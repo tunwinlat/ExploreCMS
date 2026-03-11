@@ -8,6 +8,18 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { jwtVerify } from 'jose'
 
+const getSecret = () => {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('JWT_SECRET environment variable is not set. This is a critical security risk.')
+    }
+    // Fallback for development/testing only
+    return new TextEncoder().encode('explore-cms-development-secret-only')
+  }
+  return new TextEncoder().encode(secret)
+}
+
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname
 
@@ -18,7 +30,7 @@ export async function middleware(request: NextRequest) {
     }
 
     try {
-      const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'explore-cms-super-secret-key-that-should-be-changed')
+      const secret = getSecret()
       await jwtVerify(session, secret)
       return NextResponse.next()
     } catch (e) {
@@ -30,7 +42,7 @@ export async function middleware(request: NextRequest) {
     const session = request.cookies.get('session')?.value
     if (session) {
       try {
-        const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'explore-cms-super-secret-key-that-should-be-changed')
+        const secret = getSecret()
         await jwtVerify(session, secret)
         return NextResponse.redirect(new URL('/admin/dashboard', request.url))
       } catch (e) {}
