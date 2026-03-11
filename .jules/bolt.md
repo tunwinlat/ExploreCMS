@@ -1,0 +1,3 @@
+## 2024-05-18 - Unnecessary Tags Fetch on Homepage
+**Learning:** Found a sequence of independent database queries being made on the main homepage feed (`src/app/page.tsx`), one of which (`prisma.tag.findMany`) fetched all tags but was unused. The remaining two queries (`postDb.post.findMany` and `prisma.siteSettings.findUnique`) were completely independent.
+**Action:** When working on SSR or API routes in ExploreCMS, look for sequential sequential awaits on database queries that do not depend on each other and combine them using `Promise.all`. Furthermore, actively verify whether the fetched data is actually consumed by the downstream rendering logic.
