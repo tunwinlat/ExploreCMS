@@ -11,8 +11,10 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 
 export async function updateUserRole(userId: string, newRole: string) {
-  const session = await verifySession()
-  if (!session || session.role !== 'OWNER') return { error: 'Unauthorized' }
+  const payload = await verifySession()
+  if (!payload || payload.role !== 'ADMIN') {
+    throw new Error('Unauthorized')
+  }
 
   try {
     await prisma.user.update({
@@ -22,7 +24,8 @@ export async function updateUserRole(userId: string, newRole: string) {
     revalidatePath('/admin/dashboard/users')
     return { success: true }
   } catch (error) {
-    return { error: 'Failed to update user role' }
+    console.error('Error updating user role:', error)
+    throw new Error('Failed to update user role')
   }
 }
 

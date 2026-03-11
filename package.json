@@ -38,14 +38,34 @@
     "ws": "^8.19.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
+    "@vitejs/plugin-react": "^5.1.4",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "jsdom": "^28.1.0",
     "prisma": "^6.19.2",
-    "typescript": "^5"
-  }
+    "typescript": "^5",
+    "vitest": "^4.0.18"
+  },
+  "description": "ExploreCMS is a beautifully styled, self-hosted minimalistic blogging platform engineered for speed, aesthetics, and simplicity. Built on Next.js App Router and powered by a zero-configuration embedded SQLite database, it's designed to be deployed effortlessly.",
+  "main": "add-license.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tunwinlat/ExploreCMS.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/tunwinlat/ExploreCMS/issues"
+  },
+  "homepage": "https://github.com/tunwinlat/ExploreCMS#readme"
 }
