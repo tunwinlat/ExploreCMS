@@ -10,7 +10,7 @@ export default async function DashboardPage() {
     prisma.post.count({ where: { published: false }})
   ])
   
-  let topPosts = [];
+  let topPosts: any[] = [];
   try {
     topPosts = await prisma.postView.findMany({
       orderBy: { totalViews: 'desc' },

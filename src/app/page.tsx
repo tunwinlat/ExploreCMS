@@ -1,21 +1,25 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { getPostDb } from "@/lib/bunnyDb";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ViewTracker } from "@/components/ViewTracker";
 import DynamicPostGrid from "@/components/DynamicPostGrid";
 
 export default async function Home() {
   const limit = 10
-  const posts = await prisma.post.findMany({
+  const postDb = await getPostDb();
+  const rawPosts: any[] = await postDb.post.findMany({
     where: { published: true },
     orderBy: { createdAt: 'desc' },
     take: limit + 1,
     include: {
-      author: true, // Fetch full author to satisfy the lack of 'select: { firstName }'
+      author: true,
       tags: true,
       views: true
-    }
-  })
+    } as any
+  });
+  
+  const posts = rawPosts as any[];
 
   // Compute cursor logic exactly like the API
   let nextCursor: string | undefined = undefined;
@@ -54,15 +58,15 @@ export default async function Home() {
 
       <main>
         <DynamicPostGrid 
-          initialPosts={renderPosts.map(p => ({
+          initialPosts={renderPosts.map((p: any) => ({
             id: p.id,
             title: p.title,
             slug: p.slug,
             isFeatured: p.isFeatured,
-            author: { username: p.author.username, firstName: p.author.firstName },
-            createdAt: p.createdAt.toISOString(),
-            tags: p.tags.map(t => ({ name: t.name, slug: t.slug })),
-            views: p.views,
+            author: { username: p.author?.username || 'admin', firstName: p.author?.firstName || 'Admin' },
+            createdAt: typeof p.createdAt === 'string' ? p.createdAt : p.createdAt?.toISOString() || new Date().toISOString(),
+            tags: Array.isArray(p.tags) ? p.tags.map((t: any) => ({ name: t.name, slug: t.slug })) : [],
+            views: Array.isArray(p.views) ? p.views : [],
             content: p.content
           }))} 
           navItems={navItems} 

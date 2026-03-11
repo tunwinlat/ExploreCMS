@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/db'
+import { getPostDb } from '@/lib/bunnyDb'
 import { verifySession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 
@@ -11,6 +12,8 @@ function generateSlug(title: string) {
 export async function savePost(formData: FormData, options: { redirect?: boolean } = { redirect: true }) {
   const session = await verifySession()
   if (!session) throw new Error('Unauthorized')
+  
+  const postDb = await getPostDb();
 
   const id = formData.get('id') as string | null
   const title = formData.get('title') as string
@@ -33,10 +36,10 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
 
   if (id) {
     // If slug changed, verify uniqueness
-    const existing = await prisma.post.findFirst({ where: { slug, id: { not: id } } })
+    const existing = await postDb.post.findFirst({ where: { slug, id: { not: id } } })
     if (existing) slug = `${slug}-${Date.now()}`
 
-    await prisma.post.update({
+    await postDb.post.update({
       where: { id },
       data: { 
         title, slug, content, published, isFeatured,
@@ -48,10 +51,10 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
     })
   } else {
     // Generate unique slug
-    let existing = await prisma.post.findUnique({ where: { slug } })
+    let existing = await postDb.post.findUnique({ where: { slug } })
     if (existing) slug = `${slug}-${Date.now()}`
 
-    await prisma.post.create({
+    await postDb.post.create({
       data: {
         title,
         slug,
@@ -76,7 +79,9 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
 export async function deletePost(id: string) {
   const session = await verifySession()
   if (!session) throw new Error('Unauthorized')
+  
+  const postDb = await getPostDb();
 
-  await prisma.post.delete({ where: { id } })
+  await postDb.post.delete({ where: { id } })
   redirect('/admin/dashboard')
 }

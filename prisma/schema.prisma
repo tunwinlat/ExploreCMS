@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -49,6 +50,12 @@ model SiteSettings {
   headerDescription String   @default("Welcome to my personal corner of the internet. Here I share technical deep-dives and pieces of my life story.")
   navigationConfig  String   @default("[{\"id\":\"latest\",\"type\":\"latest\",\"label\":\"Latest\"},{\"id\":\"featured\",\"type\":\"featured\",\"label\":\"Featured\"}]")
   theme             String   @default("default")
+  
+  // Remote DB Config
+  bunnyEnabled      Boolean  @default(false)
+  bunnyUrl          String?
+  bunnyToken        String?
+
   updatedAt         DateTime @updatedAt
 }
 

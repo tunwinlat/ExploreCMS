@@ -1,0 +1,32 @@
+import { PrismaClient } from '@prisma/client'
+import { PrismaLibSql } from '@prisma/adapter-libsql'
+import { createClient } from '@libsql/client'
+import { prisma as localPrisma } from './db'
+
+/**
+ * Dynamically resolves the correct Prisma instance based on the SiteSettings configuration.
+ * Always retrieves the most up-to-date configuration, so toggles in the Admin panel apply instantly.
+ */
+export async function getPostDb(): Promise<PrismaClient> {
+  // Always query the local sqlite database for the single source-of-truth configuration
+  const settings = await localPrisma.siteSettings.findUnique({
+    where: { id: 'singleton' }
+  })
+
+  // If Bunny DB is disabled, or missing creds, safely fallback to local sqlite
+  if (!settings?.bunnyEnabled || !settings?.bunnyUrl || !settings?.bunnyToken) {
+    return localPrisma
+  }
+
+  // Instantiate the Edge LibSQL Client
+  const libsql = createClient({
+    url: settings.bunnyUrl,
+    authToken: settings.bunnyToken
+  })
+
+  // Bridge the LibSQL Socket over to Prisma's Native Query Engine
+  const adapter = new PrismaLibSql(libsql as any)
+  const remotePrisma = new PrismaClient({ adapter })
+
+  return remotePrisma
+}

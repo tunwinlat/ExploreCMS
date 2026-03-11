@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { getPostDb } from '@/lib/bunnyDb'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -7,7 +8,8 @@ export async function GET(request: Request) {
   const limit = 10 // Fixed payload size
 
   try {
-    const posts = await prisma.post.findMany({
+    const postDb = await getPostDb();
+    const posts = await postDb.post.findMany({
       where: { published: true },
       take: limit + 1, // Fetch one extra to check if there's a next page
       cursor: cursor ? { id: cursor } : undefined,

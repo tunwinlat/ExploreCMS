@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { updateSiteSettings } from './settingsActions'
+import { connectBunnyDb, disconnectBunnyDb } from './bunnyActions'
 import { THEMES } from '@/lib/themes'
 
 export default function SettingsForm({ initialSettings }: { initialSettings: any }) {
@@ -10,6 +11,13 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
   const [headerTitle, setHeaderTitle] = useState(initialSettings?.headerTitle || 'Explore. Create. Inspire.')
   const [headerDescription, setHeaderDescription] = useState(initialSettings?.headerDescription || 'Welcome to my personal corner of the internet. Here I share technical deep-dives and pieces of my life story.')
   const [theme, setTheme] = useState(initialSettings?.theme || 'default')
+  
+  // Remote DB State
+  const [bunnyEnabled, setBunnyEnabled] = useState(initialSettings?.bunnyEnabled || false)
+  const [bunnyUrl, setBunnyUrl] = useState(initialSettings?.bunnyUrl || '')
+  const [bunnyToken, setBunnyToken] = useState(initialSettings?.bunnyToken || '')
+  const [bunnyLoading, setBunnyLoading] = useState(false)
+
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState({ text: '', type: '' })
   const [uploading, setUploading] = useState(false)
@@ -46,14 +54,47 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
     setLoading(true)
     setMessage({ text: '', type: '' })
 
+    // Save standard settings natively
     const res = await updateSiteSettings(title, faviconUrl || null, headerTitle, headerDescription, theme)
     if (res.success) {
-      // Force reload to apply theme globally via layout.tsx
       window.location.reload()
     } else {
       setMessage({ text: res.error || 'Failed to update settings', type: 'error' })
     }
     setLoading(false)
+  }
+
+  const handleBunnyConnect = async () => {
+    if (!bunnyUrl || !bunnyToken) {
+      setMessage({ text: 'URL and Token are required to connect.', type: 'error' })
+      return
+    }
+
+    setBunnyLoading(true)
+    setMessage({ text: 'Connecting... This may take up to a minute while migrating all data.', type: 'success' })
+    
+    const res = await connectBunnyDb(bunnyUrl, bunnyToken)
+    if (res.success) {
+      setBunnyEnabled(true)
+      setMessage({ text: 'Successfully connected and migrated to Bunny DB!', type: 'success' })
+    } else {
+      setMessage({ text: res.error || 'Failed to connect to Bunny DB', type: 'error' })
+    }
+    setBunnyLoading(false)
+  }
+
+  const handleBunnyDisconnect = async () => {
+    setBunnyLoading(true)
+    setMessage({ text: 'Disconnecting... Pulling Cloud Data back to Local Storage.', type: 'success' })
+    
+    const res = await disconnectBunnyDb()
+    if (res.success) {
+      setBunnyEnabled(false)
+      setMessage({ text: 'Successfully disconnected. All data is restored locally.', type: 'success' })
+    } else {
+      setMessage({ text: res.error || 'Failed to disconnect', type: 'error' })
+    }
+    setBunnyLoading(false)
   }
 
   return (
@@ -183,6 +224,54 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
               <strong>{t.name}</strong>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'var(--bg-color-secondary)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: bunnyEnabled ? '2px solid var(--accent-color)' : '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h3 style={{ fontSize: '1.25rem', margin: 0 }}>Bunny Edge Database</h3>
+          {bunnyEnabled && (
+            <span style={{ background: '#22c55e', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600 }}>CONNECTED TO EDGE</span>
+          )}
+        </div>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1rem' }}>
+          Offloads Post and Analytics querying to a lightning-fast Global Edge network. Local setup handles only Author configurations. Connect to automatically migrate existing posts upwards!
+        </p>
+
+        <label htmlFor="bunnyUrl" style={{ fontWeight: 500 }}>LibSQL HTTP URL</label>
+        <input
+          id="bunnyUrl"
+          type="url"
+          value={bunnyUrl}
+          onChange={(e) => setBunnyUrl(e.target.value)}
+          placeholder="libsql://yourapp-id.lite.bunnydb.net"
+          disabled={bunnyEnabled || bunnyLoading}
+          suppressHydrationWarning
+          style={{ padding: '0.8rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--bg-color)', color: 'var(--text-primary)', fontSize: '1rem', opacity: bunnyEnabled ? 0.6 : 1 }}
+        />
+
+        <label htmlFor="bunnyToken" style={{ fontWeight: 500, marginTop: '0.5rem' }}>Auth Token</label>
+        <input
+          id="bunnyToken"
+          type="password"
+          value={bunnyToken}
+          onChange={(e) => setBunnyToken(e.target.value)}
+          placeholder="ey..."
+          disabled={bunnyEnabled || bunnyLoading}
+          suppressHydrationWarning
+          style={{ padding: '0.8rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--bg-color)', color: 'var(--text-primary)', fontSize: '1rem', opacity: bunnyEnabled ? 0.6 : 1 }}
+        />
+
+        <div style={{ marginTop: '1rem' }}>
+          {bunnyEnabled ? (
+            <button type="button" onClick={handleBunnyDisconnect} disabled={bunnyLoading} className="btn" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444' }}>
+              {bunnyLoading ? 'Syncing...' : 'Disconnect and Fallback Local'}
+            </button>
+          ) : (
+            <button type="button" onClick={handleBunnyConnect} disabled={bunnyLoading || !bunnyUrl || !bunnyToken} className="btn" style={{ background: 'var(--accent-color)', color: 'white', border: 'none' }}>
+              {bunnyLoading ? 'Migrating Data to Edge...' : 'Connect to Bunny DB'}
+            </button>
+          )}
         </div>
       </div>
 
