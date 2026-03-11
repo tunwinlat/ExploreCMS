@@ -11,26 +11,26 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 
 export async function updateNavigationConfig(navigationConfig: string) {
-  const session = await verifySession()
-  if (!session || session.role !== 'OWNER') return { error: 'Unauthorized' }
+  const payload = await verifySession()
+  if (!payload || payload.role !== 'ADMIN') {
+    throw new Error('Unauthorized')
+  }
 
   try {
-    // Basic JSON validation before saving
-    JSON.parse(navigationConfig)
-    
     await prisma.siteSettings.upsert({
-      where: { id: 'singleton' },
-      update: { navigationConfig },
-      create: { 
-        id: 'singleton', 
+      where: { id: 'default' },
+      update: { navigation: navigationConfig },
+      create: {
+        id: 'default',
         title: 'ExploreCMS',
-        navigationConfig 
+        navigation: navigationConfig
       }
     })
-    
-    revalidatePath('/', 'layout')
+    revalidatePath('/')
+    revalidatePath('/admin/dashboard/navigation')
     return { success: true }
   } catch (error) {
-    return { error: 'Invalid Navigation JSON format' }
+    console.error('Error updating navigation:', error)
+    throw new Error('Failed to update navigation')
   }
 }
