@@ -14,18 +14,26 @@ import DynamicPostGrid from "@/components/DynamicPostGrid";
 export default async function Home() {
   const limit = 10
   const postDb = await getPostDb();
-  const rawPosts: any[] = await postDb.post.findMany({
-    where: { published: true },
-    orderBy: { createdAt: 'desc' },
-    take: limit + 1,
-    include: {
-      author: true,
-      tags: true,
-      views: true
-    } as any
-  });
   
-  const posts = rawPosts as any[];
+  // ⚡ Bolt: Parallelize independent DB queries and remove unused tags fetch
+  // This reduces the critical path latency by fetching settings and posts concurrently
+  const [rawPostsResult, settings] = await Promise.all([
+    postDb.post.findMany({
+      where: { published: true },
+      orderBy: { createdAt: 'desc' },
+      take: limit + 1,
+      include: {
+        author: true,
+        tags: true,
+        views: true
+      } as any
+    }),
+    prisma.siteSettings.findUnique({
+      where: { id: 'singleton' }
+    })
+  ]);
+
+  const posts = rawPostsResult as any[];
 
   // Compute cursor logic exactly like the API
   let nextCursor: string | undefined = undefined;
@@ -36,13 +44,6 @@ export default async function Home() {
     nextCursor = nextItem!.id
   }
 
-  const settings = await prisma.siteSettings.findUnique({
-    where: { id: 'singleton' }
-  });
-
-  const allTagsArray = await prisma.tag.findMany({ select: { name: true } })
-  const allTags = allTagsArray.map(t => t.name)
-  
   let navItems = []
   try {
     navItems = JSON.parse(settings?.navigationConfig || '[]')
