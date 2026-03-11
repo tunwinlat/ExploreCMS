@@ -32,6 +32,12 @@ export async function getPostDb(): Promise<PrismaClient> {
 
   // Bridge the LibSQL Socket over to Prisma's Native Query Engine
   const adapter = new PrismaLibSql(libsql as any)
+  
+  // Polyfill env for Prisma schema parser when using adapters in Server Actions
+  if (!process.env.DATABASE_URL) {
+    process.env.DATABASE_URL = "file:./dev.db"
+  }
+  
   const remotePrisma = new PrismaClient({ adapter })
 
   return remotePrisma

@@ -35,7 +35,16 @@ export async function connectBunnyDb(url: string, token: string) {
     // However, LibSQL works with regular connection strings. Let's make sure the client simply connects first.
     
     const libsql = createClient({ url, authToken: token })
+    
+    // Polyfill env for Prisma schema parser when using adapters in Server Actions
+    const originalEnv = process.env.DATABASE_URL
+    process.env.DATABASE_URL = "file:./dev.db"
+    
     const remotePrisma = new PrismaClient({ adapter: new PrismaLibSql(libsql as any) })
+    
+    // Restore env just in case
+    if (originalEnv) process.env.DATABASE_URL = originalEnv
+    else delete process.env.DATABASE_URL
     
     // Verify connection by creating a dummy table or running a raw query
     await remotePrisma.$queryRaw`SELECT 1;`
@@ -101,9 +110,15 @@ export async function disconnectBunnyDb() {
        return { success: true } // Already disconnected
     }
 
-    console.log("Connecting to Remote Bunny DB for downward extraction...")
     const libsql = createClient({ url: settings.bunnyUrl, authToken: settings.bunnyToken })
+    
+    const originalEnv = process.env.DATABASE_URL
+    process.env.DATABASE_URL = "file:./dev.db"
+    
     const remotePrisma = new PrismaClient({ adapter: new PrismaLibSql(libsql as any) })
+    
+    if (originalEnv) process.env.DATABASE_URL = originalEnv
+    else delete process.env.DATABASE_URL
     
     // 1. Fetch Remote Data
     const users = await remotePrisma.user.findMany()
