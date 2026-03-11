@@ -70,6 +70,17 @@ export default function UserProfileForm({ user }: { user: any }) {
         />
       </div>
 
+      <div>
+        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>New Password (Optional)</label>
+        <input
+          type="password"
+          name="password"
+          placeholder="Leave blank to keep current password"
+          className="glass"
+          style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', background: 'transparent', color: 'var(--text-primary)' }}
+        />
+      </div>
+
       <button type="submit" className="glass" disabled={loading} style={{ 
         padding: '0.75rem', 
         background: 'var(--text-primary)', 
