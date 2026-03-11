@@ -11,6 +11,7 @@ ExploreCMS is a beautifully styled, self-hosted minimalistic blogging platform e
 * **Rich WYSIWYG Editor**: A beautifully minimal, ghost-style writing experience built on TipTap. Supports slash commands (`/`), image dropping, embedded YouTube videos, and floating toolbars to get out of your way while you write.
 * **Built-in Analytics**: Complete with total site views and per-article unique view tracking, plotted in a beautiful native Admin Dashboard.
 * **Instant Auto-Save & Drafts**: Never lose your writing. ExploreCMS automatically saves your progress in the background to your Drafts queue every 5 seconds.
+* **Bunny Database Edge Storage**: Need to go remote? Easily connect a cloud-distributed Bunny DB (libSQL) via the Admin Settings. The platform features an intelligent, zero-data-loss bidirectional migration sync to seamlessly push/pull data up to the edge and back down to local SQLite on demand!
 
 ## 🚀 Getting Started
 
@@ -58,3 +59,8 @@ ExploreCMS is designed as a monolithic, self-contained architecture!
 Your entire site history including draft contents, public posts, analytics, images, and user accounts are securely encapsulated inside `./prisma/dev.db`.
 
 **Note:** The `.gitignore` is intentionally configured to never track this `.db` file or user uploads directly to ensure your data stays private and secure!
+
+## 📜 License
+
+This project is licensed under the **Mozilla Public License, v. 2.0 (MPL-2.0)**. 
+See the [LICENSE](LICENSE) file for more details. Any copy of the file must include the MPL header.
