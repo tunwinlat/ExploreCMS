@@ -9,7 +9,6 @@
 import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 
 export async function updateTag(id: string, newName: string) {
   const session = await verifySession()
@@ -41,19 +40,19 @@ export async function updateTag(id: string, newName: string) {
 }
 
 export async function deleteTag(id: string) {
-  const session = await verifySession()
-  if (!session) return { error: 'Unauthorized' }
+  const payload = await verifySession()
+  if (!payload || payload.role !== 'ADMIN') {
+    throw new Error('Unauthorized')
+  }
 
   try {
-    // Due to implicit m-n, this safely removes relations automatically
     await prisma.tag.delete({
       where: { id }
     })
-
     revalidatePath('/admin/dashboard/tags')
-    revalidatePath('/')
     return { success: true }
   } catch (error) {
-    return { error: 'Failed to delete tag' }
+    console.error('Error deleting tag:', error)
+    throw new Error('Failed to delete tag')
   }
 }
