@@ -9,6 +9,7 @@
 import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import bcrypt from 'bcryptjs'
 
 export async function updateUserProfile(formData: FormData) {
   const session = await verifySession()
@@ -16,14 +17,22 @@ export async function updateUserProfile(formData: FormData) {
 
   const firstName = formData.get('firstName') as string
   const lastName = formData.get('lastName') as string
+  const password = formData.get('password') as string
 
   try {
+    const updateData: any = {
+      firstName: firstName || null,
+      lastName: lastName || null,
+    }
+
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10)
+      updateData.password = hashedPassword
+    }
+
     await prisma.user.update({
       where: { id: (session as { userId: string }).userId },
-      data: {
-        firstName: firstName || null,
-        lastName: lastName || null,
-      }
+      data: updateData
     })
     revalidatePath('/admin/dashboard/profile')
     revalidatePath('/')
