@@ -6,11 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run"
   },
   "dependencies": {
     "@libsql/client": "^0.17.0",
-    "@prisma/adapter-libsql": "^6.19.2",
+    "@prisma/adapter-libsql": "^7.4.2",
     "@prisma/client": "^6.19.2",
     "@tippyjs/react": "^4.2.6",
     "@tiptap/extension-bubble-menu": "^3.20.1",
@@ -38,20 +39,15 @@
     "ws": "^8.19.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.58.2",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
-    "@vitejs/plugin-react": "^5.1.4",
+    "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "jsdom": "^28.1.0",
-    "playwright": "^1.58.2",
     "prisma": "^6.19.2",
     "typescript": "^5",
     "vitest": "^4.0.18"
