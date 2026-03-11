@@ -11,14 +11,16 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 
 export async function updateSiteSettings(title: string, faviconUrl: string | null, headerTitle: string, headerDescription: string, theme: string) {
-  const session = await verifySession()
-  if (!session || session.role !== 'OWNER') return { error: 'Unauthorized' }
+  const payload = await verifySession()
+  if (!payload || payload.role !== 'ADMIN') {
+    throw new Error('Unauthorized')
+  }
 
   try {
     await prisma.siteSettings.upsert({
-      where: { id: 'singleton' },
+      where: { id: 'default' },
       update: { title, faviconUrl, headerTitle, headerDescription, theme },
-      create: { id: 'singleton', title, faviconUrl, headerTitle, headerDescription, theme }
+      create: { id: 'default', title, faviconUrl, headerTitle, headerDescription, theme }
     })
     
     revalidatePath('/', 'layout')
