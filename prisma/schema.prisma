@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  firstName String?
+  lastName  String?
+  password  String
+  role      String   @default("COLLABORATOR") // Roles: OWNER, COLLABORATOR
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  posts     Post[]
+}
+
+model Post {
+  id         String   @id @default(cuid())
+  title      String
+  slug       String   @unique
+  content    String   // HTML content
+  published  Boolean  @default(false)
+  isFeatured Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id])
+  tags       Tag[]
+  views      PostView?
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  posts     Post[]
+}
+
+model SiteSettings {
+  id                String   @id @default("singleton")
+  title             String   @default("ExploreCMS")
+  faviconUrl        String?
+  headerTitle       String   @default("Explore. Create. Inspire.")
+  headerDescription String   @default("Welcome to my personal corner of the internet. Here I share technical deep-dives and pieces of my life story.")
+  navigationConfig  String   @default("[{\"id\":\"latest\",\"type\":\"latest\",\"label\":\"Latest\"},{\"id\":\"featured\",\"type\":\"featured\",\"label\":\"Featured\"}]")
+  theme             String   @default("default")
+  updatedAt         DateTime @updatedAt
+}
+
+model SiteAnalytics {
+  id          String   @id @default("singleton")
+  totalViews  Int      @default(0)
+  uniqueViews Int      @default(0)
+  updatedAt   DateTime @updatedAt
+}
+
+model PostView {
+  id          String   @id @default(cuid())
+  postId      String   @unique
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  totalViews  Int      @default(0)
+  uniqueViews Int      @default(0)
+  updatedAt   DateTime @updatedAt
+}

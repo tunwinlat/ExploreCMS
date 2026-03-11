@@ -1,0 +1,564 @@
+/* =========================================================================
+   DYNAMIC THEMING ENGINE (21 THEMES) - HD PATTERNS & COLORS
+========================================================================= */
+
+[data-theme="default"] {
+  --font-primary: 'Inter', sans-serif;
+}
+
+/* 2. Ocean Depth - Water Ripples (CSS Gradients) */
+[data-theme="ocean"] {
+  --bg-color: #e0f2fe;
+  --bg-color-secondary: #ffffff;
+  --text-primary: #082f49;
+  --text-secondary: #0ea5e9;
+  --accent-color: #0284c7;
+  --accent-hover: #0369a1;
+  --border-color: rgba(2, 132, 199, 0.15);
+  --font-primary: 'Outfit', sans-serif;
+  --radius-md: 16px;
+  --radius-lg: 32px;
+  --btn-text: #ffffff;
+  --bg-pattern-base: radial-gradient(circle at 100% 100%, rgba(2, 132, 199, 0.1) 0%, transparent 50%);
+  --bg-pattern-overlay: repeating-radial-gradient(circle at 0 0, transparent 0, var(--border-color) 12px, transparent 24px);
+  --bg-pattern-size: 150px 150px;
+  --bg-pattern-opacity: 0.4;
+}
+.dark[data-theme="ocean"] {
+  --bg-color: #082f49;
+  --bg-color-secondary: #0c4a6e;
+  --text-primary: #e0f2fe;
+  --text-secondary: #7dd3fc;
+  --border-color: rgba(125, 211, 252, 0.15);
+  --bg-pattern-base: radial-gradient(circle at 100% 100%, rgba(125, 211, 252, 0.08) 0%, transparent 60%);
+  --bg-pattern-overlay: repeating-radial-gradient(circle at 0 0, transparent 0, var(--border-color) 12px, transparent 24px);
+  --bg-pattern-opacity: 0.3;
+}
+
+/* 3. Desert Sunset - Wavy Sand Dunes (SVG) */
+[data-theme="sunset"] {
+  --bg-color: #ffedd5;
+  --bg-color-secondary: #fff7ed;
+  --text-primary: #431407;
+  --text-secondary: #9a3412;
+  --accent-color: #ea580c;
+  --accent-hover: #c2410c;
+  --border-color: rgba(234, 88, 12, 0.15);
+  --font-primary: 'Lato', sans-serif;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='100' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 10 Q 25 20, 50 10 T 100 10' fill='none' stroke='%23ea580c' stroke-width='1' stroke-opacity='0.15'/%3E%3C/svg%3E");
+  --bg-pattern-size: 100px 20px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="sunset"] {
+  --bg-color: #431407;
+  --bg-color-secondary: #7c2d12;
+  --text-primary: #ffedd5;
+  --text-secondary: #fdba74;
+  --accent-color: #f97316;
+  --border-color: rgba(253, 186, 116, 0.15);
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='100' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 10 Q 25 20, 50 10 T 100 10' fill='none' stroke='%23fdba74' stroke-width='1' stroke-opacity='0.15'/%3E%3C/svg%3E");
+}
+
+/* 4. Cyberpunk 2077 - Circuit Board / Hexagons */
+[data-theme="cyberpunk"] {
+  --bg-color: #fef08a;
+  --bg-color-secondary: #fefce8;
+  --text-primary: #000000;
+  --text-secondary: #86198f;
+  --accent-color: #d946ef;
+  --accent-hover: #c026d3;
+  --border-color: rgba(217, 70, 239, 0.3);
+  --font-primary: 'Space Grotesk', sans-serif;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='60' height='103.923' viewBox='0 0 60 103.923' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 103.923L0 51.9615L30 0L60 51.9615L30 103.923Z' fill='none' stroke='%23d946ef' stroke-width='1' stroke-opacity='0.2'/%3E%3C/svg%3E");
+  --bg-pattern-size: 60px 103.923px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="cyberpunk"] {
+  --bg-color: #0f172a;
+  --bg-color-secondary: #1e293b;
+  --text-primary: #fef08a;
+  --text-secondary: #2dd4bf;
+  --accent-color: #fef08a;
+  --accent-hover: #fde047;
+  --border-color: rgba(45, 212, 191, 0.2);
+  --btn-text: #0f172a;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='60' height='103.923' viewBox='0 0 60 103.923' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 103.923L0 51.9615L30 0L60 51.9615L30 103.923Z' fill='none' stroke='%232dd4bf' stroke-width='1' stroke-opacity='0.15'/%3E%3C/svg%3E");
+}
+
+/* 5. Enchanted Forest - Topographical Map / Leaves */
+[data-theme="forest"] {
+  --bg-color: #dcfce7;
+  --bg-color-secondary: #f0fdf4;
+  --text-primary: #14532d;
+  --text-secondary: #166534;
+  --accent-color: #15803d;
+  --accent-hover: #16a34a;
+  --border-color: rgba(21, 128, 61, 0.15);
+  --font-primary: 'Open Sans', sans-serif;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40' fill='none' stroke='%2315803d' stroke-opacity='0.1' stroke-width='1'/%3E%3C/svg%3E");
+  --bg-pattern-size: 40px 40px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="forest"] {
+  --bg-color: #052e16;
+  --bg-color-secondary: #14532d;
+  --text-primary: #dcfce7;
+  --text-secondary: #86efac;
+  --accent-color: #22c55e;
+  --border-color: rgba(134, 239, 172, 0.15);
+  --btn-text: #052e16;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40' fill='none' stroke='%2322c55e' stroke-opacity='0.1' stroke-width='1'/%3E%3C/svg%3E");
+}
+
+/* 6. Terminal Hacker - Matrix Data Blocks */
+[data-theme="hacker"] {
+  --bg-color: #000000;
+  --bg-color-secondary: #111111;
+  --text-primary: #4ade80;
+  --text-secondary: #22c55e;
+  --accent-color: #16a34a;
+  --accent-hover: #15803d;
+  --border-color: rgba(74, 222, 128, 0.2);
+  --font-primary: 'Fira Code', monospace;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --btn-text: #000000;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='10' height='10' fill='%2322c55e' fill-opacity='0.05'/%3E%3Crect x='10' y='10' width='10' height='10' fill='%2322c55e' fill-opacity='0.05'/%3E%3C/svg%3E");
+  --bg-pattern-size: 20px 20px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="hacker"] {
+  --bg-color: #000000;
+  --bg-color-secondary: #0a0a0a;
+  --text-primary: #22c55e;
+  --text-secondary: #16a34a;
+  --border-color: rgba(34, 197, 94, 0.15);
+}
+
+/* 7. Pure Minimalist - Blueprint Grid */
+[data-theme="minimalist"] {
+  --bg-color: #ffffff;
+  --bg-color-secondary: #fafafa;
+  --text-primary: #000000;
+  --text-secondary: #525252;
+  --accent-color: #171717;
+  --accent-hover: #404040;
+  --border-color: rgba(0, 0, 0, 0.1);
+  --font-primary: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: linear-gradient(var(--border-color) 1px, transparent 1px), linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+  --bg-pattern-size: 40px 40px;
+  --bg-pattern-opacity: 0.5;
+}
+.dark[data-theme="minimalist"] {
+  --bg-color: #000000;
+  --bg-color-secondary: #0a0a0a;
+  --text-primary: #ffffff;
+  --text-secondary: #a3a3a3;
+  --accent-color: #e5e5e5;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --btn-text: #000000;
+}
+
+/* 8. Bubblegum Pop - Polka Dots */
+[data-theme="bubblegum"] {
+  --bg-color: #fce7f3;
+  --bg-color-secondary: #fdf2f8;
+  --text-primary: #831843;
+  --text-secondary: #be185d;
+  --accent-color: #db2777;
+  --accent-hover: #e11d48;
+  --border-color: rgba(219, 39, 119, 0.15);
+  --font-primary: 'Quicksand', sans-serif;
+  --radius-md: 20px;
+  --radius-lg: 40px;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='10' cy='10' r='3' fill='%23db2777' fill-opacity='0.15'/%3E%3C/svg%3E");
+  --bg-pattern-size: 20px 20px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="bubblegum"] {
+  --bg-color: #4a044e;
+  --bg-color-secondary: #701a75;
+  --text-primary: #fce7f3;
+  --text-secondary: #f9a8d4;
+  --accent-color: #f472b6;
+  --border-color: rgba(244, 114, 182, 0.15);
+  --btn-text: #4a044e;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='10' cy='10' r='3' fill='%23f472b6' fill-opacity='0.15'/%3E%3C/svg%3E");
+}
+
+/* 9. Royal Velvet - Elegant Diamonds / Argyle */
+[data-theme="royal"] {
+  --bg-color: #faf5ff;
+  --bg-color-secondary: #ffffff;
+  --text-primary: #3b0764;
+  --text-secondary: #6b21a8;
+  --accent-color: #7e22ce;
+  --accent-hover: #9333ea;
+  --border-color: rgba(126, 34, 206, 0.15);
+  --font-primary: 'Cormorant Garamond', serif;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='50' height='50' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M25 0 L50 25 L25 50 L0 25 Z' fill='none' stroke='%237e22ce' stroke-opacity='0.1' stroke-width='1'/%3E%3C/svg%3E");
+  --bg-pattern-size: 50px 50px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="royal"] {
+  --bg-color: #2e1065;
+  --bg-color-secondary: #3b0764;
+  --text-primary: #f3e8ff;
+  --text-secondary: #d8b4fe;
+  --accent-color: #c084fc;
+  --border-color: rgba(192, 132, 252, 0.15);
+  --btn-text: #2e1065;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='50' height='50' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M25 0 L50 25 L25 50 L0 25 Z' fill='none' stroke='%23c084fc' stroke-opacity='0.1' stroke-width='1'/%3E%3C/svg%3E");
+}
+
+/* 10. Midnight City - True Starry Night Sky */
+[data-theme="midnight"] {
+  --bg-color: #e2e8f0;
+  --bg-color-secondary: #f8fafc;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --accent-color: #3b82f6;
+  --accent-hover: #2563eb;
+  --border-color: rgba(15, 23, 42, 0.1);
+  --font-primary: 'Montserrat', sans-serif;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: radial-gradient(var(--border-color) 1px, transparent 1px);
+  --bg-pattern-size: 50px 50px;
+  --bg-pattern-opacity: 0.6;
+}
+.dark[data-theme="midnight"] {
+  --bg-color: #020617;
+  --bg-color-secondary: #0f172a;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --accent-color: #3b82f6;
+  --border-color: rgba(248, 250, 252, 0.15);
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  /* Complex glowing star field CSS */
+  --bg-pattern-overlay: 
+    radial-gradient(1.5px 1.5px at 10% 20%, #ffffff 100%, transparent),
+    radial-gradient(1.5px 1.5px at 30% 60%, rgba(255,255,255,0.8) 100%, transparent),
+    radial-gradient(2px 2px at 80% 40%, rgba(255,255,255,0.6) 100%, transparent),
+    radial-gradient(1px 1px at 60% 80%, rgba(255,255,255,0.4) 100%, transparent),
+    radial-gradient(1px 1px at 20% 90%, #ffffff 100%, transparent),
+    radial-gradient(2.5px 2.5px at 90% 10%, rgba(59, 130, 246, 0.8) 100%, transparent),
+    radial-gradient(1px 1px at 50% 30%, rgba(255,255,255,0.7) 100%, transparent);
+  --bg-pattern-size: 200px 200px;
+  --bg-pattern-opacity: 0.9;
+}
+
+/* 11. Monochromatic - Diagonal Pinstripes */
+[data-theme="monochromatic"] {
+  --bg-color: #e5e5e5;
+  --bg-color-secondary: #f5f5f5;
+  --text-primary: #171717;
+  --text-secondary: #525252;
+  --accent-color: #404040;
+  --accent-hover: #262626;
+  --border-color: rgba(23, 23, 23, 0.1);
+  --font-primary: 'DM Sans', sans-serif;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: repeating-linear-gradient(45deg, transparent, transparent 10px, var(--border-color) 10px, var(--border-color) 11px);
+  --bg-pattern-size: 100% 100%;
+  --bg-pattern-opacity: 0.7;
+}
+.dark[data-theme="monochromatic"] {
+  --bg-color: #171717;
+  --bg-color-secondary: #262626;
+  --text-primary: #f5f5f5;
+  --text-secondary: #a3a3a3;
+  --accent-color: #737373;
+  --border-color: rgba(245, 245, 245, 0.1);
+  --btn-text: #171717;
+}
+
+/* 12. Neon Synthwave - Outrun Horizon / Lightgrid */
+[data-theme="synthwave"] {
+  --bg-color: #1e1b4b;
+  --bg-color-secondary: #312e81;
+  --text-primary: #fbcfe8;
+  --text-secondary: #f472b6;
+  --accent-color: #ec4899;
+  --accent-hover: #db2777;
+  --border-color: rgba(236, 72, 153, 0.3);
+  --font-primary: 'Nunito', sans-serif;
+  --btn-text: #ffffff;
+  --bg-pattern-base: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+  --bg-pattern-overlay: linear-gradient(0deg, transparent 40%, var(--border-color) 40%, var(--border-color) 42%, transparent 42%), linear-gradient(90deg, transparent 40%, var(--border-color) 40%, var(--border-color) 42%, transparent 42%);
+  --bg-pattern-size: 40px 40px;
+  --bg-pattern-opacity: 0.8;
+}
+.dark[data-theme="synthwave"] {
+  --bg-color: #0f0728;
+  --bg-color-secondary: #221254;
+  --text-primary: #fbcfe8;
+  --text-secondary: #06b6d4;
+  --accent-color: #06b6d4;
+  --border-color: rgba(6, 182, 212, 0.3);
+  --bg-pattern-base: linear-gradient(180deg, #0f0728 0%, #221254 100%);
+  --bg-pattern-overlay: 
+    linear-gradient(transparent 95%, rgba(6, 182, 212, 0.5) 95%),
+    linear-gradient(90deg, transparent 95%, rgba(6, 182, 212, 0.5) 95%);
+  --bg-pattern-size: 50px 50px;
+  --btn-text: #0f0728;
+}
+
+/* 13. Emerald Isle - Celtic Knots / Clover */
+[data-theme="emerald"] {
+  --bg-color: #ecfdf5;
+  --bg-color-secondary: #ffffff;
+  --text-primary: #064e3b;
+  --text-secondary: #047857;
+  --accent-color: #10b981;
+  --accent-hover: #059669;
+  --border-color: rgba(16, 185, 129, 0.15);
+  --font-primary: 'Work Sans', sans-serif;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='24' height='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 0L24 12L12 24L0 12Z' fill='none' stroke='%2310b981' stroke-width='1' stroke-opacity='0.15'/%3E%3C/svg%3E");
+  --bg-pattern-size: 24px 24px;
+}
+.dark[data-theme="emerald"] {
+  --bg-color: #022c22;
+  --bg-color-secondary: #064e3b;
+  --text-primary: #ecfdf5;
+  --text-secondary: #6ee7b7;
+  --accent-color: #34d399;
+  --border-color: rgba(110, 231, 183, 0.15);
+  --btn-text: #022c22;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='24' height='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 0L24 12L12 24L0 12Z' fill='none' stroke='%2334d399' stroke-width='1' stroke-opacity='0.15'/%3E%3C/svg%3E");
+}
+
+/* 14. Morning Coffee - Cups and Beans Rings */
+[data-theme="coffee"] {
+  --bg-color: #fdf8f6;
+  --bg-color-secondary: #ffffff;
+  --text-primary: #4a3f35;
+  --text-secondary: #8c7b6f;
+  --accent-color: #8b5a2b;
+  --accent-hover: #6b4226;
+  --border-color: rgba(139, 90, 43, 0.15);
+  --font-primary: 'Source Sans Pro', sans-serif;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: radial-gradient(circle at 100% 0%, var(--border-color) 20px, transparent 21px);
+  --bg-pattern-size: 60px 60px;
+}
+.dark[data-theme="coffee"] {
+  --bg-color: #2c1e16;
+  --bg-color-secondary: #3b2a20;
+  --text-primary: #fdf8f6;
+  --text-secondary: #d4c4b7;
+  --accent-color: #b58b66;
+  --border-color: rgba(212, 196, 183, 0.15);
+  --btn-text: #2c1e16;
+}
+
+/* 15. Arctic Glacier - Isometric Ice Cubes */
+[data-theme="glacier"] {
+  --bg-color: #f0fdfa;
+  --bg-color-secondary: #ffffff;
+  --text-primary: #134e4a;
+  --text-secondary: #0f766e;
+  --accent-color: #14b8a6;
+  --accent-hover: #0d9488;
+  --border-color: rgba(20, 184, 166, 0.15);
+  --font-primary: 'Jost', sans-serif;
+  --radius-md: 4px;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='40' height='69.282' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 17.32l-20 11.547L0 17.32V40.41l20 11.548 20-11.548V17.32zm0 34.641l-20 11.548-20-11.548V40.41l20 11.548 20-11.548v11.547zM20 0l20 11.547-20 11.547L0 11.547 20 0z' fill='none' stroke='%2314b8a6' stroke-width='1' stroke-opacity='0.15'/%3E%3C/svg%3E");
+  --bg-pattern-size: 40px 69.282px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="glacier"] {
+  --bg-color: #042f2e;
+  --bg-color-secondary: #134e4a;
+  --text-primary: #f0fdfa;
+  --text-secondary: #5eead4;
+  --accent-color: #2dd4bf;
+  --border-color: rgba(94, 234, 212, 0.15);
+  --btn-text: #042f2e;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='40' height='69.282' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 17.32l-20 11.547L0 17.32V40.41l20 11.548 20-11.548V17.32zm0 34.641l-20 11.548-20-11.548V40.41l20 11.548 20-11.548v11.547zM20 0l20 11.547-20 11.547L0 11.547 20 0z' fill='none' stroke='%235eead4' stroke-width='1' stroke-opacity='0.15'/%3E%3C/svg%3E");
+}
+
+/* 16. Lavender Dream - Soft Waves */
+[data-theme="lavender"] {
+  --bg-color: #f5f3ff;
+  --bg-color-secondary: #ffffff;
+  --text-primary: #4c1d95;
+  --text-secondary: #6d28d9;
+  --accent-color: #8b5cf6;
+  --accent-hover: #7c3aed;
+  --border-color: rgba(139, 92, 246, 0.15);
+  --font-primary: 'Poppins', sans-serif;
+  --radius-md: 24px;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='100' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 10 Q 25 0, 50 10 T 100 10' fill='none' stroke='%238b5cf6' stroke-width='1' stroke-opacity='0.2'/%3E%3C/svg%3E");
+  --bg-pattern-size: 100px 20px;
+}
+.dark[data-theme="lavender"] {
+  --bg-color: #2e1065;
+  --bg-color-secondary: #4c1d95;
+  --text-primary: #f5f3ff;
+  --text-secondary: #c4b5fd;
+  --accent-color: #a78bfa;
+  --border-color: rgba(196, 181, 253, 0.15);
+  --btn-text: #2e1065;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='100' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 10 Q 25 0, 50 10 T 100 10' fill='none' stroke='%23a78bfa' stroke-width='1' stroke-opacity='0.15'/%3E%3C/svg%3E");
+}
+
+/* 17. Volcanic Ash - Static Noise / Grunge */
+[data-theme="volcanic"] {
+  --bg-color: #f8fafc;
+  --bg-color-secondary: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --accent-color: #ef4444;
+  --accent-hover: #dc2626;
+  --border-color: rgba(239, 68, 68, 0.15);
+  --font-primary: 'Roboto Condensed', sans-serif;
+  --radius-md: 0px;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+  --bg-pattern-size: 200px 200px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="volcanic"] {
+  --bg-color: #0f172a;
+  --bg-color-secondary: #1e293b;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --accent-color: #f87171;
+  --border-color: rgba(248, 113, 113, 0.15);
+  --btn-text: #0f172a;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08' mix-blend-mode='screen'/%3E%3C/svg%3E");
+}
+
+/* 18. Tokyo Sakura - Cherry Blossom Petals */
+[data-theme="sakura"] {
+  --bg-color: #fff1f2;
+  --bg-color-secondary: #ffffff;
+  --text-primary: #881337;
+  --text-secondary: #be123c;
+  --accent-color: #f43f5e;
+  --accent-hover: #e11d48;
+  --border-color: rgba(244, 63, 94, 0.15);
+  --font-primary: 'Noto Sans JP', sans-serif;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0 C30 15 35 25 20 40 C5 25 10 15 20 0 Z' fill='%23f43f5e' fill-opacity='0.05'/%3E%3C/svg%3E");
+  --bg-pattern-size: 60px 60px;
+}
+.dark[data-theme="sakura"] {
+  --bg-color: #4c0519;
+  --bg-color-secondary: #881337;
+  --text-primary: #ffe4e6;
+  --text-secondary: #fda4af;
+  --accent-color: #fb7185;
+  --border-color: rgba(251, 113, 133, 0.15);
+  --btn-text: #4c0519;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0 C30 15 35 25 20 40 C5 25 10 15 20 0 Z' fill='%23fb7185' fill-opacity='0.05'/%3E%3C/svg%3E");
+}
+
+/* 19. Dracula - Vampire Crosses / Plus signs */
+[data-theme="dracula"] {
+  --bg-color: #282a36;
+  --bg-color-secondary: #44475a;
+  --text-primary: #f8f8f2;
+  --text-secondary: #6272a4;
+  --accent-color: #ff79c6;
+  --accent-hover: #bd93f9;
+  --border-color: rgba(255, 121, 198, 0.2);
+  --font-primary: 'Ubuntu', sans-serif;
+  --btn-text: #282a36;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 0v20M0 10h20' stroke='%23ff79c6' stroke-width='1' stroke-opacity='0.15'/%3E%3C/svg%3E");
+  --bg-pattern-size: 30px 30px;
+}
+.dark[data-theme="dracula"] {
+  --bg-color: #1e1f29;
+  --bg-color-secondary: #282a36;
+  --text-primary: #f8f8f2;
+  --text-secondary: #8be9fd;
+  --accent-color: #bd93f9;
+  --border-color: rgba(189, 147, 249, 0.2);
+  --btn-text: #1e1f29;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 0v20M0 10h20' stroke='%23bd93f9' stroke-width='1' stroke-opacity='0.1'/%3E%3C/svg%3E");
+}
+
+/* 20. Solarized - Graph Paper */
+[data-theme="solarized"] {
+  --bg-color: #fdf6e3;
+  --bg-color-secondary: #eee8d5;
+  --text-primary: #657b83;
+  --text-secondary: #93a1a1;
+  --accent-color: #268bd2;
+  --accent-hover: #2aa198;
+  --border-color: rgba(38, 139, 210, 0.15);
+  --font-primary: 'Inconsolata', monospace;
+  --btn-text: #fdf6e3;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: linear-gradient(var(--border-color) 1px, transparent 1px), linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+  --bg-pattern-size: 20px 20px;
+  --bg-pattern-opacity: 0.8;
+}
+.dark[data-theme="solarized"] {
+  --bg-color: #002b36;
+  --bg-color-secondary: #073642;
+  --text-primary: #839496;
+  --text-secondary: #586e75;
+  --accent-color: #2aa198;
+  --accent-hover: #268bd2;
+  --border-color: rgba(42, 161, 152, 0.15);
+  --btn-text: #002b36;
+}
+
+/* 21. Gruvbox - Retro Pixel Scanlines */
+[data-theme="gruvbox"] {
+  --bg-color: #fbf1c7;
+  --bg-color-secondary: #ebdbb2;
+  --text-primary: #3c3836;
+  --text-secondary: #504945;
+  --accent-color: #d79921;
+  --accent-hover: #b57614;
+  --border-color: rgba(215, 153, 33, 0.15);
+  --font-primary: 'Fira Sans', sans-serif;
+  --btn-text: #fbf1c7;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(215, 153, 33, 0.1) 2px, rgba(215, 153, 33, 0.1) 4px);
+  --bg-pattern-size: 100% 4px;
+}
+.dark[data-theme="gruvbox"] {
+  --bg-color: #282828;
+  --bg-color-secondary: #3c3836;
+  --text-primary: #ebdbb2;
+  --text-secondary: #a89984;
+  --accent-color: #fabd2f;
+  --accent-hover: #d79921;
+  --border-color: rgba(250, 189, 47, 0.15);
+  --btn-text: #282828;
+  --bg-pattern-overlay: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(250, 189, 47, 0.05) 2px, rgba(250, 189, 47, 0.05) 4px);
+}

@@ -1,0 +1,33 @@
+'use server'
+
+import { prisma } from '@/lib/db'
+import { compare } from 'bcryptjs'
+import { createSession } from '@/lib/auth'
+import { redirect } from 'next/navigation'
+
+export async function loginUser(formData: FormData) {
+  const username = formData.get('username') as string
+  const password = formData.get('password') as string
+
+  if (!username || !password) {
+    return { error: 'Missing credentials.' }
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { username }
+  })
+
+  if (!user) {
+    return { error: 'Invalid username or password.' }
+  }
+
+  const matches = await compare(password, user.password)
+  
+  if (!matches) {
+    return { error: 'Invalid username or password.' }
+  }
+
+  await createSession({ userId: user.id, username: user.username, role: user.role })
+  
+  redirect('/admin/dashboard')
+}

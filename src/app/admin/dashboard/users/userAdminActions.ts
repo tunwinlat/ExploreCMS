@@ -1,0 +1,40 @@
+'use server'
+
+import { verifySession } from '@/lib/auth'
+import { prisma } from '@/lib/db'
+import { revalidatePath } from 'next/cache'
+
+export async function updateUserRole(userId: string, newRole: string) {
+  const session = await verifySession()
+  if (!session || session.role !== 'OWNER') return { error: 'Unauthorized' }
+
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { role: newRole }
+    })
+    revalidatePath('/admin/dashboard/users')
+    return { success: true }
+  } catch (error) {
+    return { error: 'Failed to update user role' }
+  }
+}
+
+export async function deleteUser(userId: string) {
+  const session = await verifySession()
+  if (!session || session.role !== 'OWNER') return { error: 'Unauthorized' }
+  
+  if ((session as { userId: string }).userId === userId) {
+    return { error: 'You cannot delete your own account' }
+  }
+
+  try {
+    await prisma.user.delete({
+      where: { id: userId }
+    })
+    revalidatePath('/admin/dashboard/users')
+    return { success: true }
+  } catch (error) {
+    return { error: 'Failed to delete user' }
+  }
+}

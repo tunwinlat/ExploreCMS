@@ -1,0 +1,53 @@
+'use server'
+
+import { verifySession } from '@/lib/auth'
+import { prisma } from '@/lib/db'
+import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
+
+export async function updateTag(id: string, newName: string) {
+  const session = await verifySession()
+  if (!session) return { error: 'Unauthorized' }
+
+  try {
+    const slug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
+    
+    // Check if new slug already exists
+    const existing = await prisma.tag.findFirst({
+      where: { slug, id: { not: id } }
+    })
+    
+    if (existing) {
+      return { error: 'A tag with this name already exists' }
+    }
+
+    await prisma.tag.update({
+      where: { id },
+      data: { name: newName, slug }
+    })
+
+    revalidatePath('/admin/dashboard/tags')
+    revalidatePath('/')
+    return { success: true }
+  } catch (error) {
+    return { error: 'Failed to update tag' }
+  }
+}
+
+export async function deleteTag(id: string) {
+  const session = await verifySession()
+  if (!session) return { error: 'Unauthorized' }
+
+  try {
+    // Due to implicit m-n, this safely removes relations automatically
+    await prisma.tag.delete({
+      where: { id }
+    })
+
+    revalidatePath('/admin/dashboard/tags')
+    revalidatePath('/')
+    return { success: true }
+  } catch (error) {
+    return { error: 'Failed to delete tag' }
+  }
+}

@@ -1,0 +1,126 @@
+/* 
+  Global Stylesheet strictly for public-facing Reading Mode.
+  Maps TipTap / ProseMirror HTML output to our custom Theme Engine variables.
+*/
+
+.markdown-content {
+  color: var(--text-primary);
+  font-family: inherit;
+  line-height: 1.8;
+  width: 100%;
+}
+
+.markdown-content p {
+  margin-bottom: 1.5rem;
+}
+
+.markdown-content h1, 
+.markdown-content h2, 
+.markdown-content h3, 
+.markdown-content h4 {
+  color: var(--text-primary);
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.markdown-content h1 { font-size: 2.25rem; }
+.markdown-content h2 { font-size: 1.8rem; }
+.markdown-content h3 { font-size: 1.5rem; }
+
+.markdown-content a {
+  color: var(--accent-color);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color var(--transition-fast) ease;
+}
+
+.markdown-content a:hover {
+  text-decoration-color: var(--accent-color);
+}
+
+.markdown-content blockquote {
+  border-left: 4px solid var(--accent-color);
+  padding-left: 1.5rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: var(--text-secondary);
+  background: var(--bg-color-secondary);
+  padding: 1rem 1.5rem;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+/* Code Blocks */
+.markdown-content pre {
+  background: #111827 !important; /* Force dark mode for code blocks */
+  color: #f3f4f6 !important;
+  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  margin: 2rem 0;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.markdown-content pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+}
+
+/* Inline Code */
+.markdown-content code {
+  background: var(--border-color);
+  color: var(--accent-color);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.markdown-content ul, 
+.markdown-content ol {
+  margin: 1.5rem 0;
+  padding-left: 2rem;
+}
+
+.markdown-content li {
+  margin-bottom: 0.5rem;
+}
+
+.markdown-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  margin: 2rem auto;
+  display: block;
+}
+
+.markdown-content hr {
+  border: 0;
+  border-top: 1px solid var(--border-color);
+  margin: 3rem 0;
+}
+
+/* YouTube wrapper */
+.markdown-content .iframe-wrapper {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+  margin: 2rem 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.markdown-content iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}

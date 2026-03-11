@@ -1,0 +1,248 @@
+'use client'
+
+import { useState, useRef, useEffect, useCallback } from 'react'
+import Link from 'next/link'
+
+import { NavItem } from '@/app/admin/dashboard/navigation/NavBuilder'
+
+type Post = {
+  id: string
+  title: string
+  slug: string
+  isFeatured: boolean
+  author: { username: string, firstName: string | null }
+  createdAt: string | Date 
+  tags: { name: string, slug: string }[]
+  views?: { uniqueViews: number }[]
+  content: string
+}
+
+export default function DynamicPostGrid({ 
+  initialPosts, 
+  navItems, 
+  initialCursor 
+}: { 
+  initialPosts: Post[], 
+  navItems: NavItem[], 
+  initialCursor?: string 
+}) {
+  const [posts, setPosts] = useState<Post[]>(initialPosts)
+  const [activeFilter, setActiveFilter] = useState<{type: 'latest'|'featured'|'tag', target?: string}>({type: 'latest'})
+  
+  // Pagination State
+  const [cursor, setCursor] = useState<string | undefined>(initialCursor)
+  const [loading, setLoading] = useState(false)
+  const [hasMore, setHasMore] = useState(!!initialCursor)
+  
+  const observerRef = useRef<IntersectionObserver | null>(null)
+  const loadMoreRef = useRef<HTMLDivElement>(null)
+
+  const fetchNextPage = useCallback(async () => {
+    if (loading || !hasMore || !cursor) return
+    setLoading(true)
+    
+    try {
+      const res = await fetch(`/api/posts?cursor=${cursor}`)
+      const data = await res.json()
+      
+      if (data.posts && data.posts.length > 0) {
+        setPosts(prev => [...prev, ...data.posts])
+        setCursor(data.nextCursor)
+        if (!data.nextCursor) setHasMore(false)
+      } else {
+        setHasMore(false)
+      }
+    } catch (err) {
+      console.error("Failed to load more posts:", err)
+    } finally {
+      setLoading(false)
+    }
+  }, [cursor, loading, hasMore])
+
+  useEffect(() => {
+    if (!hasMore) return
+
+    const currentTarget = loadMoreRef.current
+    if (currentTarget) {
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            fetchNextPage()
+          }
+        },
+        { rootMargin: '200px' } 
+      )
+      observerRef.current.observe(currentTarget)
+    }
+
+    return () => {
+      if (observerRef.current && currentTarget) {
+        observerRef.current.unobserve(currentTarget)
+      }
+    }
+  }, [fetchNextPage, hasMore])
+
+  const filteredPosts = posts.filter(post => {
+    if (activeFilter.type === 'latest') return true;
+    if (activeFilter.type === 'featured') return post.isFeatured;
+    if (activeFilter.type === 'tag' && activeFilter.target) {
+      return post.tags.some(t => t.slug === activeFilter.target);
+    }
+    return true;
+  })
+
+  return (
+    <div>
+      {/* Primary Navigation System */}
+      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '3rem', flexWrap: 'wrap' }}>
+        {navItems.map((item) => {
+          if (item.type === 'dropdown') {
+            return (
+              <div key={item.id} className="dropdown-container" style={{ position: 'relative', display: 'inline-block' }}>
+                <button 
+                  className="btn glass" 
+                  style={{ padding: '0.5rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  {item.label} <span style={{ fontSize: '0.8rem' }}>▼</span>
+                </button>
+                <div 
+                  className="dropdown-menu glass" 
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    marginTop: '0.5rem',
+                    minWidth: '200px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.25rem',
+                    padding: '0.5rem',
+                    zIndex: 50,
+                    opacity: 0,
+                    visibility: 'hidden',
+                    transition: 'all var(--transition-fast)'
+                  }}
+                >
+                  {item.children?.map(child => (
+                    <button
+                      key={child.id}
+                      onClick={() => setActiveFilter({ type: 'tag', target: child.tagSlug })}
+                      style={{
+                        padding: '0.75rem 1rem',
+                        background: activeFilter.target === child.tagSlug ? 'var(--accent-color)' : 'transparent',
+                        color: activeFilter.target === child.tagSlug ? 'white' : 'var(--text-primary)',
+                        border: 'none',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        borderRadius: 'var(--radius-sm)',
+                        transition: 'background var(--transition-fast)'
+                      }}
+                      className="dropdown-item"
+                    >
+                      {child.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )
+          }
+
+          // Normal tag or latest/featured button
+          const isActive = activeFilter.type === item.type && (!item.tagSlug || item.tagSlug === activeFilter.target)
+          
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveFilter({ type: item.type as any, target: item.tagSlug })}
+              className={`btn ${isActive ? 'btn-primary' : 'glass'}`}
+              style={{ transition: 'all var(--transition-normal)', padding: '0.5rem 1.25rem' }}
+            >
+              {item.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Masonry / Pinterest Style Grid */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+        gap: '2rem',
+        alignItems: 'start'
+      }}>
+        {filteredPosts.length === 0 ? (
+          <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-secondary)' }}>No posts found for this view.</p>
+        ) : (
+          filteredPosts.map(post => {
+            const imgMatch = post.content.match(/<img[^>]+src="([^">]+)"/)
+            const coverImage = imgMatch ? imgMatch[1] : null
+            const textContent = post.content.replace(/<[^>]*>?/gm, '').trim()
+            const excerpt = textContent.length > 120 ? textContent.substring(0, 120) + '...' : textContent
+
+            return (
+              <Link key={post.id} href={`/post/${post.slug}`} style={{ textDecoration: 'none' }}>
+                <article className="glass article-card fade-in-up" style={{
+                  transition: 'all var(--transition-normal)',
+                  breakInside: 'avoid',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  padding: 0,
+                  overflow: 'hidden'
+                }}>
+                  {coverImage && (
+                    <div style={{ width: '100%', height: '240px', overflow: 'hidden', borderBottom: '1px solid var(--border-color)' }}>
+                      <img src={coverImage} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} className="card-img" />
+                    </div>
+                  )}
+                  
+                  <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    {post.isFeatured && (
+                      <div style={{ display: 'inline-block', background: 'var(--accent-color)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '1rem', width: 'fit-content', letterSpacing: '0.05em' }}>
+                        FEATURED
+                      </div>
+                    )}
+                    <h2 style={{ fontSize: '1.4rem', marginBottom: '0.75rem', color: 'var(--text-primary)', lineHeight: 1.3, fontWeight: 700 }}>
+                      {post.title}
+                    </h2>
+                    
+                    {excerpt && (
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.5rem', lineHeight: 1.6, flex: 1 }}>
+                        {excerpt}
+                      </p>
+                    )}
+                    
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                      {post.tags.map(tag => (
+                        <span key={tag.name} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 500 }}>
+                          {tag.name}
+                        </span>
+                      ))}
+                    </div>
+
+                    <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 500 }}>
+                      <span>{post.author.firstName || post.author.username}</span>
+                      <span>{new Date(post.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    </div>
+                  </div>
+                </article>
+              </Link>
+            )
+          })
+        )}
+      </div>
+
+      <div 
+        ref={loadMoreRef} 
+        style={{ height: '40px', margin: '3rem 0', display: 'flex', justifyContent: 'center' }}
+      >
+        {loading && (
+          <div style={{ color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.9rem', animation: 'pulse 2s infinite' }}>
+            Loading more stories...
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
