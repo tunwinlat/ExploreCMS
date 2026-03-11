@@ -37,14 +37,9 @@ export async function connectBunnyDb(url: string, token: string) {
     const libsql = createClient({ url, authToken: token })
     
     // Polyfill env for Prisma schema parser when using adapters in Server Actions
-    const originalEnv = process.env.DATABASE_URL
     process.env.DATABASE_URL = "file:./dev.db"
     
     const remotePrisma = new PrismaClient({ adapter: new PrismaLibSql(libsql as any) })
-    
-    // Restore env just in case
-    if (originalEnv) process.env.DATABASE_URL = originalEnv
-    else delete process.env.DATABASE_URL
     
     // Verify connection by creating a dummy table or running a raw query
     await remotePrisma.$queryRaw`SELECT 1;`
@@ -92,7 +87,8 @@ export async function connectBunnyDb(url: string, token: string) {
 
     return { success: true }
   } catch (error: any) {
-    console.error("Bunny Connection Error:", error)
+    console.error("Bunny Connection Error Detailed Stack:", JSON.stringify(error, null, 2))
+    console.error("Stringified error Object:", String(error))
     return { success: false, error: 'Database Connection Failed: ' + (error.message || 'Unknown Error') }
   }
 }
@@ -112,13 +108,9 @@ export async function disconnectBunnyDb() {
 
     const libsql = createClient({ url: settings.bunnyUrl, authToken: settings.bunnyToken })
     
-    const originalEnv = process.env.DATABASE_URL
     process.env.DATABASE_URL = "file:./dev.db"
     
     const remotePrisma = new PrismaClient({ adapter: new PrismaLibSql(libsql as any) })
-    
-    if (originalEnv) process.env.DATABASE_URL = originalEnv
-    else delete process.env.DATABASE_URL
     
     // 1. Fetch Remote Data
     const users = await remotePrisma.user.findMany()
