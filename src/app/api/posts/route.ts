@@ -11,7 +11,7 @@ import { getPostDb } from '@/lib/bunnyDb'
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const cursor = searchParams.get('cursor')
-  const limit = 10 // Fixed payload size
+  const limit = 9 // Fixed payload size
 
   try {
     const postDb = await getPostDb();

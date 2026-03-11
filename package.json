@@ -38,14 +38,22 @@
     "ws": "^8.19.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/bcryptjs": "^2.4.6",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
+    "node-mocks-http": "^1.17.2",
     "prisma": "^6.19.2",
-    "typescript": "^5"
+    "ts-jest": "^29.4.6",
+    "typescript": "^5",
+    "undici": "^7.22.0"
   }
 }
