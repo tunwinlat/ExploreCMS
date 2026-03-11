@@ -153,19 +153,19 @@ export default function TipTapEditor({ initialContent = '', onChange }: TipTapEd
       
       {editor && (
         <div className="editor-toolbar fade-in-up">
-          <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive('bold') ? 'active' : ''}>B</button>
-          <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive('italic') ? 'active' : ''}>I</button>
-          <button type="button" onClick={() => editor.chain().focus().toggleStrike().run()} className={editor.isActive('strike') ? 'active' : ''}>S</button>
+          <button type="button" aria-label="Bold" title="Bold" onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive('bold') ? 'active' : ''}>B</button>
+          <button type="button" aria-label="Italic" title="Italic" onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive('italic') ? 'active' : ''}>I</button>
+          <button type="button" aria-label="Strike" title="Strike" onClick={() => editor.chain().focus().toggleStrike().run()} className={editor.isActive('strike') ? 'active' : ''}>S</button>
           <div className="divider" style={{ width: '1px', background: 'var(--border-color)', margin: '0 0.5rem' }}></div>
-          <button type="button" onClick={setLink} className={editor.isActive('link') ? 'active' : ''}>🔗</button>
+          <button type="button" aria-label="Add Link" title="Add Link" onClick={setLink} className={editor.isActive('link') ? 'active' : ''}>🔗</button>
           <div className="divider" style={{ width: '1px', background: 'var(--border-color)', margin: '0 0.5rem' }}></div>
-          <button type="button" onClick={() => editor.chain().focus().setTextAlign('left').run()} className={editor.isActive({ textAlign: 'left' }) ? 'active' : ''}>⬅</button>
-          <button type="button" onClick={() => editor.chain().focus().setTextAlign('center').run()} className={editor.isActive({ textAlign: 'center' }) ? 'active' : ''}>↔</button>
-          <button type="button" onClick={() => editor.chain().focus().setTextAlign('right').run()} className={editor.isActive({ textAlign: 'right' }) ? 'active' : ''}>➡</button>
+          <button type="button" aria-label="Align Left" title="Align Left" onClick={() => editor.chain().focus().setTextAlign('left').run()} className={editor.isActive({ textAlign: 'left' }) ? 'active' : ''}>⬅</button>
+          <button type="button" aria-label="Align Center" title="Align Center" onClick={() => editor.chain().focus().setTextAlign('center').run()} className={editor.isActive({ textAlign: 'center' }) ? 'active' : ''}>↔</button>
+          <button type="button" aria-label="Align Right" title="Align Right" onClick={() => editor.chain().focus().setTextAlign('right').run()} className={editor.isActive({ textAlign: 'right' }) ? 'active' : ''}>➡</button>
           
           <div style={{ flex: 1 }}></div>
 
-          <button type="button" onClick={addImageClick} disabled={uploading}>
+          <button type="button" aria-label={uploading ? 'Uploading Image' : 'Add Image'} title="Add Image" onClick={addImageClick} disabled={uploading}>
             {uploading ? 'Uploading...' : '🖼️ Add Image'}
           </button>
         </div>
