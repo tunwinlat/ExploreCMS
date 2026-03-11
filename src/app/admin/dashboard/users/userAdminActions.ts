@@ -27,11 +27,9 @@ export async function updateUserRole(userId: string, newRole: string) {
 }
 
 export async function deleteUser(userId: string) {
-  const session = await verifySession()
-  if (!session || session.role !== 'OWNER') return { error: 'Unauthorized' }
-  
-  if ((session as { userId: string }).userId === userId) {
-    return { error: 'You cannot delete your own account' }
+  const payload = await verifySession()
+  if (!payload || payload.role !== 'ADMIN') {
+    throw new Error('Unauthorized')
   }
 
   try {
@@ -41,6 +39,7 @@ export async function deleteUser(userId: string) {
     revalidatePath('/admin/dashboard/users')
     return { success: true }
   } catch (error) {
-    return { error: 'Failed to delete user' }
+    console.error('Error deleting user:', error)
+    throw new Error('Failed to delete user')
   }
 }
