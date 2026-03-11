@@ -5,20 +5,22 @@
  */
 
 import { prisma } from '@/lib/db'
+import { getPostDb } from '@/lib/bunnyDb'
 import Link from 'next/link'
 
 export const metadata = { title: "Analytics Overview | ExploreCMS" }
 
 export default async function DashboardPage() {
+  const postDb = await getPostDb() as any;
   const [analytics, totalPosts, draftPosts] = await Promise.all([
     prisma.siteAnalytics.findUnique({ where: { id: 'singleton' }}),
-    prisma.post.count({ where: { published: true }}),
-    prisma.post.count({ where: { published: false }})
+    postDb.post.count({ where: { published: true }}),
+    postDb.post.count({ where: { published: false }})
   ])
   
   let topPosts: any[] = [];
   try {
-    topPosts = await prisma.postView.findMany({
+    topPosts = await postDb.postView.findMany({
       orderBy: { totalViews: 'desc' },
       take: 5,
       include: { post: true }

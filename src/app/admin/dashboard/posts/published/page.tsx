@@ -4,14 +4,15 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { prisma } from '@/lib/db'
+import { getPostDb } from '@/lib/bunnyDb'
 import Link from 'next/link'
 import { DeletePostButton } from '../DeletePostButton'
 
 export const metadata = { title: "Published Posts | ExploreCMS" }
 
 export default async function PublishedPostsPage() {
-  const posts = await prisma.post.findMany({
+  const postDb = await getPostDb() as any;
+  const posts = await postDb.post.findMany({
     where: { published: true },
     orderBy: { createdAt: 'desc' },
     include: { author: true }

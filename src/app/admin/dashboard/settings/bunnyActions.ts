@@ -9,7 +9,7 @@
 import { verifySession } from '@/lib/auth'
 import { prisma as localPrisma } from '@/lib/db'
 import { PrismaClient } from '@prisma/client'
-import { PrismaLibSql } from '@prisma/adapter-libsql'
+import { PrismaLibSQL } from '@prisma/adapter-libsql'
 import { createClient } from '@libsql/client'
 import { exec } from 'child_process'
 import { promisify } from 'util'
@@ -24,6 +24,12 @@ export async function connectBunnyDb(url: string, token: string) {
   if (session?.role !== 'OWNER') return { success: false, error: 'Unauthorized' }
   
   if (!url || !token) return { success: false, error: 'URL and Token are required' }
+  
+  // Guarantee a protocol layout to prevent LibSQL URL_INVALID parsing crashes
+  let safeUrl = url.trim()
+  if (!safeUrl.startsWith('http://') && !safeUrl.startsWith('https://') && !safeUrl.startsWith('libsql://') && !safeUrl.startsWith('ws://') && !safeUrl.startsWith('wss://')) {
+    safeUrl = `https://${safeUrl}`
+  }
 
   try {
     // 1. Temporarily construct a direct remote client to push the Schema and test connectivity
@@ -34,31 +40,30 @@ export async function connectBunnyDb(url: string, token: string) {
     // Note: Since Prisma's adapter-enabled push is still experimental, standard HTTP pushing isn't officially supported via `db push`. 
     // However, LibSQL works with regular connection strings. Let's make sure the client simply connects first.
     
-    const libsql = createClient({ url, authToken: token })
-    
-    // Polyfill env for Prisma schema parser when using adapters in Server Actions
-    process.env.DATABASE_URL = "file:./dev.db"
-    
-    const remotePrisma = new PrismaClient({ adapter: new PrismaLibSql(libsql as any) })
+    const remotePrisma = new PrismaClient({ adapter: new PrismaLibSQL({ url: safeUrl, authToken: token }) })
     
     // Verify connection by creating a dummy table or running a raw query
     await remotePrisma.$queryRaw`SELECT 1;`
 
-    // IMPORTANT WORKAROUND: Because LibSQL HTTP URLs aren't natively supported by standard Prisma `db push` for schema creation yet without deep Turso tunneling, 
-    // we have to manually execute the `CREATE TABLE` raw queries against Bunny to initialize an empty database.
-    // Instead of doing this manually, we will assume the user has run a standard dump, or we can execute the raw Schema.
-    // Actually, Prisma recently added support for libsql:// URIs in the standard rust engine, so we can try to inject it via env.
-    
     try {
-      console.log("Attempting remote Schema Push...")
-      // Convert https://... to libsql://... for the native generator
-      const cleanUrl = url.replace('https://', 'libsql://').replace('http://', 'libsql://')
-      const pushString = `${cleanUrl}?authToken=${token}`
-      await execAsync(`npx prisma db push --accept-data-loss`, { env: { ...process.env, DATABASE_URL: pushString } })
+      console.log("Attempting remote Schema Push over Edge HTTP...")
+      
+      // Since `prisma db push` relies on the Rust engine which fails against raw HTTP LibSQL edge nodes,
+      // we generate the raw SQLite DDL from our Prisma schema instead!
+      const { stdout } = await execAsync(`npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script`)
+      
+      // Inject idempotency so we don't crash if the tables already exist
+      const idempotentSql = stdout
+        .replace(/CREATE TABLE/g, 'CREATE TABLE IF NOT EXISTS')
+        .replace(/CREATE UNIQUE INDEX/g, 'CREATE UNIQUE INDEX IF NOT EXISTS')
+        .replace(/CREATE INDEX/g, 'CREATE INDEX IF NOT EXISTS')
+        
+      // Execute it dynamically across the edge client
+      const libsql = createClient({ url: safeUrl, authToken: token })
+      await libsql.executeMultiple(idempotentSql)
+      console.log("Remote Schema synchronized perfectly!")
     } catch(pushErr) {
-      console.warn("Standard DB Push failed. Ensuring schema manually...", pushErr)
-      // If push fails (LibSQL HTTP limitation), we fallback to executing the raw DDL schema we know exists.
-      // (For this specific VibeCoding phase, we will log a warning. Usually the user must push the DB themselves if native Prisma fails via HTTP).
+      console.warn("Schema synchronization failed or generated an exception:", pushErr)
     }
 
     console.log("Migrating data UPWARD (Local -> Remote Bunny DB)...")
@@ -82,7 +87,7 @@ export async function connectBunnyDb(url: string, token: string) {
     // 4. Save settings locally to permanently route all traffic to Bunny
     await localPrisma.siteSettings.update({
       where: { id: 'singleton' },
-      data: { bunnyEnabled: true, bunnyUrl: url, bunnyToken: token }
+      data: { bunnyEnabled: true, bunnyUrl: safeUrl, bunnyToken: token }
     })
 
     return { success: true }
@@ -106,11 +111,7 @@ export async function disconnectBunnyDb() {
        return { success: true } // Already disconnected
     }
 
-    const libsql = createClient({ url: settings.bunnyUrl, authToken: settings.bunnyToken })
-    
-    process.env.DATABASE_URL = "file:./dev.db"
-    
-    const remotePrisma = new PrismaClient({ adapter: new PrismaLibSql(libsql as any) })
+    const remotePrisma = new PrismaClient({ adapter: new PrismaLibSQL({ url: settings.bunnyUrl, authToken: settings.bunnyToken }) })
     
     // 1. Fetch Remote Data
     const users = await remotePrisma.user.findMany()

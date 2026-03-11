@@ -6,7 +6,7 @@
 
 'use server'
 
-import { prisma } from '@/lib/db'
+import { getPostDb } from '@/lib/bunnyDb'
 import { verifySession } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
 
@@ -15,7 +15,8 @@ export async function deletePostById(id: string) {
   if (!session) return { success: false, error: 'Unauthorized' }
 
   try {
-    const post = await prisma.post.findUnique({ where: { id } })
+    const postDb = await getPostDb() as any;
+    const post = await postDb.post.findUnique({ where: { id } })
     if (!post) return { success: false, error: 'Not found' }
 
     // Only Owner or the Author can delete
@@ -23,7 +24,7 @@ export async function deletePostById(id: string) {
       return { success: false, error: 'Permission denied' }
     }
 
-    await prisma.post.delete({ where: { id } })
+    await postDb.post.delete({ where: { id } })
     
     revalidatePath('/admin/dashboard')
     revalidatePath('/')

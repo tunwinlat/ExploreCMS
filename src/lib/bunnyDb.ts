@@ -5,8 +5,7 @@
  */
 
 import { PrismaClient } from '@prisma/client'
-import { PrismaLibSql } from '@prisma/adapter-libsql'
-import { createClient } from '@libsql/client'
+import { PrismaLibSQL } from '@prisma/adapter-libsql'
 import { prisma as localPrisma } from './db'
 
 /**
@@ -24,19 +23,8 @@ export async function getPostDb(): Promise<PrismaClient> {
     return localPrisma
   }
 
-  // Instantiate the Edge LibSQL Client
-  const libsql = createClient({
-    url: settings.bunnyUrl,
-    authToken: settings.bunnyToken
-  })
-
   // Bridge the LibSQL Socket over to Prisma's Native Query Engine
-  const adapter = new PrismaLibSql(libsql as any)
-  
-  // Polyfill env for Prisma schema parser when using adapters in Server Actions
-  if (!process.env.DATABASE_URL) {
-    process.env.DATABASE_URL = "file:./dev.db"
-  }
+  const adapter = new PrismaLibSQL({ url: settings.bunnyUrl, authToken: settings.bunnyToken })
   
   const remotePrisma = new PrismaClient({ adapter })
 

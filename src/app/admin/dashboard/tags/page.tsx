@@ -5,7 +5,7 @@
  */
 
 import { verifySession } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPostDb } from '@/lib/bunnyDb'
 import TagList from './TagList'
 
 export const metadata = { title: "Manage Tags | ExploreCMS" }
@@ -14,7 +14,8 @@ export default async function TagsPage() {
   const session = await verifySession()
   if (!session) return null
 
-  const tags = await prisma.tag.findMany({
+  const postDb = await getPostDb() as any;
+  const tags = await postDb.tag.findMany({
     include: {
       _count: {
         select: { posts: true }

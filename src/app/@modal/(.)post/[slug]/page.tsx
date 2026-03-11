@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { prisma } from '@/lib/db'
+import { getPostDb } from '@/lib/bunnyDb'
 import { notFound } from 'next/navigation'
 import Modal from '@/components/Modal'
 import { ViewTracker } from '@/components/ViewTracker'
@@ -13,10 +13,11 @@ import '@/app/post/[slug]/post.css' // Import the specific typographic styleshee
 export default async function PostModalIntercept({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   
-  const post = await prisma.post.findUnique({
+  const db = await getPostDb()
+  const post = await db.post.findUnique({
     where: { slug },
     include: { author: true, tags: true }
-  })
+  }) as any
 
   // Enforce published check on the public frontend
   if (!post || !post.published) notFound()

@@ -7,7 +7,7 @@
 'use server'
 
 import { verifySession } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPostDb } from '@/lib/bunnyDb'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
@@ -16,10 +16,11 @@ export async function updateTag(id: string, newName: string) {
   if (!session) return { error: 'Unauthorized' }
 
   try {
+    const postDb = await getPostDb() as any;
     const slug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
     
     // Check if new slug already exists
-    const existing = await prisma.tag.findFirst({
+    const existing = await postDb.tag.findFirst({
       where: { slug, id: { not: id } }
     })
     
@@ -27,7 +28,7 @@ export async function updateTag(id: string, newName: string) {
       return { error: 'A tag with this name already exists' }
     }
 
-    await prisma.tag.update({
+    await postDb.tag.update({
       where: { id },
       data: { name: newName, slug }
     })
@@ -45,8 +46,9 @@ export async function deleteTag(id: string) {
   if (!session) return { error: 'Unauthorized' }
 
   try {
+    const postDb = await getPostDb() as any;
     // Due to implicit m-n, this safely removes relations automatically
-    await prisma.tag.delete({
+    await postDb.tag.delete({
       where: { id }
     })
 
