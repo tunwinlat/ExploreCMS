@@ -1,8 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ExploreCMS
 
-## Getting Started
+ExploreCMS is a beautifully styled, self-hosted minimalistic blogging platform engineered for speed, aesthetics, and simplicity. Built on Next.js App Router and powered by a zero-configuration embedded SQLite database, it's designed to be deployed effortlessly.
 
-First, run the development server:
+## ✨ Features
+
+* **Glassmorphic UI**: A stunning, custom-built CSS design system featuring translucent glass containers, smooth transitions, and high-performance fluid animations.
+* **21 Dynamic Themes**: Switch instantly between 21 gorgeous, tailor-made color palettes (Ocean, Cyberpunk, Forest, Sunset, etc), each with their own specialized Google Font pairing and full Light/Dark mode variants.
+* **Infinite Scroll & Inline Reading**: A frictionless user experience. Navigate a dynamic masonry grid of articles that infinitely paginates using Intersection Observers. Click any article to read it in a sleek sliding Modal Overlay without ever losing your position in the feed! 
+* **Zero-Setup Database**: Built entirely on top of Prisma + SQLite. You don't need a sprawling Postgres cluster or a Redis instance to start writing. Just `npm run dev` and your database lives securely right next to your code.
+* **Rich WYSIWYG Editor**: A beautifully minimal, ghost-style writing experience built on TipTap. Supports slash commands (`/`), image dropping, embedded YouTube videos, and floating toolbars to get out of your way while you write.
+* **Built-in Analytics**: Complete with total site views and per-article unique view tracking, plotted in a beautiful native Admin Dashboard.
+* **Instant Auto-Save & Drafts**: Never lose your writing. ExploreCMS automatically saves your progress in the background to your Drafts queue every 5 seconds.
+
+## 🚀 Getting Started
+
+First, clone the repository and install dependencies:
+
+```bash
+npm install
+```
+
+Generate the Prisma Client and sync your local SQLite database:
+
+```bash
+npx prisma generate
+npx prisma db push
+```
+
+Run the development server:
 
 ```bash
 npm run dev
@@ -14,23 +39,22 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🔐 Initial Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+On your very first run, you will be automatically redirected to `/setup`. 
 
-## Learn More
+This secure setup widget will ask you to create your initial `OWNER` Admin account credentials. Once established, this screen locks itself down permanently, and you will be routed straight to your new Admin Dashboard to begin writing. 
 
-To learn more about Next.js, take a look at the following resources:
+## 🎨 Changing Themes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Themes can be easily previewed and activated live via the Admin Dashboard.
+Navigate to **Admin** -> **Settings** -> **Theme Configurator** to swap between aesthetics globally in real-time.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🗄️ Database & Security
 
-## Deploy on Vercel
+ExploreCMS is designed as a monolithic, self-contained architecture!
+Your entire site history including draft contents, public posts, analytics, images, and user accounts are securely encapsulated inside `./prisma/dev.db`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Note:** The `.gitignore` is intentionally configured to never track this `.db` file or user uploads directly to ensure your data stays private and secure!
