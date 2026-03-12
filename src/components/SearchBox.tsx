@@ -217,6 +217,7 @@ export function SearchBox() {
               {query && (
                 <button
                   type="button"
+                  aria-label="Clear search"
                   onClick={() => { setQuery(''); inputRef.current?.focus() }}
                   style={{
                     position: 'absolute',
