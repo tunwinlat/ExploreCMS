@@ -9,7 +9,8 @@
 import { verifySession } from '@/lib/auth'
 import { prisma as localPrisma } from '@/lib/db'
 import { PrismaClient } from '@prisma/client'
-import { PrismaLibSQL } from '@prisma/adapter-libsql'
+// package export is PrismaLibSql (lowercase q) not PrismaLibSQL
+import { PrismaLibSql } from '@prisma/adapter-libsql'
 import { createClient } from '@libsql/client'
 import { syncRemoteSchema } from '@/lib/schemaSyncer'
 
@@ -37,7 +38,7 @@ export async function connectBunnyDb(url: string, token: string) {
     // and applies only missing tables/columns, preserving existing data.
     
     
-    const remotePrisma = new PrismaClient({ adapter: new PrismaLibSQL({ url: safeUrl, authToken: token }) })
+    const remotePrisma = new PrismaClient({ adapter: new PrismaLibSql({ url: safeUrl, authToken: token }) })
     
     // Verify connection by creating a dummy table or running a raw query
     await remotePrisma.$queryRaw`SELECT 1;`
@@ -101,7 +102,7 @@ export async function disconnectBunnyDb() {
        return { success: true } // Already disconnected
     }
 
-    const remotePrisma = new PrismaClient({ adapter: new PrismaLibSQL({ url: settings.bunnyUrl, authToken: settings.bunnyToken }) })
+    const remotePrisma = new PrismaClient({ adapter: new PrismaLibSql({ url: settings.bunnyUrl, authToken: settings.bunnyToken }) })
     
     // 1. Fetch Remote Data
     const remote = remotePrisma as any

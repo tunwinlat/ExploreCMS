@@ -47,7 +47,7 @@ export default async function DraftPostsPage() {
               </tr>
             </thead>
             <tbody>
-              {posts.map(post => (
+              {posts.map((post: any) => (
                 <tr key={post.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                   <td style={{ padding: '1rem' }}>
                     <Link href={`/admin/dashboard/edit/${post.id}`} prefetch={false} style={{ fontWeight: 500 }}>

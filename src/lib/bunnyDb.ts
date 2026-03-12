@@ -5,7 +5,8 @@
  */
 
 import { PrismaClient } from '@prisma/client'
-import { PrismaLibSQL } from '@prisma/adapter-libsql'
+// adapter-libsql exports PrismaLibSql (note the lowercase "ql")
+import { PrismaLibSql } from '@prisma/adapter-libsql'
 import { prisma as localPrisma } from './db'
 
 /**
@@ -41,7 +42,7 @@ export async function getPostDb(): Promise<PrismaClient> {
   }
 
   // Bridge the LibSQL Socket over to Prisma's Native Query Engine
-  const adapter = new PrismaLibSQL({ url: settings.bunnyUrl, authToken: settings.bunnyToken })
+  const adapter = new PrismaLibSql({ url: settings.bunnyUrl, authToken: settings.bunnyToken })
   
   const remotePrisma = new PrismaClient({ adapter })
 

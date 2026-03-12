@@ -42,12 +42,13 @@ export default function PostEditor({
       // Background saves should strictly preserve the CURRENT publish state, ensuring we don't accidentally
       // force a post to go live via autosave, nor accidentally un-publish a live post.
       formData.set('published', post.published ? 'true' : 'false')
-      
-      try {
-        const res = await savePost(formData, { redirect: false })
-        if (res?.success) setLastSaved(new Date())
-      } catch (err) {
-        // silent fail on autosave
+
+      // The featured checkbox lives inside the "Advanced" section which might be closed.
+      // if the input isn't in the DOM then FormData won't have it at all, causing
+      // `savePost` to interpret it as false.  When editing an existing post we must keep
+      // the previous value unless the user has actively toggled the box.
+      if (formData.get('isFeatured') === null && typeof post.isFeatured === 'boolean') {
+        formData.set('isFeatured', post.isFeatured ? 'true' : 'false')
       }
     }, 5000)
 
@@ -67,8 +68,13 @@ export default function PostEditor({
     if (action === 'publish') {
       formData.set('published', 'true')
     } else if (action === 'draft') {
+      // saving a draft when not published just keeps it draft
+      formData.set('published', 'false')
+    } else if (action === 'unpublish') {
+      // unpublish an already-published post
       formData.set('published', 'false')
     }
+
 
     try {
       const res = await savePost(formData, { redirect: action === 'publish' })
@@ -112,10 +118,25 @@ export default function PostEditor({
             ⚙️ Advanced
           </button>
           
-          <button type="submit" name="action" value="draft" disabled={loading} className="btn" style={{ background: 'rgba(234, 179, 8, 0.1)', color: '#eab308', border: 'none' }}>
-            {loading ? 'Saving...' : 'Save Draft'}
+          {/* if the post is already published we call the first button "Unpublish" to make intent clear */}
+          <button
+            type="submit"
+            name="action"
+            value={post?.published ? 'unpublish' : 'draft'}
+            disabled={loading}
+            className="btn"
+            style={{ background: 'rgba(234, 179, 8, 0.1)', color: '#eab308', border: 'none' }}
+          >
+            {loading ? 'Saving...' : post?.published ? 'Unpublish' : 'Save Draft'}
           </button>
-          <button type="submit" name="action" value="publish" disabled={loading} className="btn btn-primary" style={{ background: '#10b981', color: 'white' }}>
+          <button
+            type="submit"
+            name="action"
+            value="publish"
+            disabled={loading}
+            className="btn btn-primary"
+            style={{ background: '#10b981', color: 'white' }}
+          >
             {loading ? 'Publishing...' : 'Publish'}
           </button>
           {post && (
@@ -188,6 +209,9 @@ export default function PostEditor({
               <input type="checkbox" name="isFeatured" value="true" defaultChecked={post?.isFeatured} style={{ transform: 'scale(1.2)' }} />
               ⭐ Mark as Featured Post
             </label>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
+              *You must click <strong>Publish</strong> (or keep the post published) for the featured flag to show up on the homepage. Selecting "Unpublish"/"Save Draft" will make the post inactive and it won't appear in any lists.
+            </p>
           </div>
         )}
         

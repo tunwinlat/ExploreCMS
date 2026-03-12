@@ -34,7 +34,7 @@ export default async function PostModalIntercept({ params }: { params: Promise<{
           </div>
           
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
-            {post.tags.map(tag => (
+            {post.tags.map((tag: {name: string}) => (
               <span key={tag.name} style={{ background: 'var(--border-color)', color: 'var(--text-secondary)', padding: '0.3rem 0.6rem', borderRadius: '4px', fontSize: '0.9rem' }}>
                 #{tag.name}
               </span>

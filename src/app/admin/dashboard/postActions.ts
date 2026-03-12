@@ -27,7 +27,18 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
   const slugInput = formData.get('slug') as string | null
   const content = formData.get('content') as string
   const published = formData.get('published') === 'true'
-  const isFeatured = formData.get('isFeatured') === 'true'
+  // If the checkbox isn't in the submitted form (e.g. advanced pane closed) we
+  // shouldn't blindly reset the flag to false. Only override if an explicit value
+  // was provided; otherwise we will read the previous value from the database.
+  let isFeatured: boolean
+  const rawFeatured = formData.get('isFeatured')
+  if (rawFeatured === null && id) {
+    // fetch current flag
+    const existing = await postDb.post.findUnique({ where: { id }, select: { isFeatured: true } })
+    isFeatured = existing?.isFeatured ?? false
+  } else {
+    isFeatured = rawFeatured === 'true'
+  }
   const tagsString = formData.get('tags') as string || ''
 
   if (!title || !content) return { error: 'Title and content are required' }

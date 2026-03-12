@@ -33,11 +33,11 @@ export default function NavBuilder({ initialConfig, availableTags }: { initialCo
     setLoading(true)
     setMessage({ text: '', type: '' })
     
-    const res = await updateNavigationConfig(JSON.stringify(items))
-    if (res.success) {
+    try {
+      await updateNavigationConfig(JSON.stringify(items))
       setMessage({ text: 'Navigation updated successfully!', type: 'success' })
-    } else {
-      setMessage({ text: res.error || 'Failed to update workflow', type: 'error' })
+    } catch (error) {
+      setMessage({ text: error instanceof Error ? error.message : 'Failed to update navigation', type: 'error' })
     }
     setLoading(false)
   }

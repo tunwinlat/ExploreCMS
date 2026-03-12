@@ -25,8 +25,11 @@ export default function UserList({ users, currentUserId }: { users: User[], curr
   const handleRoleChange = async (userId: string, newRole: string) => {
     setLoadingId(userId)
     setError(null)
-    const res = await updateUserRole(userId, newRole)
-    if (res.error) setError(res.error)
+    try {
+      await updateUserRole(userId, newRole)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update user role')
+    }
     setLoadingId(null)
   }
 
@@ -34,8 +37,11 @@ export default function UserList({ users, currentUserId }: { users: User[], curr
     if (!confirm('Are you sure you want to completely delete this user?')) return
     setLoadingId(userId)
     setError(null)
-    const res = await deleteUser(userId)
-    if (res.error) setError(res.error)
+    try {
+      await deleteUser(userId)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete user')
+    }
     setLoadingId(null)
   }
 

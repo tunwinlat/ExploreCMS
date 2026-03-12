@@ -197,3 +197,135 @@ h1, h2, h3, h4 {
     transform: translateY(0);
   }
 }
+
+/* ===== Featured Posts Carousel ===== */
+.featured-carousel .carousel-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  transform: translateY(-50%) scale(1.1) !important;
+}
+
+.featured-carousel .carousel-container:hover .carousel-nav-btn {
+  opacity: 1;
+}
+
+/* ===== Trending Posts ===== */
+.trending-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.2);
+  border-color: var(--accent-color);
+}
+
+/* ===== Search Box ===== */
+.search-trigger:hover {
+  border-color: var(--accent-color);
+  color: var(--text-primary);
+}
+
+.search-result-item:hover {
+  background: var(--bg-color) !important;
+}
+
+.search-result-item:hover h4 {
+  color: var(--accent-hover);
+}
+
+/* ===== Related Posts ===== */
+.related-post-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.2);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.related-post-card:hover .related-post-img {
+  transform: scale(1.08);
+}
+
+/* ===== Post Tags ===== */
+.post-tag:hover {
+  background: var(--accent-color) !important;
+  color: white !important;
+  border-color: var(--accent-color) !important;
+}
+
+/* ===== Back Link & Home Button ===== */
+.back-link:hover {
+  color: var(--accent-hover);
+}
+
+.back-home-btn:hover {
+  background: var(--accent-color) !important;
+  color: white !important;
+  border-color: var(--accent-color) !important;
+  transform: translateY(-2px);
+}
+
+/* ===== Dropdown Menu ===== */
+.dropdown-container:hover .dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+}
+
+.dropdown-item:hover {
+  background: var(--accent-color) !important;
+  color: white !important;
+}
+
+/* ===== Animations ===== */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ===== Responsive Adjustments ===== */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+  
+  .main-content {
+    padding: 2rem 0;
+  }
+  
+  .featured-carousel .carousel-content {
+    padding: 1.5rem !important;
+  }
+  
+  .featured-carousel .carousel-nav-btn {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  
+  .trending-section .trending-card {
+    flex-direction: column;
+  }
+  
+  .trending-section .trending-card > div:last-child {
+    width: 100% !important;
+    height: 120px !important;
+  }
+}
+
+/* ===== Scrollbar Styling ===== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* ===== Selection Styling ===== */
+::selection {
+  background: var(--accent-color);
+  color: white;
+}

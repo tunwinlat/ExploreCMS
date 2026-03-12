@@ -19,11 +19,11 @@ export async function updateNavigationConfig(navigationConfig: string) {
   try {
     await prisma.siteSettings.upsert({
       where: { id: 'default' },
-      update: { navigation: navigationConfig },
+      update: { navigationConfig },
       create: {
         id: 'default',
         title: 'ExploreCMS',
-        navigation: navigationConfig
+        navigationConfig
       }
     })
     revalidatePath('/')
