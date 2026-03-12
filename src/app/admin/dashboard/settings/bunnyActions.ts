@@ -11,10 +11,7 @@ import { prisma as localPrisma } from '@/lib/db'
 import { PrismaClient } from '@prisma/client'
 import { PrismaLibSQL } from '@prisma/adapter-libsql'
 import { createClient } from '@libsql/client'
-import { exec } from 'child_process'
-import { promisify } from 'util'
-
-const execAsync = promisify(exec)
+import { syncRemoteSchema } from '@/lib/schemaSyncer'
 
 /**
  * Validates the Bunny connection and triggers a full upward Migration (Local -> Remote)
@@ -35,10 +32,10 @@ export async function connectBunnyDb(url: string, token: string) {
     // 1. Temporarily construct a direct remote client to push the Schema and test connectivity
     console.log("Testing Bunny DB connection...")
     
-    // We run Prisma db push natively utilizing the env override to force the schema onto remote
-    const pushEnv = { ...process.env, DATABASE_URL: url }
-    // Note: Since Prisma's adapter-enabled push is still experimental, standard HTTP pushing isn't officially supported via `db push`. 
-    // However, LibSQL works with regular connection strings. Let's make sure the client simply connects first.
+    
+    // Note: Schema sync is handled by syncRemoteSchema() which introspects the remote DB
+    // and applies only missing tables/columns, preserving existing data.
+    
     
     const remotePrisma = new PrismaClient({ adapter: new PrismaLibSQL({ url: safeUrl, authToken: token }) })
     
@@ -46,22 +43,13 @@ export async function connectBunnyDb(url: string, token: string) {
     await remotePrisma.$queryRaw`SELECT 1;`
 
     try {
-      console.log("Attempting remote Schema Push over Edge HTTP...")
+      console.log("Synchronizing remote schema (incremental migration)...")
       
-      // Since `prisma db push` relies on the Rust engine which fails against raw HTTP LibSQL edge nodes,
-      // we generate the raw SQLite DDL from our Prisma schema instead!
-      const { stdout } = await execAsync(`npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script`)
-      
-      // Inject idempotency so we don't crash if the tables already exist
-      const idempotentSql = stdout
-        .replace(/CREATE TABLE/g, 'CREATE TABLE IF NOT EXISTS')
-        .replace(/CREATE UNIQUE INDEX/g, 'CREATE UNIQUE INDEX IF NOT EXISTS')
-        .replace(/CREATE INDEX/g, 'CREATE INDEX IF NOT EXISTS')
-        
-      // Execute it dynamically across the edge client
+      // Use introspection-based syncer: detects missing tables/columns and applies
+      // only the delta, preserving all existing data on the remote DB.
       const libsql = createClient({ url: safeUrl, authToken: token })
-      await libsql.executeMultiple(idempotentSql)
-      console.log("Remote Schema synchronized perfectly!")
+      const syncResult = await syncRemoteSchema(libsql)
+      console.log(`Schema sync complete: ${syncResult.tablesCreated.length} tables created, ${syncResult.columnsAdded.length} columns added.`)
     } catch(pushErr) {
       console.warn("Schema synchronization failed or generated an exception:", pushErr)
     }
@@ -69,23 +57,25 @@ export async function connectBunnyDb(url: string, token: string) {
     console.log("Migrating data UPWARD (Local -> Remote Bunny DB)...")
 
     // 2. Read all local content
-    const users = await localPrisma.user.findMany()
-    const tags = await localPrisma.tag.findMany()
-    const posts = await localPrisma.post.findMany()
-    const views = await localPrisma.postView.findMany()
+    const db = localPrisma as any
+    const remote = remotePrisma as any
+    const users = await db.user.findMany()
+    const tags = await db.tag.findMany()
+    const posts = await db.post.findMany()
+    const views = await db.postView.findMany()
 
     // 3. Push to Remote Bunny Database using batch transactions
-    await remotePrisma.$transaction([
-      ...users.map(u => remotePrisma.user.upsert({ where: { id: u.id }, create: u, update: u })),
-      ...tags.map(t => remotePrisma.tag.upsert({ where: { id: t.id }, create: t, update: t })),
-      ...posts.map(p => remotePrisma.post.upsert({ where: { id: p.id }, create: p, update: p })),
-      ...views.map(v => remotePrisma.postView.upsert({ where: { id: v.id }, create: v, update: v }))
+    await remote.$transaction([
+      ...users.map((u: any) => remote.user.upsert({ where: { id: u.id }, create: u, update: u })),
+      ...tags.map((t: any) => remote.tag.upsert({ where: { id: t.id }, create: t, update: t })),
+      ...posts.map((p: any) => remote.post.upsert({ where: { id: p.id }, create: p, update: p })),
+      ...views.map((v: any) => remote.postView.upsert({ where: { id: v.id }, create: v, update: v }))
     ])
 
     console.log("Migration complete!")
 
     // 4. Save settings locally to permanently route all traffic to Bunny
-    await localPrisma.siteSettings.update({
+    await (localPrisma as any).siteSettings.update({
       where: { id: 'singleton' },
       data: { bunnyEnabled: true, bunnyUrl: safeUrl, bunnyToken: token }
     })
@@ -106,7 +96,7 @@ export async function disconnectBunnyDb() {
   if (session?.role !== 'OWNER') return { success: false, error: 'Unauthorized' }
 
   try {
-    const settings = await localPrisma.siteSettings.findUnique({ where: { id: 'singleton' } })
+    const settings = await (localPrisma as any).siteSettings.findUnique({ where: { id: 'singleton' } })
     if (!settings?.bunnyEnabled || !settings.bunnyUrl || !settings.bunnyToken) {
        return { success: true } // Already disconnected
     }
@@ -114,23 +104,25 @@ export async function disconnectBunnyDb() {
     const remotePrisma = new PrismaClient({ adapter: new PrismaLibSQL({ url: settings.bunnyUrl, authToken: settings.bunnyToken }) })
     
     // 1. Fetch Remote Data
-    const users = await remotePrisma.user.findMany()
-    const tags = await remotePrisma.tag.findMany()
-    const posts = await remotePrisma.post.findMany()
-    const views = await remotePrisma.postView.findMany()
+    const remote = remotePrisma as any
+    const db = localPrisma as any
+    const users = await remote.user.findMany()
+    const tags = await remote.tag.findMany()
+    const posts = await remote.post.findMany()
+    const views = await remote.postView.findMany()
 
     console.log("Migrating data DOWNWARD (Remote Bunny DB -> Local SQLite)...")
 
     // 2. Upsert it safely into Local SQLite
-    await localPrisma.$transaction([
-      ...users.map(u => localPrisma.user.upsert({ where: { id: u.id }, create: u, update: u })),
-      ...tags.map(t => localPrisma.tag.upsert({ where: { id: t.id }, create: t, update: t })),
-      ...posts.map(p => localPrisma.post.upsert({ where: { id: p.id }, create: p, update: p })),
-      ...views.map(v => localPrisma.postView.upsert({ where: { id: v.id }, create: v, update: v }))
+    await db.$transaction([
+      ...users.map((u: any) => db.user.upsert({ where: { id: u.id }, create: u, update: u })),
+      ...tags.map((t: any) => db.tag.upsert({ where: { id: t.id }, create: t, update: t })),
+      ...posts.map((p: any) => db.post.upsert({ where: { id: p.id }, create: p, update: p })),
+      ...views.map((v: any) => db.postView.upsert({ where: { id: v.id }, create: v, update: v }))
     ])
 
     // 3. Disable connection
-    await localPrisma.siteSettings.update({
+    await (localPrisma as any).siteSettings.update({
       where: { id: 'singleton' },
       data: { bunnyEnabled: false }
     })
