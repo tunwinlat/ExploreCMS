@@ -17,14 +17,16 @@ export default async function NavigationPage() {
     redirect('/admin/dashboard')
   }
 
-  const settings = await prisma.siteSettings.findUnique({
-    where: { id: 'singleton' }
-  })
-  
-  const availableTags = await prisma.tag.findMany({
-    select: { name: true, slug: true },
-    orderBy: { name: 'asc' }
-  })
+  // ⚡ Bolt: Parallelize independent DB queries to avoid waterfalling
+  const [settings, availableTags] = await Promise.all([
+    prisma.siteSettings.findUnique({
+      where: { id: 'singleton' }
+    }),
+    prisma.tag.findMany({
+      select: { name: true, slug: true },
+      orderBy: { name: 'asc' }
+    })
+  ])
 
   // Provide a default fallback if DB string empty/invalid
   const initialConfig = settings?.navigationConfig || '[{"id":"latest","type":"latest","label":"Latest"}]'
