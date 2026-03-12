@@ -32,7 +32,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
 
   // Bunny Storage State
   const [bunnyStorageEnabled, setBunnyStorageEnabled] = useState(initialSettings?.bunnyStorageEnabled || false)
-  const [bunnyStorageRegion, setBunnyStorageRegion] = useState(initialSettings?.bunnyStorageRegion || 'fsn1')
+  const [bunnyStorageRegion, setBunnyStorageRegion] = useState(initialSettings?.bunnyStorageRegion || '')
   const [bunnyStorageZoneName, setBunnyStorageZoneName] = useState(initialSettings?.bunnyStorageZoneName || '')
   const [bunnyStorageApiKey, setBunnyStorageApiKey] = useState(initialSettings?.bunnyStorageApiKey || '')
   const [bunnyStorageUrl, setBunnyStorageUrl] = useState(initialSettings?.bunnyStorageUrl || '')
@@ -123,25 +123,34 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
   }
 
   const handleBunnyStorageConnect = async () => {
-    if (!bunnyStorageRegion || !bunnyStorageZoneName || !bunnyStorageApiKey || !bunnyStorageUrl) {
-      toast('All fields are required to connect.', 'warning')
+    if (!bunnyStorageZoneName || !bunnyStorageApiKey || !bunnyStorageUrl) {
+      toast('Zone name, API key, and CDN URL are required.', 'warning')
       return
     }
 
     setBunnyStorageLoading(true)
     toast('Connecting to Bunny Storage... This may take a moment.', 'info')
 
-    const res = await connectBunnyStorage(
-      bunnyStorageRegion,
-      bunnyStorageZoneName,
-      bunnyStorageApiKey,
-      bunnyStorageUrl
-    )
-    if (res.success) {
-      setBunnyStorageEnabled(true)
-      toast(`Successfully connected! Migrated ${res.migratedCount} images to Bunny Storage.`, 'success')
-    } else {
-      toast(res.error || 'Failed to connect to Bunny Storage.', 'error')
+    try {
+      const res = await connectBunnyStorage(
+        bunnyStorageRegion,
+        bunnyStorageZoneName,
+        bunnyStorageApiKey,
+        bunnyStorageUrl
+      )
+      if (res.success) {
+        setBunnyStorageEnabled(true)
+        if (res.errors && res.errors.length > 0) {
+          toast(`Connected with ${res.migratedCount} images migrated. ${res.errors.length} errors - check console.`, 'warning')
+          console.error('Migration errors:', res.errors)
+        } else {
+          toast(`Successfully connected! Migrated ${res.migratedCount} images to Bunny Storage.`, 'success')
+        }
+      } else {
+        toast(res.error || 'Failed to connect to Bunny Storage.', 'error')
+      }
+    } catch (err: any) {
+      toast(`Connection failed: ${err.message}`, 'error')
     }
     setBunnyStorageLoading(false)
   }
@@ -149,14 +158,20 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
   const handleBunnyStorageDisconnect = async () => {
     setShowStorageDisconnectDialog(false)
     setBunnyStorageLoading(true)
-    toast('Disconnecting... Downloading images back to local storage.', 'info')
+    toast('Disconnecting... This may take a moment.', 'info')
 
-    const res = await disconnectBunnyStorage()
-    if (res.success) {
-      setBunnyStorageEnabled(false)
-      toast(`Successfully disconnected. Downloaded ${res.migratedCount} images locally.`, 'success')
-    } else {
-      toast(res.error || 'Failed to disconnect.', 'error')
+    try {
+      const res = await disconnectBunnyStorage()
+      console.log('Disconnect result:', res)
+      if (res.success) {
+        setBunnyStorageEnabled(false)
+        toast(`Successfully disconnected${res.migratedCount > 0 ? `. Downloaded ${res.migratedCount} images` : ''}.`, 'success')
+      } else {
+        toast(res.error || 'Failed to disconnect.', 'error')
+      }
+    } catch (err: any) {
+      console.error('Disconnect error:', err)
+      toast(`Disconnect failed: ${err.message}`, 'error')
     }
     setBunnyStorageLoading(false)
   }
@@ -390,7 +405,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
             Stores all images and assets on Bunny's global CDN. When connecting, all existing local images are migrated to storage and post URLs are automatically updated. New uploads go directly to Bunny Storage.
           </p>
 
-          <label htmlFor="bunnyStorageRegion" style={{ fontWeight: 400 }}>Storage Region</label>
+          <label htmlFor="bunnyStorageRegion" style={{ fontWeight: 400 }}>Storage Region (Optional)</label>
           <select
             id="bunnyStorageRegion"
             value={bunnyStorageRegion}
@@ -399,14 +414,17 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
             className="input-field"
             style={{ opacity: bunnyStorageEnabled ? 0.6 : 1 }}
           >
+            <option value="">Auto (Default)</option>
             <option value="fsn1">Falkenstein (fsn1)</option>
             <option value="ny">New York (ny)</option>
             <option value="sg">Singapore (sg)</option>
-            <option value="de">Germany (de)</option>
             <option value="uk">London (uk)</option>
             <option value="syd">Sydney (syd)</option>
             <option value="la">Los Angeles (la)</option>
           </select>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+            Only select a region if you created a region-specific storage zone. Most users should leave this as "Auto".
+          </p>
 
           <label htmlFor="bunnyStorageZoneName" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Storage Zone Name</label>
           <input
@@ -450,14 +468,48 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
             Your Bunny CDN pull zone URL (e.g., https://my-zone.b-cdn.net)
           </p>
 
-          <div style={{ marginTop: '1rem' }}>
+          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {!bunnyStorageEnabled && (
+              <button 
+                type="button" 
+                onClick={async () => {
+                  setBunnyStorageLoading(true)
+                  try {
+                    const res = await fetch('/api/test-bunny-storage', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        region: bunnyStorageRegion,
+                        storageZoneName: bunnyStorageZoneName,
+                        apiKey: bunnyStorageApiKey,
+                        cdnUrl: bunnyStorageUrl
+                      })
+                    })
+                    const data = await res.json()
+                    if (data.success) {
+                      toast(`Connection test successful! Found ${data.fileCount} files in storage. Endpoint: ${data.baseUrl}`, 'success')
+                    } else {
+                      toast(`Connection failed: ${data.error}`, 'error')
+                    }
+                  } catch (err: any) {
+                    toast(`Test failed: ${err.message}`, 'error')
+                  }
+                  setBunnyStorageLoading(false)
+                }} 
+                disabled={bunnyStorageLoading || !bunnyStorageZoneName || !bunnyStorageApiKey} 
+                className="btn" 
+                style={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)' }}
+              >
+                Test Connection
+              </button>
+            )}
             {bunnyStorageEnabled ? (
               <button type="button" onClick={() => setShowStorageDisconnectDialog(true)} disabled={bunnyStorageLoading} className="btn" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444' }}>
                 {bunnyStorageLoading ? 'Downloading...' : 'Disconnect and Download to Local'}
               </button>
             ) : (
-              <button type="button" onClick={handleBunnyStorageConnect} disabled={bunnyStorageLoading || !bunnyStorageRegion || !bunnyStorageZoneName || !bunnyStorageApiKey || !bunnyStorageUrl} className="btn" style={{ background: '#22c55e', color: 'white', border: 'none' }}>
-                {bunnyStorageLoading ? 'Migrating Images to CDN...' : 'Connect to Bunny Storage'}
+              <button type="button" onClick={handleBunnyStorageConnect} disabled={bunnyStorageLoading || !bunnyStorageZoneName || !bunnyStorageApiKey || !bunnyStorageUrl} className="btn" style={{ background: '#22c55e', color: 'white', border: 'none' }}>
+                {bunnyStorageLoading ? 'Connecting & Migrating...' : 'Connect to Bunny Storage'}
               </button>
             )}
           </div>

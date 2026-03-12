@@ -9,7 +9,7 @@
 import { verifySession } from '@/lib/auth'
 import { prisma as localPrisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { readFile } from 'fs/promises'
+import { readFile, access } from 'fs/promises'
 import { join } from 'path'
 
 // Bunny Storage API Client
@@ -19,18 +19,46 @@ class BunnyStorageClient {
   private region: string
   private baseUrl: string
 
-  constructor(apiKey: string, storageZoneName: string, region: string) {
+  constructor(apiKey: string, storageZoneName: string, region: string = '') {
     this.apiKey = apiKey
     this.storageZoneName = storageZoneName
     this.region = region
     // Storage endpoint: storage.bunnycdn.com or region-specific
-    this.baseUrl = region && region !== 'de' 
+    // If no region specified, use the main storage endpoint
+    this.baseUrl = region && region !== '' && region !== 'de' 
       ? `${region}.storage.bunnycdn.com`
       : 'storage.bunnycdn.com'
   }
 
+  async testConnection(): Promise<{ success: boolean; error?: string; baseUrl: string }> {
+    try {
+      const url = `https://${this.baseUrl}/${this.storageZoneName}/`
+      console.log('Testing connection to:', url)
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'AccessKey': this.apiKey,
+        },
+      })
+
+      if (!response.ok) {
+        const error = await response.text()
+        return { success: false, error: `HTTP ${response.status}: ${error}`, baseUrl: this.baseUrl }
+      }
+
+      return { success: true, baseUrl: this.baseUrl }
+    } catch (error: any) {
+      return { success: false, error: error.message, baseUrl: this.baseUrl }
+    }
+  }
+
   async uploadFile(path: string, buffer: Buffer, contentType?: string): Promise<string> {
-    const url = `https://${this.baseUrl}/${this.storageZoneName}/${path}`
+    // Bunny Storage expects forward slashes in path
+    const normalizedPath = path.replace(/\\/g, '/')
+    const url = `https://${this.baseUrl}/${this.storageZoneName}/${normalizedPath}`
+    
+    console.log(`Uploading to: ${url}`)
     
     const response = await fetch(url, {
       method: 'PUT',
@@ -46,11 +74,12 @@ class BunnyStorageClient {
       throw new Error(`Bunny Storage upload failed: ${response.status} ${error}`)
     }
 
-    return path
+    return normalizedPath
   }
 
   async deleteFile(path: string): Promise<void> {
-    const url = `https://${this.baseUrl}/${this.storageZoneName}/${path}`
+    const normalizedPath = path.replace(/\\/g, '/')
+    const url = `https://${this.baseUrl}/${this.storageZoneName}/${normalizedPath}`
     
     const response = await fetch(url, {
       method: 'DELETE',
@@ -66,7 +95,8 @@ class BunnyStorageClient {
   }
 
   async listFiles(path: string = ''): Promise<any[]> {
-    const url = `https://${this.baseUrl}/${this.storageZoneName}/${path}`
+    const normalizedPath = path.replace(/\\/g, '/')
+    const url = `https://${this.baseUrl}/${this.storageZoneName}/${normalizedPath}`
     
     const response = await fetch(url, {
       method: 'GET',
@@ -84,7 +114,8 @@ class BunnyStorageClient {
   }
 
   async downloadFile(path: string): Promise<Buffer> {
-    const url = `https://${this.baseUrl}/${this.storageZoneName}/${path}`
+    const normalizedPath = path.replace(/\\/g, '/')
+    const url = `https://${this.baseUrl}/${this.storageZoneName}/${normalizedPath}`
     
     const response = await fetch(url, {
       method: 'GET',
@@ -104,6 +135,18 @@ class BunnyStorageClient {
 }
 
 /**
+ * Check if file exists
+ */
+async function fileExists(path: string): Promise<boolean> {
+  try {
+    await access(path)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
  * Connect to Bunny Storage and migrate all local images to storage
  */
 export async function connectBunnyStorage(
@@ -112,18 +155,37 @@ export async function connectBunnyStorage(
   apiKey: string,
   cdnUrl: string
 ) {
-  const session = await verifySession()
-  if (session?.role !== 'OWNER') return { success: false, error: 'Unauthorized' }
-
-  if (!region || !storageZoneName || !apiKey || !cdnUrl) {
-    return { success: false, error: 'All fields are required' }
-  }
-
+  console.log('=== connectBunnyStorage called ===')
+  console.log('Region:', region || '(default)')
+  console.log('Zone:', storageZoneName)
+  console.log('CDN URL:', cdnUrl)
+  
   try {
+    const session = await verifySession()
+    console.log('Session verified:', session?.role)
+    
+    if (session?.role !== 'OWNER') {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    if (!storageZoneName || !apiKey || !cdnUrl) {
+      return { success: false, error: 'Zone name, API key, and CDN URL are required' }
+    }
+
     const storage = new BunnyStorageClient(apiKey, storageZoneName, region)
     const db = localPrisma as any
 
+    // Test connection first
+    console.log('Testing connection to Bunny Storage...')
+    const testResult = await storage.testConnection()
+    if (!testResult.success) {
+      console.error('Connection test failed:', testResult.error)
+      return { success: false, error: `Connection failed: ${testResult.error}. Make sure your zone name and API key are correct.` }
+    }
+    console.log('Connection test successful, using endpoint:', testResult.baseUrl)
+
     // 1. Get all posts with images
+    console.log('Fetching posts with images...')
     const posts = await db.post.findMany({
       where: {
         content: {
@@ -134,22 +196,52 @@ export async function connectBunnyStorage(
 
     console.log(`Found ${posts.length} posts with images to migrate`)
 
+    if (posts.length === 0) {
+      console.log('No posts with images found, just saving settings...')
+      // No posts with images, just save settings
+      await db.siteSettings.update({
+        where: { id: 'singleton' },
+        data: {
+          bunnyStorageEnabled: true,
+          bunnyStorageRegion: region,
+          bunnyStorageZoneName: storageZoneName,
+          bunnyStorageApiKey: apiKey,
+          bunnyStorageUrl: cdnUrl,
+        }
+      })
+      
+      revalidatePath('/', 'layout')
+      return { success: true, migratedCount: 0 }
+    }
+    
+    // Limit concurrent uploads to avoid overwhelming the server
+    const MAX_CONCURRENT = 5
+
     // 2. Extract and upload images
-    const uploadPromises = []
+    const uploadPromises: Promise<{ originalSrc: string; newSrc: string; postId: string } | null>[] = []
     const publicDir = join(process.cwd(), 'public')
+    const errors: string[] = []
 
     for (const post of posts) {
       const imgRegex = /<img[^>]+src="([^">]+)"/g
       const matches = [...post.content.matchAll(imgRegex)]
 
+      console.log(`Post ${post.id}: found ${matches.length} images`)
+
       for (const match of matches) {
         const originalSrc = match[1]
         
         // Skip if already using external URL
-        if (originalSrc.startsWith('http')) continue
+        if (originalSrc.startsWith('http')) {
+          console.log(`Skipping external URL: ${originalSrc}`)
+          continue
+        }
         
         // Skip if not from uploads folder
-        if (!originalSrc.startsWith('/uploads/')) continue
+        if (!originalSrc.startsWith('/uploads/')) {
+          console.log(`Skipping non-upload path: ${originalSrc}`)
+          continue
+        }
 
         const filename = originalSrc.replace('/uploads/', '')
         const localPath = join(publicDir, 'uploads', filename)
@@ -157,16 +249,31 @@ export async function connectBunnyStorage(
         uploadPromises.push(
           (async () => {
             try {
+              // Check if file exists
+              const exists = await fileExists(localPath)
+              if (!exists) {
+                console.error(`File not found: ${localPath}`)
+                errors.push(`File not found: ${filename}`)
+                return null
+              }
+
+              console.log(`Reading file: ${localPath}`)
+              
               // Read local file
               const buffer = await readFile(localPath)
+              
+              console.log(`Uploading ${filename} (${buffer.length} bytes) to Bunny Storage...`)
               
               // Upload to Bunny Storage
               const storagePath = `uploads/${filename}`
               await storage.uploadFile(storagePath, buffer)
               
+              console.log(`Successfully uploaded: ${filename}`)
+              
               return { originalSrc, newSrc: `${cdnUrl}/uploads/${filename}`, postId: post.id }
-            } catch (err) {
-              console.error(`Failed to upload ${filename}:`, err)
+            } catch (err: any) {
+              console.error(`Failed to upload ${filename}:`, err.message)
+              errors.push(`${filename}: ${err.message}`)
               return null
             }
           })()
@@ -174,26 +281,41 @@ export async function connectBunnyStorage(
       }
     }
 
-    const results = await Promise.all(uploadPromises)
-    const successful = results.filter(r => r !== null)
+    // Process uploads with concurrency limit
+    const results: ({ originalSrc: string; newSrc: string; postId: string } | null)[] = []
+    for (let i = 0; i < uploadPromises.length; i += MAX_CONCURRENT) {
+      const batch = uploadPromises.slice(i, i + MAX_CONCURRENT)
+      const batchResults = await Promise.all(batch)
+      results.push(...batchResults)
+      console.log(`Processed batch ${Math.floor(i / MAX_CONCURRENT) + 1}/${Math.ceil(uploadPromises.length / MAX_CONCURRENT)}`)
+    }
+    
+    const successful = results.filter((r): r is { originalSrc: string; newSrc: string; postId: string } => r !== null)
 
     console.log(`Successfully uploaded ${successful.length} images`)
+    if (errors.length > 0) {
+      console.error('Upload errors:', errors)
+    }
 
     // 3. Update post content with new URLs
     for (const result of successful) {
-      if (!result) continue
-      
-      const post = await db.post.findUnique({ where: { id: result.postId } })
-      if (post) {
-        const updatedContent = post.content.replace(
-          new RegExp(result.originalSrc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
-          result.newSrc
-        )
-        
-        await db.post.update({
-          where: { id: result.postId },
-          data: { content: updatedContent }
-        })
+      try {
+        const post = await db.post.findUnique({ where: { id: result.postId } })
+        if (post) {
+          const updatedContent = post.content.replace(
+            new RegExp(result.originalSrc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+            result.newSrc
+          )
+          
+          await db.post.update({
+            where: { id: result.postId },
+            data: { content: updatedContent }
+          })
+          
+          console.log(`Updated post ${result.postId}: ${result.originalSrc} -> ${result.newSrc}`)
+        }
+      } catch (err: any) {
+        console.error(`Failed to update post ${result.postId}:`, err.message)
       }
     }
 
@@ -210,7 +332,12 @@ export async function connectBunnyStorage(
     })
 
     revalidatePath('/', 'layout')
-    return { success: true, migratedCount: successful.length }
+    
+    return { 
+      success: true, 
+      migratedCount: successful.length,
+      errors: errors.length > 0 ? errors : undefined
+    }
   } catch (error: any) {
     console.error('Bunny Storage Connection Error:', error)
     return { success: false, error: error.message || 'Failed to connect to Bunny Storage' }
@@ -221,16 +348,78 @@ export async function connectBunnyStorage(
  * Disconnect from Bunny Storage and migrate all images back to local
  */
 export async function disconnectBunnyStorage() {
-  const session = await verifySession()
-  if (session?.role !== 'OWNER') return { success: false, error: 'Unauthorized' }
-
+  console.log('=== disconnectBunnyStorage called ===')
+  
   try {
+    const session = await verifySession()
+    console.log('Session:', session?.role)
+    
+    if (session?.role !== 'OWNER') {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    console.log('Fetching settings...')
     const settings = await (localPrisma as any).siteSettings.findUnique({
       where: { id: 'singleton' }
     })
 
+    console.log('Settings found:', !!settings)
+    console.log('Storage enabled:', settings?.bunnyStorageEnabled)
+    console.log('Storage URL:', settings?.bunnyStorageUrl)
+
     if (!settings?.bunnyStorageEnabled) {
       return { success: true, message: 'Already disconnected' }
+    }
+
+    const db = localPrisma as any
+    const publicDir = join(process.cwd(), 'public')
+
+    // 1. Get all posts with Bunny Storage images
+    console.log('Searching for posts with Bunny Storage URL:', settings.bunnyStorageUrl)
+    
+    // If no bunnyStorageUrl, just disable and return
+    if (!settings.bunnyStorageUrl) {
+      console.log('No CDN URL found, just disabling...')
+      await db.siteSettings.update({
+        where: { id: 'singleton' },
+        data: { bunnyStorageEnabled: false }
+      })
+      revalidatePath('/', 'layout')
+      return { success: true, migratedCount: 0 }
+    }
+
+    console.log('Querying posts...')
+    let posts: any[] = []
+    try {
+      posts = await db.post.findMany({
+        where: {
+          content: {
+            contains: settings.bunnyStorageUrl
+          }
+        }
+      })
+    } catch (dbErr: any) {
+      console.error('Database query failed:', dbErr.message)
+      // If query fails (maybe wrong DB), just disable storage
+      await db.siteSettings.update({
+        where: { id: 'singleton' },
+        data: { bunnyStorageEnabled: false }
+      })
+      revalidatePath('/', 'layout')
+      return { success: true, migratedCount: 0, warning: 'Database query failed, disabled storage only' }
+    }
+
+    console.log(`Found ${posts.length} posts with Bunny Storage images to migrate back`)
+
+    // If no posts have Bunny Storage images, just disable
+    if (posts.length === 0) {
+      console.log('No posts with Bunny Storage images found, just disabling...')
+      await db.siteSettings.update({
+        where: { id: 'singleton' },
+        data: { bunnyStorageEnabled: false }
+      })
+      revalidatePath('/', 'layout')
+      return { success: true, migratedCount: 0 }
     }
 
     const storage = new BunnyStorageClient(
@@ -238,22 +427,9 @@ export async function disconnectBunnyStorage() {
       settings.bunnyStorageZoneName,
       settings.bunnyStorageRegion
     )
-    const db = localPrisma as any
-    const publicDir = join(process.cwd(), 'public')
-
-    // 1. Get all posts with Bunny Storage images
-    const posts = await db.post.findMany({
-      where: {
-        content: {
-          contains: settings.bunnyStorageUrl
-        }
-      }
-    })
-
-    console.log(`Found ${posts.length} posts with Bunny Storage images to migrate back`)
 
     // 2. Download and save images locally
-    const downloadPromises = []
+    const downloadPromises: Promise<{ originalSrc: string; newSrc: string; postId: string } | null>[] = []
 
     for (const post of posts) {
       const imgRegex = /<img[^>]+src="([^">]+)"/g
@@ -270,6 +446,8 @@ export async function disconnectBunnyStorage() {
         downloadPromises.push(
           (async () => {
             try {
+              console.log(`Downloading ${filename} from Bunny Storage...`)
+              
               // Download from Bunny Storage
               const buffer = await storage.downloadFile(filename)
               
@@ -281,9 +459,11 @@ export async function disconnectBunnyStorage() {
               await mkdir(dirname(localPath), { recursive: true })
               await writeFile(localPath, buffer)
               
+              console.log(`Saved locally: ${localPath}`)
+              
               return { originalSrc, newSrc: `/${filename}`, postId: post.id }
-            } catch (err) {
-              console.error(`Failed to download ${filename}:`, err)
+            } catch (err: any) {
+              console.error(`Failed to download ${filename}:`, err.message)
               return null
             }
           })()
@@ -291,26 +471,39 @@ export async function disconnectBunnyStorage() {
       }
     }
 
-    const results = await Promise.all(downloadPromises)
-    const successful = results.filter(r => r !== null)
+    // Process downloads with concurrency limit
+    const MAX_CONCURRENT = 5
+    const results: ({ originalSrc: string; newSrc: string; postId: string } | null)[] = []
+    for (let i = 0; i < downloadPromises.length; i += MAX_CONCURRENT) {
+      const batch = downloadPromises.slice(i, i + MAX_CONCURRENT)
+      const batchResults = await Promise.all(batch)
+      results.push(...batchResults)
+      console.log(`Processed download batch ${Math.floor(i / MAX_CONCURRENT) + 1}/${Math.ceil(downloadPromises.length / MAX_CONCURRENT)}`)
+    }
+    
+    const successful = results.filter((r): r is { originalSrc: string; newSrc: string; postId: string } => r !== null)
 
     console.log(`Successfully downloaded ${successful.length} images`)
 
     // 3. Update post content with local URLs
     for (const result of successful) {
-      if (!result) continue
-      
-      const post = await db.post.findUnique({ where: { id: result.postId } })
-      if (post) {
-        const updatedContent = post.content.replace(
-          new RegExp(result.originalSrc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
-          result.newSrc
-        )
-        
-        await db.post.update({
-          where: { id: result.postId },
-          data: { content: updatedContent }
-        })
+      try {
+        const post = await db.post.findUnique({ where: { id: result.postId } })
+        if (post) {
+          const updatedContent = post.content.replace(
+            new RegExp(result.originalSrc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+            result.newSrc
+          )
+          
+          await db.post.update({
+            where: { id: result.postId },
+            data: { content: updatedContent }
+          })
+          
+          console.log(`Updated post ${result.postId}`)
+        }
+      } catch (err: any) {
+        console.error(`Failed to update post ${result?.postId}:`, err.message)
       }
     }
 
