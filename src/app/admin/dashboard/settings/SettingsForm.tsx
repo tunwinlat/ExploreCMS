@@ -165,7 +165,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
       console.log('Disconnect result:', res)
       if (res.success) {
         setBunnyStorageEnabled(false)
-        toast(`Successfully disconnected${res.migratedCount > 0 ? `. Downloaded ${res.migratedCount} images` : ''}.`, 'success')
+        toast(`Successfully disconnected${res.migratedCount && res.migratedCount > 0 ? `. Downloaded ${res.migratedCount} images` : ''}.`, 'success')
       } else {
         toast(res.error || 'Failed to disconnect.', 'error')
       }
