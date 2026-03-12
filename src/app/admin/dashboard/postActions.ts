@@ -10,6 +10,7 @@ import { prisma } from '@/lib/db'
 import { getPostDb } from '@/lib/bunnyDb'
 import { verifySession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 
 function generateSlug(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
@@ -75,6 +76,10 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
     })
   }
 
+  // Bust the homepage cache so the new/updated post appears on the site
+  revalidatePath('/')
+  revalidatePath('/admin/dashboard')
+
   if (options.redirect) {
     redirect('/admin/dashboard')
   }
@@ -89,5 +94,7 @@ export async function deletePost(id: string) {
   const postDb = await getPostDb();
 
   await postDb.post.delete({ where: { id } })
+  revalidatePath('/')
+  revalidatePath('/admin/dashboard')
   redirect('/admin/dashboard')
 }

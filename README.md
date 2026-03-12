@@ -11,9 +11,9 @@ ExploreCMS is a beautifully styled, self-hosted minimalistic blogging platform e
 * **Rich WYSIWYG Editor**: A beautifully minimal, ghost-style writing experience built on TipTap. Supports slash commands (`/`), image dropping, embedded YouTube videos, and floating toolbars to get out of your way while you write.
 * **Built-in Analytics**: Complete with total site views and per-article unique view tracking, plotted in a beautiful native Admin Dashboard.
 * **Instant Auto-Save & Drafts**: Never lose your writing. ExploreCMS automatically saves your progress in the background to your Drafts queue every 5 seconds.
-* **Bunny Database Edge Storage**: Need to go remote? Easily connect a cloud-distributed Bunny DB (libSQL) via the Admin Settings. The platform features an intelligent, zero-data-loss bidirectional migration sync to seamlessly push/pull data up to the edge and back down to local SQLite on demand!
-  > [!WARNING]
-  > **Note regarding Edge Storage**: There is currently a known bug in Prisma Engine 6.x when using driver adapters like `@libsql/client` inside Next.js Server Actions. You may see a `URL_INVALID` crash trace when connecting depending on your runtime. We are investigating a permanent ENV polyfill workaround.
+* **Bunny Database Edge Storage**: Need to go remote? Easily connect a cloud-distributed Bunny DB (libSQL) via the Admin Settings. The platform features an intelligent, zero-data-loss bidirectional migration sync to seamlessly push/pull data up to the edge and back down to local SQLite on demand! An **introspection-based incremental schema syncer** ensures future schema changes (new fields, new tables) are safely applied to the remote DB without losing existing data.
+  > [!NOTE]
+  > **Bunny DB Setup**: Requires `@prisma/adapter-libsql@6.19.2` (must match your Prisma engine version). The schema syncer uses `PRAGMA table_info()` to detect and apply only missing columns via `ALTER TABLE ADD COLUMN`, making schema evolution safe. Images are always stored locally in `public/uploads/` regardless of which database is active.
 
 ## 🚀 Getting Started
 

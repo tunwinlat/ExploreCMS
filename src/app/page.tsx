@@ -11,6 +11,11 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { ViewTracker } from "@/components/ViewTracker";
 import DynamicPostGrid from "@/components/DynamicPostGrid";
 
+// Force dynamic rendering — the homepage reads from whichever DB is active
+// and must always show the latest published posts
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function Home() {
   const limit = 10
   const postDb = await getPostDb();
@@ -28,7 +33,7 @@ export default async function Home() {
         views: true
       } as any
     }),
-    prisma.siteSettings.findUnique({
+    (prisma as any).siteSettings.findUnique({
       where: { id: 'singleton' }
     })
   ]);
