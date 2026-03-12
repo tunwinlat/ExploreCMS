@@ -289,7 +289,7 @@ export default async function Home() {
               }))} />
             </div>
 
-            {/* Quick Stats or Info Card (optional) */}
+            {/* About Card */}
             <div className="glass" style={{ padding: '1.25rem' }}>
               <h4 style={{ 
                 fontSize: '0.9rem', 
@@ -313,8 +313,7 @@ export default async function Home() {
                 lineHeight: 1.6,
                 margin: 0
               }}>
-                Discover articles on technology, creativity, and personal growth. 
-                Use the search or browse by tags to find what interests you.
+                {settings?.sidebarAbout || 'Discover articles on technology, creativity, and personal growth. Use the search or browse by tags to find what interests you.'}
               </p>
             </div>
           </aside>

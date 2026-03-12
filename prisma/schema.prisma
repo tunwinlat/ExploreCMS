@@ -52,6 +52,7 @@ model SiteSettings {
   faviconUrl        String?
   headerTitle       String   @default("Explore. Create. Inspire.")
   headerDescription String   @default("Welcome to my personal corner of the internet. Here I share technical deep-dives and pieces of my life story.")
+  sidebarAbout      String   @default("Discover articles on technology, creativity, and personal growth. Use the search or browse by tags to find what interests you.")
   navigationConfig  String   @default("[{\"id\":\"latest\",\"type\":\"latest\",\"label\":\"Latest\"},{\"id\":\"featured\",\"type\":\"featured\",\"label\":\"Featured\"}]")
   theme             String   @default("default")
   footerText        String   @default("")

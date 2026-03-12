@@ -20,6 +20,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
   const [headerDescription, setHeaderDescription] = useState(initialSettings?.headerDescription || 'Welcome to my personal corner of the internet. Here I share technical deep-dives and pieces of my life story.')
   const [theme, setTheme] = useState(initialSettings?.theme || 'default')
   const [footerText, setFooterText] = useState(initialSettings?.footerText || '')
+  const [sidebarAbout, setSidebarAbout] = useState(initialSettings?.sidebarAbout || 'Discover articles on technology, creativity, and personal growth. Use the search or browse by tags to find what interests you.')
 
   // Remote DB State
   const [bunnyEnabled, setBunnyEnabled] = useState(initialSettings?.bunnyEnabled || false)
@@ -67,7 +68,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
     }
     setLoading(true)
 
-    const res = await updateSiteSettings(title, faviconUrl || null, headerTitle, headerDescription, theme, footerText)
+    const res = await updateSiteSettings(title, faviconUrl || null, headerTitle, headerDescription, theme, footerText, sidebarAbout)
     if (res.success) {
       toast('Site settings saved! Reloading...', 'success')
       setTimeout(() => window.location.reload(), 1000)
@@ -155,6 +156,22 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
             className="input-field"
             style={{ resize: 'vertical' }}
           />
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 500, marginTop: '1.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)' }}>Sidebar About Section</h3>
+          <label htmlFor="sidebarAbout" style={{ fontWeight: 400, marginTop: '0.5rem' }}>About Text</label>
+          <textarea
+            id="sidebarAbout"
+            value={sidebarAbout}
+            onChange={(e) => setSidebarAbout(e.target.value)}
+            placeholder="Discover articles on technology, creativity, and personal growth..."
+            rows={4}
+            suppressHydrationWarning
+            className="input-field"
+            style={{ resize: 'vertical' }}
+          />
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>This text appears in the "About" card in the right sidebar on the home page.</p>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
