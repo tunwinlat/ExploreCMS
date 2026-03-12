@@ -9,6 +9,7 @@
 import { useState } from 'react'
 import { updateSiteSettings } from './settingsActions'
 import { connectBunnyDb, disconnectBunnyDb } from './bunnyActions'
+import { connectBunnyStorage, disconnectBunnyStorage } from './storageActions'
 import { THEMES } from '@/lib/themes'
 import { useToast } from '@/components/admin/Toast'
 import ConfirmDialog from '@/components/admin/ConfirmDialog'
@@ -28,6 +29,15 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
   const [bunnyToken, setBunnyToken] = useState(initialSettings?.bunnyToken || '')
   const [bunnyLoading, setBunnyLoading] = useState(false)
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false)
+
+  // Bunny Storage State
+  const [bunnyStorageEnabled, setBunnyStorageEnabled] = useState(initialSettings?.bunnyStorageEnabled || false)
+  const [bunnyStorageRegion, setBunnyStorageRegion] = useState(initialSettings?.bunnyStorageRegion || 'fsn1')
+  const [bunnyStorageZoneName, setBunnyStorageZoneName] = useState(initialSettings?.bunnyStorageZoneName || '')
+  const [bunnyStorageApiKey, setBunnyStorageApiKey] = useState(initialSettings?.bunnyStorageApiKey || '')
+  const [bunnyStorageUrl, setBunnyStorageUrl] = useState(initialSettings?.bunnyStorageUrl || '')
+  const [bunnyStorageLoading, setBunnyStorageLoading] = useState(false)
+  const [showStorageDisconnectDialog, setShowStorageDisconnectDialog] = useState(false)
 
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -110,6 +120,45 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
       toast(res.error || 'Failed to disconnect.', 'error')
     }
     setBunnyLoading(false)
+  }
+
+  const handleBunnyStorageConnect = async () => {
+    if (!bunnyStorageRegion || !bunnyStorageZoneName || !bunnyStorageApiKey || !bunnyStorageUrl) {
+      toast('All fields are required to connect.', 'warning')
+      return
+    }
+
+    setBunnyStorageLoading(true)
+    toast('Connecting to Bunny Storage... This may take a moment.', 'info')
+
+    const res = await connectBunnyStorage(
+      bunnyStorageRegion,
+      bunnyStorageZoneName,
+      bunnyStorageApiKey,
+      bunnyStorageUrl
+    )
+    if (res.success) {
+      setBunnyStorageEnabled(true)
+      toast(`Successfully connected! Migrated ${res.migratedCount} images to Bunny Storage.`, 'success')
+    } else {
+      toast(res.error || 'Failed to connect to Bunny Storage.', 'error')
+    }
+    setBunnyStorageLoading(false)
+  }
+
+  const handleBunnyStorageDisconnect = async () => {
+    setShowStorageDisconnectDialog(false)
+    setBunnyStorageLoading(true)
+    toast('Disconnecting... Downloading images back to local storage.', 'info')
+
+    const res = await disconnectBunnyStorage()
+    if (res.success) {
+      setBunnyStorageEnabled(false)
+      toast(`Successfully disconnected. Downloaded ${res.migratedCount} images locally.`, 'success')
+    } else {
+      toast(res.error || 'Failed to disconnect.', 'error')
+    }
+    setBunnyStorageLoading(false)
   }
 
   return (
@@ -330,6 +379,90 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
           </div>
         </div>
 
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'var(--bg-color-secondary)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: bunnyStorageEnabled ? '2px solid #22c55e' : '1px solid var(--border-color)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 500, margin: 0 }}>Bunny Storage (CDN)</h3>
+            {bunnyStorageEnabled && (
+              <span className="status-badge status-badge--published" style={{ fontSize: '0.75rem', background: '#22c55e' }}>STORAGE CONNECTED</span>
+            )}
+          </div>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1rem' }}>
+            Stores all images and assets on Bunny's global CDN. When connecting, all existing local images are migrated to storage and post URLs are automatically updated. New uploads go directly to Bunny Storage.
+          </p>
+
+          <label htmlFor="bunnyStorageRegion" style={{ fontWeight: 400 }}>Storage Region</label>
+          <select
+            id="bunnyStorageRegion"
+            value={bunnyStorageRegion}
+            onChange={(e) => setBunnyStorageRegion(e.target.value)}
+            disabled={bunnyStorageEnabled || bunnyStorageLoading}
+            className="input-field"
+            style={{ opacity: bunnyStorageEnabled ? 0.6 : 1 }}
+          >
+            <option value="fsn1">Falkenstein (fsn1)</option>
+            <option value="ny">New York (ny)</option>
+            <option value="sg">Singapore (sg)</option>
+            <option value="de">Germany (de)</option>
+            <option value="uk">London (uk)</option>
+            <option value="syd">Sydney (syd)</option>
+            <option value="la">Los Angeles (la)</option>
+          </select>
+
+          <label htmlFor="bunnyStorageZoneName" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Storage Zone Name</label>
+          <input
+            id="bunnyStorageZoneName"
+            type="text"
+            value={bunnyStorageZoneName}
+            onChange={(e) => setBunnyStorageZoneName(e.target.value)}
+            placeholder="my-storage-zone"
+            disabled={bunnyStorageEnabled || bunnyStorageLoading}
+            suppressHydrationWarning
+            className="input-field"
+            style={{ opacity: bunnyStorageEnabled ? 0.6 : 1 }}
+          />
+
+          <label htmlFor="bunnyStorageApiKey" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Storage API Key</label>
+          <input
+            id="bunnyStorageApiKey"
+            type="password"
+            value={bunnyStorageApiKey}
+            onChange={(e) => setBunnyStorageApiKey(e.target.value)}
+            placeholder="your-storage-api-key"
+            disabled={bunnyStorageEnabled || bunnyStorageLoading}
+            suppressHydrationWarning
+            className="input-field"
+            style={{ opacity: bunnyStorageEnabled ? 0.6 : 1 }}
+          />
+
+          <label htmlFor="bunnyStorageUrl" style={{ fontWeight: 400, marginTop: '0.5rem' }}>CDN URL</label>
+          <input
+            id="bunnyStorageUrl"
+            type="url"
+            value={bunnyStorageUrl}
+            onChange={(e) => setBunnyStorageUrl(e.target.value)}
+            placeholder="https://my-zone.b-cdn.net"
+            disabled={bunnyStorageEnabled || bunnyStorageLoading}
+            suppressHydrationWarning
+            className="input-field"
+            style={{ opacity: bunnyStorageEnabled ? 0.6 : 1 }}
+          />
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+            Your Bunny CDN pull zone URL (e.g., https://my-zone.b-cdn.net)
+          </p>
+
+          <div style={{ marginTop: '1rem' }}>
+            {bunnyStorageEnabled ? (
+              <button type="button" onClick={() => setShowStorageDisconnectDialog(true)} disabled={bunnyStorageLoading} className="btn" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444' }}>
+                {bunnyStorageLoading ? 'Downloading...' : 'Disconnect and Download to Local'}
+              </button>
+            ) : (
+              <button type="button" onClick={handleBunnyStorageConnect} disabled={bunnyStorageLoading || !bunnyStorageRegion || !bunnyStorageZoneName || !bunnyStorageApiKey || !bunnyStorageUrl} className="btn" style={{ background: '#22c55e', color: 'white', border: 'none' }}>
+                {bunnyStorageLoading ? 'Migrating Images to CDN...' : 'Connect to Bunny Storage'}
+              </button>
+            )}
+          </div>
+        </div>
+
         <button type="submit" disabled={loading} className="btn btn-primary" style={{ marginTop: '1rem', padding: '0.75rem', fontSize: '1rem' }}>
           {loading ? 'Saving...' : 'Save Site Settings'}
         </button>
@@ -345,6 +478,18 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
         loading={bunnyLoading}
         onConfirm={handleBunnyDisconnect}
         onCancel={() => setShowDisconnectDialog(false)}
+      />
+
+      <ConfirmDialog
+        open={showStorageDisconnectDialog}
+        title="Disconnect from Bunny Storage?"
+        message="This will download all images from Bunny Storage back to your local server and update post URLs. This ensures your images work if you switch to a new instance."
+        confirmLabel="Download & Disconnect"
+        cancelLabel="Keep Using Storage"
+        variant="warning"
+        loading={bunnyStorageLoading}
+        onConfirm={handleBunnyStorageDisconnect}
+        onCancel={() => setShowStorageDisconnectDialog(false)}
       />
     </>
   )

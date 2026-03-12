@@ -62,6 +62,13 @@ model SiteSettings {
   bunnyUrl          String?
   bunnyToken        String?
 
+  // Bunny Storage Config
+  bunnyStorageEnabled   Boolean  @default(false)
+  bunnyStorageRegion    String?  // e.g., "fsn1", "ny", "sg"
+  bunnyStorageZoneName  String?  // e.g., "my-zone"
+  bunnyStorageApiKey    String?
+  bunnyStorageUrl       String?  // CDN URL like https://my-zone.b-cdn.net
+
   updatedAt         DateTime @updatedAt
 }
 
