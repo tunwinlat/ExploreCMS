@@ -8,10 +8,18 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { cookies } from 'next/headers';
 
+import { getPostDb } from '@/lib/bunnyDb';
+
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
     const { slug } = body;
+
+    if (!slug) {
+      return NextResponse.json({ error: 'Slug is required' }, { status: 400 })
+    }
+
+    const postDb = await getPostDb();
     
     const cookieStore = await cookies();
     const viewedCookie = cookieStore.get('viewed_pages')?.value;
@@ -20,7 +28,7 @@ export async function POST(req: Request) {
     if (viewedCookie) {
       try {
         viewedPages = JSON.parse(viewedCookie);
-      } catch (e) {
+      } catch (_e) {
         // invalid cookie
       }
     }
@@ -46,9 +54,9 @@ export async function POST(req: Request) {
 
     // Track Post Views
     if (slug) {
-      const post = await prisma.post.findUnique({ where: { slug } });
+      const post = await postDb.post.findUnique({ where: { slug } });
       if (post) {
-        await prisma.postView.upsert({
+        await postDb.postView.upsert({
           where: { postId: post.id },
           update: {
             totalViews: { increment: 1 },
