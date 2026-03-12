@@ -5,33 +5,28 @@
  */
 
 import { verifySession } from '@/lib/auth'
-import { prisma } from '@/lib/db'
 import { redirect } from 'next/navigation'
-import UserList from './UserList'
+import { getPopupConfig } from './popupActions'
+import PopupEditor from './PopupEditor'
 
-export default async function UsersPage() {
+export default async function PopupPage() {
   const session = await verifySession()
   if (!session) return null
 
-  // Ensure only OWNER can view this page
   if (session.role !== 'OWNER') {
     redirect('/admin/dashboard')
   }
 
-  const users = await prisma.user.findMany({
-    orderBy: { createdAt: 'desc' }
-  })
+  const config = await getPopupConfig()
 
   return (
     <div className="fade-in-up">
       <header style={{ marginBottom: '2.5rem' }}>
-        <h1 className="admin-page-title">Manage Users</h1>
-        <p className="admin-page-subtitle">
-          Grant or revoke Collaborator access. Collaborators can create and edit posts but cannot manage other users.
-        </p>
+        <h1 className="admin-page-title">Popup Toast</h1>
+        <p className="admin-page-subtitle">Configure a popup message that appears to visitors on the homepage.</p>
       </header>
 
-      <UserList users={users} currentUserId={(session as { userId: string }).userId} />
+      <PopupEditor initialConfig={config} />
     </div>
   )
 }

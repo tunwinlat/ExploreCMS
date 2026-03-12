@@ -54,13 +54,23 @@ model SiteSettings {
   headerDescription String   @default("Welcome to my personal corner of the internet. Here I share technical deep-dives and pieces of my life story.")
   navigationConfig  String   @default("[{\"id\":\"latest\",\"type\":\"latest\",\"label\":\"Latest\"},{\"id\":\"featured\",\"type\":\"featured\",\"label\":\"Featured\"}]")
   theme             String   @default("default")
-  
+  footerText        String   @default("")
+
   // Remote DB Config
   bunnyEnabled      Boolean  @default(false)
   bunnyUrl          String?
   bunnyToken        String?
 
   updatedAt         DateTime @updatedAt
+}
+
+model PopupConfig {
+  id          String   @id @default("singleton")
+  enabled     Boolean  @default(false)
+  title       String   @default("")
+  content     String   @default("")
+  displayMode String   @default("once") // "once" = once per visitor, "always" = every page load
+  updatedAt   DateTime @updatedAt
 }
 
 model SiteAnalytics {

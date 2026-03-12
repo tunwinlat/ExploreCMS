@@ -12,16 +12,16 @@ import { revalidatePath } from 'next/cache'
 
 export async function updateNavigationConfig(navigationConfig: string) {
   const payload = await verifySession()
-  if (!payload || payload.role !== 'ADMIN') {
+  if (!payload || payload.role !== 'OWNER') {
     throw new Error('Unauthorized')
   }
 
   try {
     await prisma.siteSettings.upsert({
-      where: { id: 'default' },
+      where: { id: 'singleton' },
       update: { navigationConfig },
       create: {
-        id: 'default',
+        id: 'singleton',
         title: 'ExploreCMS',
         navigationConfig
       }

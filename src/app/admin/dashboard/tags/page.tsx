@@ -28,8 +28,8 @@ export default async function TagsPage() {
     <div className="fade-in-up">
       <header style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
-          <h1 className="heading-xl" style={{ fontSize: '2.5rem', margin: 0 }}>Manage Tags</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', fontSize: '1.1rem' }}>
+          <h1 className="admin-page-title">Manage Tags</h1>
+          <p className="admin-page-subtitle">
             Rename or delete global tags. Changes will immediately sync across all associated posts.
           </p>
         </div>

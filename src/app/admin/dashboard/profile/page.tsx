@@ -20,14 +20,12 @@ export default async function UsersPage() {
 
   return (
     <div className="fade-in-up">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', margin: 0 }}>My Profile</h1>
+      <header style={{ marginBottom: '2.5rem' }}>
+        <h1 className="admin-page-title">My Profile</h1>
+        <p className="admin-page-subtitle">Update your personal information and password.</p>
       </header>
 
       <div className="glass" style={{ padding: '2rem' }}>
-        <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
-          Personal Information
-        </h2>
         <UserProfileForm user={user} />
       </div>
     </div>

@@ -17,7 +17,7 @@ export default async function DashboardPage() {
     postDb.post.count({ where: { published: true }}),
     postDb.post.count({ where: { published: false }})
   ])
-  
+
   let topPosts: any[] = [];
   try {
     topPosts = await postDb.postView.findMany({
@@ -30,63 +30,63 @@ export default async function DashboardPage() {
 
   return (
     <div className="fade-in-up">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div>
-          <h1 className="heading-xl" style={{ fontSize: '2.5rem', margin: 0 }}>Analytics Overview</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Welcome back. Here is how your content is performing.</p>
-        </div>
+      <div style={{ marginBottom: '2.5rem' }}>
+        <h1 className="admin-page-title">Analytics Overview</h1>
+        <p className="admin-page-subtitle">Welcome back. Here is how your content is performing.</p>
       </div>
 
       {/* Metric Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
-        <div className="glass" style={{ padding: '1.5rem', borderTop: '4px solid var(--accent-color)' }}>
-          <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem', fontWeight: 600, textTransform: 'uppercase' }}>Total Site Views</div>
-          <div style={{ fontSize: '2.5rem', fontWeight: 700 }}>{analytics?.totalViews || 0}</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '3rem' }}>
+        <div className="glass" style={{ padding: '1.5rem', borderLeft: '3px solid var(--accent-color)' }}>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '0.75rem', fontWeight: 500 }}>Total Site Views</div>
+          <div style={{ fontSize: '2rem', fontWeight: 600 }}>{analytics?.totalViews?.toLocaleString() || '0'}</div>
         </div>
-        <div className="glass" style={{ padding: '1.5rem', borderTop: '4px solid #10b981' }}>
-          <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem', fontWeight: 600, textTransform: 'uppercase' }}>Unique Site Visitors</div>
-          <div style={{ fontSize: '2.5rem', fontWeight: 700 }}>{analytics?.uniqueViews || 0}</div>
+        <div className="glass" style={{ padding: '1.5rem', borderLeft: '3px solid #10b981' }}>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '0.75rem', fontWeight: 500 }}>Unique Visitors</div>
+          <div style={{ fontSize: '2rem', fontWeight: 600 }}>{analytics?.uniqueViews?.toLocaleString() || '0'}</div>
         </div>
-        <div className="glass" style={{ padding: '1.5rem', borderTop: '4px solid #8b5cf6' }}>
-          <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem', fontWeight: 600, textTransform: 'uppercase' }}>Published Posts</div>
-          <div style={{ fontSize: '2.5rem', fontWeight: 700 }}>{totalPosts}</div>
+        <div className="glass" style={{ padding: '1.5rem', borderLeft: '3px solid #8b5cf6' }}>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '0.75rem', fontWeight: 500 }}>Published Posts</div>
+          <div style={{ fontSize: '2rem', fontWeight: 600 }}>{totalPosts}</div>
         </div>
-        <div className="glass" style={{ padding: '1.5rem', borderTop: '4px solid #f59e0b' }}>
-          <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem', fontWeight: 600, textTransform: 'uppercase' }}>Active Drafts</div>
-          <div style={{ fontSize: '2.5rem', fontWeight: 700 }}>{draftPosts}</div>
+        <div className="glass" style={{ padding: '1.5rem', borderLeft: '3px solid #f59e0b' }}>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '0.75rem', fontWeight: 500 }}>Active Drafts</div>
+          <div style={{ fontSize: '2rem', fontWeight: 600 }}>{draftPosts}</div>
         </div>
       </div>
 
       {/* Top Posts Table */}
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Top Performing Articles</h2>
-      <div className="glass" style={{ padding: '1.5rem' }}>
+      <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem' }}>Top Performing Articles</h2>
+      <div className="glass" style={{ padding: '0.25rem' }}>
         {topPosts.length === 0 ? (
-          <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem 0' }}>
+          <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2.5rem 0', fontSize: '0.9rem' }}>
             No post analytics available yet.
           </div>
         ) : (
-          <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                <th style={{ padding: '1rem', fontWeight: 600 }}>Article</th>
-                <th style={{ padding: '1rem', fontWeight: 600, textAlign: 'right' }}>Total Views</th>
-                <th style={{ padding: '1rem', fontWeight: 600, textAlign: 'right' }}>Unique Readers</th>
-              </tr>
-            </thead>
-            <tbody>
-              {topPosts.map(({ post, totalViews, uniqueViews }) => post ? (
-                <tr key={post.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={{ padding: '1rem' }}>
-                    <Link href={`/admin/dashboard/edit/${post.id}`} prefetch={false} style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
-                      {post.title}
-                    </Link>
-                  </td>
-                  <td style={{ padding: '1rem', fontWeight: 600, textAlign: 'right', color: 'var(--accent-hover)' }}>{totalViews}</td>
-                  <td style={{ padding: '1rem', color: 'var(--text-secondary)', textAlign: 'right' }}>{uniqueViews}</td>
+          <div className="admin-table-wrapper">
+            <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                  <th scope="col" style={{ padding: '0.875rem 1rem' }}>Article</th>
+                  <th scope="col" style={{ padding: '0.875rem 1rem', textAlign: 'right' }}>Views</th>
+                  <th scope="col" style={{ padding: '0.875rem 1rem', textAlign: 'right' }}>Unique</th>
                 </tr>
-              ) : null)}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {topPosts.map(({ post, totalViews, uniqueViews }) => post ? (
+                  <tr key={post.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                    <td style={{ padding: '0.875rem 1rem', maxWidth: '400px' }}>
+                      <Link href={`/admin/dashboard/edit/${post.id}`} prefetch={false} style={{ fontWeight: 400, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }}>
+                        {post.title}
+                      </Link>
+                    </td>
+                    <td style={{ padding: '0.875rem 1rem', fontWeight: 500, textAlign: 'right', color: 'var(--accent-hover)' }}>{totalViews?.toLocaleString()}</td>
+                    <td style={{ padding: '0.875rem 1rem', color: 'var(--text-secondary)', textAlign: 'right' }}>{uniqueViews?.toLocaleString()}</td>
+                  </tr>
+                ) : null)}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

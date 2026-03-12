@@ -10,17 +10,17 @@ import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 
-export async function updateSiteSettings(title: string, faviconUrl: string | null, headerTitle: string, headerDescription: string, theme: string) {
+export async function updateSiteSettings(title: string, faviconUrl: string | null, headerTitle: string, headerDescription: string, theme: string, footerText: string) {
   const payload = await verifySession()
-  if (!payload || payload.role !== 'ADMIN') {
+  if (!payload || payload.role !== 'OWNER') {
     throw new Error('Unauthorized')
   }
 
   try {
     await prisma.siteSettings.upsert({
-      where: { id: 'default' },
-      update: { title, faviconUrl, headerTitle, headerDescription, theme },
-      create: { id: 'default', title, faviconUrl, headerTitle, headerDescription, theme }
+      where: { id: 'singleton' },
+      update: { title, faviconUrl, headerTitle, headerDescription, theme, footerText },
+      create: { id: 'singleton', title, faviconUrl, headerTitle, headerDescription, theme, footerText }
     })
     
     revalidatePath('/', 'layout')

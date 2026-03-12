@@ -24,9 +24,9 @@ export default async function SettingsPage() {
 
   return (
     <div className="fade-in-up">
-      <header style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', margin: 0, marginBottom: '0.5rem' }}>Site Settings</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>Configure your public blog aesthetics.</p>
+      <header style={{ marginBottom: '2.5rem' }}>
+        <h1 className="admin-page-title">Site Settings</h1>
+        <p className="admin-page-subtitle">Configure your public blog aesthetics.</p>
       </header>
       
       <SettingsForm initialSettings={settings} />

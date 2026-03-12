@@ -31,9 +31,9 @@ export default async function NavigationPage() {
 
   return (
     <div className="fade-in-up">
-      <header style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', margin: 0, marginBottom: '0.5rem' }}>Navigation Builder</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>Design the layout and dropdowns for your public post filtering menu.</p>
+      <header style={{ marginBottom: '2.5rem' }}>
+        <h1 className="admin-page-title">Navigation Builder</h1>
+        <p className="admin-page-subtitle">Design the layout and dropdowns for your public post filtering menu.</p>
       </header>
       
       <NavBuilder initialConfig={initialConfig} availableTags={availableTags} />

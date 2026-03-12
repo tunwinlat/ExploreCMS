@@ -30,7 +30,7 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
   const [loading, setLoading] = useState(!initialPosts.length)
 
   useEffect(() => {
-    if (initialPosts.length > 0) return // Skip if we have initial posts
+    if (initialPosts.length > 0) return
     
     fetchTrending()
   }, [period, initialPosts.length])
@@ -38,7 +38,7 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
   const fetchTrending = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/trending?period=${period}&limit=6`)
+      const res = await fetch(`/api/trending?period=${period}&limit=8`)
       const data = await res.json()
       if (data.posts) {
         setPosts(data.posts)
@@ -51,92 +51,125 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
   }
 
   const getRankStyle = (index: number) => {
-    if (index === 0) return { background: 'linear-gradient(135deg, #FFD700, #FFA500)', color: '#000' }
-    if (index === 1) return { background: 'linear-gradient(135deg, #C0C0C0, #A0A0A0)', color: '#000' }
-    if (index === 2) return { background: 'linear-gradient(135deg, #CD7F32, #B87333)', color: '#fff' }
-    return { background: 'var(--bg-color-secondary)', color: 'var(--text-primary)' }
+    if (index === 0) return { 
+      background: 'linear-gradient(135deg, #FFD700, #FFA500)', 
+      color: '#000',
+      boxShadow: '0 4px 12px rgba(255, 215, 0, 0.3)'
+    }
+    if (index === 1) return { 
+      background: 'linear-gradient(135deg, #C0C0C0, #A0A0A0)', 
+      color: '#000',
+      boxShadow: '0 4px 12px rgba(192, 192, 192, 0.3)'
+    }
+    if (index === 2) return { 
+      background: 'linear-gradient(135deg, #CD7F32, #B87333)', 
+      color: '#fff',
+      boxShadow: '0 4px 12px rgba(205, 127, 50, 0.3)'
+    }
+    return { 
+      background: 'var(--bg-color)', 
+      color: 'var(--text-secondary)',
+      border: '1px solid var(--border-color)'
+    }
   }
 
   if (loading) {
     return (
-      <section className="trending-section" style={{ marginBottom: '4rem' }}>
-        <div className="glass" style={{ padding: '2rem', textAlign: 'center' }}>
-          <div style={{ color: 'var(--text-secondary)', animation: 'pulse 2s infinite' }}>
-            Loading trending posts...
+      <aside className="trending-sidebar glass" style={{ padding: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          <div style={{
+            width: '36px',
+            height: '36px',
+            borderRadius: '10px',
+            background: 'linear-gradient(135deg, #FF6B6B, #FF8E53)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+              <polyline points="17 6 23 6 23 12"></polyline>
+            </svg>
           </div>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>Trending</h3>
         </div>
-      </section>
+        <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', animation: 'pulse 2s infinite' }}>
+          Loading...
+        </div>
+      </aside>
     )
   }
 
   if (posts.length === 0) return null
 
   return (
-    <section className="trending-section" style={{ marginBottom: '4rem' }}>
-      {/* Section Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div 
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #FF6B6B, #FF8E53)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-              <polyline points="17 6 23 6 23 12"></polyline>
-            </svg>
-          </div>
-          <div>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>Trending Now</h2>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>Most popular posts this {period === '7d' ? 'week' : period === '30d' ? 'month' : 'period'}</p>
-          </div>
+    <aside className="trending-sidebar">
+      {/* Header */}
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '0.75rem', 
+        marginBottom: '1.25rem',
+        paddingBottom: '1rem',
+        borderBottom: '1px solid var(--border-color)'
+      }}>
+        <div style={{
+          width: '36px',
+          height: '36px',
+          borderRadius: '10px',
+          background: 'linear-gradient(135deg, #FF6B6B, #FF8E53)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+            <polyline points="17 6 23 6 23 12"></polyline>
+          </svg>
         </div>
-
-        {/* Period Filter */}
-        <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-color-secondary)', padding: '0.25rem', borderRadius: '10px' }}>
-          {(['7d', '30d', 'all'] as const).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              style={{
-                padding: '0.5rem 1rem',
-                borderRadius: '8px',
-                border: 'none',
-                background: period === p ? 'var(--accent-color)' : 'transparent',
-                color: period === p ? 'white' : 'var(--text-secondary)',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              {p === '7d' ? 'Week' : p === '30d' ? 'Month' : 'All Time'}
-            </button>
-          ))}
+        <div>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>Trending Now</h3>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0.15rem 0 0 0' }}>
+            {period === '7d' ? 'This week' : period === '30d' ? 'This month' : 'All time'}
+          </p>
         </div>
       </div>
 
-      {/* Trending Grid */}
-      <div 
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-          gap: '1rem'
-        }}
-      >
+      {/* Period Filter */}
+      <div style={{ 
+        display: 'flex', 
+        gap: '0.25rem', 
+        marginBottom: '1.25rem',
+        background: 'var(--bg-color)',
+        padding: '0.25rem',
+        borderRadius: '8px'
+      }}>
+        {(['7d', '30d', 'all'] as const).map((p) => (
+          <button
+            key={p}
+            onClick={() => setPeriod(p)}
+            style={{
+              flex: 1,
+              padding: '0.4rem 0.5rem',
+              borderRadius: '6px',
+              border: 'none',
+              background: period === p ? 'var(--accent-color)' : 'transparent',
+              color: period === p ? 'white' : 'var(--text-secondary)',
+              fontSize: '0.75rem',
+              fontWeight: 500,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {p === '7d' ? 'Week' : p === '30d' ? 'Month' : 'All'}
+          </button>
+        ))}
+      </div>
+
+      {/* Trending List */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {posts.map((post, index) => {
           const rankStyle = getRankStyle(index)
-          const excerpt = post.content
-            .replace(/<[^>]*>?/gm, '')
-            .trim()
-            .substring(0, 100) + '...'
-          
           const imgMatch = post.content.match(/<img[^>]+src="([^">]+)"/)
           const coverImage = imgMatch ? imgMatch[1] : null
 
@@ -144,15 +177,15 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
             <Link 
               key={post.id} 
               href={`/post/${post.slug}`}
-              className="trending-card"
+              className="trending-item"
               style={{
                 display: 'flex',
-                gap: '1rem',
-                padding: '1rem',
-                background: 'var(--bg-color-secondary)',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-color)',
-                transition: 'all 0.3s ease',
+                gap: '0.75rem',
+                padding: '0.75rem',
+                background: 'var(--bg-color)',
+                borderRadius: '10px',
+                border: '1px solid transparent',
+                transition: 'all 0.2s ease',
                 textDecoration: 'none',
                 alignItems: 'flex-start'
               }}
@@ -160,15 +193,15 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
               {/* Rank Badge */}
               <div 
                 style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
+                  width: '28px',
+                  height: '28px',
+                  minWidth: '28px',
+                  borderRadius: '8px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: '0.9rem',
-                  flexShrink: 0,
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
                   ...rankStyle
                 }}
               >
@@ -177,11 +210,11 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
 
               {/* Content */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <h3 
+                <h4 
                   style={{
-                    fontSize: '1rem',
+                    fontSize: '0.9rem',
                     fontWeight: 600,
-                    marginBottom: '0.5rem',
+                    marginBottom: '0.35rem',
                     lineHeight: 1.4,
                     color: 'var(--text-primary)',
                     display: '-webkit-box',
@@ -191,13 +224,19 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
                   }}
                 >
                   {post.title}
-                </h3>
+                </h4>
                 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem', 
+                  fontSize: '0.75rem', 
+                  color: 'var(--text-secondary)'
+                }}>
                   <span>{post.author.firstName || post.author.username}</span>
-                  <span>•</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <span style={{ opacity: 0.5 }}>•</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                       <circle cx="12" cy="12" r="3"></circle>
                     </svg>
@@ -210,9 +249,10 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
               {coverImage && (
                 <div 
                   style={{
-                    width: '70px',
-                    height: '70px',
-                    borderRadius: '8px',
+                    width: '50px',
+                    height: '50px',
+                    minWidth: '50px',
+                    borderRadius: '6px',
                     overflow: 'hidden',
                     flexShrink: 0
                   }}
@@ -228,6 +268,6 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
           )
         })}
       </div>
-    </section>
+    </aside>
   )
 }

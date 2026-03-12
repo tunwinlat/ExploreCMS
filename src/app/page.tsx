@@ -36,8 +36,20 @@ async function getFeaturedPosts() {
       }
     });
     
-    // Do not fall back to recent posts; an empty array means no carousel should render
-    // callers rely on `featuredPosts.length > 0` to decide whether to show the slider.
+    // If no featured posts, return the most recent posts
+    if (posts.length === 0) {
+      return await postDb.post.findMany({
+        where: { published: true },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          author: { select: { username: true, firstName: true } },
+          tags: true,
+          views: true
+        }
+      });
+    }
+    
     return posts;
   } catch (error) {
     console.error('Error fetching featured posts:', error);
@@ -56,7 +68,7 @@ async function getTrendingPosts() {
         published: true,
         createdAt: { gte: sevenDaysAgo }
       },
-      take: 6,
+      take: 8,
       orderBy: {
         views: {
           totalViews: 'desc'
@@ -135,125 +147,182 @@ export default async function Home() {
   }
 
   return (
-    <div className="container main-content fade-in-up">
-      {/* Header Actions */}
-      <div style={{ 
-        position: 'absolute', 
-        top: '1.5rem', 
-        right: '1.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '1rem'
-      }}>
-        <SearchBox />
-        <ThemeToggle />
-      </div>
-
-      {/* Hero Header */}
+    <div className="main-content fade-in-up">
+      {/* Header */}
       <header style={{ 
-        marginBottom: '3rem', 
-        textAlign: 'center', 
-        paddingTop: '4rem'
+        borderBottom: '1px solid var(--border-color)',
+        padding: '1rem 0',
+        marginBottom: '2rem'
       }}>
-        <h1 className="heading-xl">{settings?.headerTitle || "Explore. Create. Inspire."}</h1>
-        <p style={{ 
-          fontSize: '1.25rem', 
-          color: 'var(--text-secondary)', 
-          maxWidth: '600px', 
-          margin: '0 auto 2rem', 
-          whiteSpace: 'pre-wrap' 
+        <div className="container" style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
         }}>
-          {settings?.headerDescription || "Welcome to my personal corner of the internet. Here I share technical deep-dives and pieces of my life story."}
-        </p>
+          {/* Logo */}
+          <Link href="/" style={{ 
+            fontSize: '1.5rem', 
+            fontWeight: 800,
+            background: 'linear-gradient(135deg, var(--accent-color), var(--accent-hover))',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            {settings?.title || 'ExploreCMS'}
+          </Link>
+
+          {/* Header Actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <SearchBox />
+            <ThemeToggle />
+          </div>
+        </div>
       </header>
 
-      <main>
-        {/* Featured Posts Carousel */}
-        {featuredPosts.length > 0 && (
-          <FeaturedPostsCarousel posts={featuredPosts.map((p: any) => ({
-            id: p.id,
-            title: p.title,
-            slug: p.slug,
-            content: p.content,
-            createdAt: typeof p.createdAt === 'string' ? p.createdAt : p.createdAt?.toISOString() || new Date().toISOString(),
-            author: { 
-              username: p.author?.username || 'admin', 
-              firstName: p.author?.firstName || null 
-            },
-            tags: Array.isArray(p.tags) ? p.tags.map((t: any) => ({ name: t.name, slug: t.slug })) : [],
-            views: Array.isArray(p.views) ? p.views : p.views ? [p.views] : []
-          }))} />
-        )}
-
-        {/* Trending Posts Section */}
-        {trendingPosts.length > 0 && (
-          <TrendingPosts initialPosts={trendingPosts.map((p: any) => ({
-            id: p.id,
-            title: p.title,
-            slug: p.slug,
-            content: p.content,
-            createdAt: typeof p.createdAt === 'string' ? p.createdAt : p.createdAt?.toISOString() || new Date().toISOString(),
-            author: { 
-              username: p.author?.username || 'admin', 
-              firstName: p.author?.firstName || null 
-            },
-            tags: Array.isArray(p.tags) ? p.tags.map((t: any) => ({ name: t.name, slug: t.slug })) : [],
-            views: Array.isArray(p.views) ? p.views : p.views ? [p.views] : []
-          }))} />
-        )}
-
-        {/* Latest Posts Section */}
-        <section className="latest-posts-section" style={{ marginTop: '2rem' }}>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.75rem', 
-            marginBottom: '1.5rem'
+      {/* Hero Section */}
+      <div className="container" style={{ marginBottom: '2rem' }}>
+        <div style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 2rem' }}>
+          <h1 className="heading-xl">{settings?.headerTitle || "Explore. Create. Inspire."}</h1>
+          <p style={{ 
+            fontSize: '1.15rem', 
+            color: 'var(--text-secondary)', 
+            lineHeight: 1.7
           }}>
-            <div 
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, var(--accent-color), var(--accent-hover))',
+            {settings?.headerDescription || "Welcome to my personal corner of the internet. Here I share technical deep-dives and pieces of my life story."}
+          </p>
+        </div>
+      </div>
+
+      <div className="container">
+        {/* Main 2-Column Layout */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 340px',
+          gap: '2.5rem',
+          alignItems: 'start'
+        }} className="home-layout">
+          {/* Left Column - Main Content */}
+          <main>
+            {/* Featured Posts Carousel */}
+            {featuredPosts.length > 0 && (
+              <FeaturedPostsCarousel posts={featuredPosts.map((p: any) => ({
+                id: p.id,
+                title: p.title,
+                slug: p.slug,
+                content: p.content,
+                createdAt: typeof p.createdAt === 'string' ? p.createdAt : p.createdAt?.toISOString() || new Date().toISOString(),
+                author: { 
+                  username: p.author?.username || 'admin', 
+                  firstName: p.author?.firstName || null 
+                },
+                tags: Array.isArray(p.tags) ? p.tags.map((t: any) => ({ name: t.name, slug: t.slug })) : [],
+                views: Array.isArray(p.views) ? p.views : p.views ? [p.views] : []
+              }))} />
+            )}
+
+            {/* Latest Posts Section */}
+            <section className="latest-posts-section" style={{ marginTop: '3rem' }}>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.75rem', 
+                marginBottom: '1.5rem'
+              }}>
+                <div 
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, var(--accent-color), var(--accent-hover))',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Latest Stories</h2>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.15rem 0 0 0' }}>Fresh from the blog</p>
+                </div>
+              </div>
+
+              <DynamicPostGrid 
+                initialPosts={latestPosts.map((p: any) => ({
+                  id: p.id,
+                  title: p.title,
+                  slug: p.slug,
+                  isFeatured: p.isFeatured,
+                  author: { 
+                    username: p.author?.username || 'admin', 
+                    firstName: p.author?.firstName || 'Admin' 
+                  },
+                  createdAt: typeof p.createdAt === 'string' ? p.createdAt : p.createdAt?.toISOString() || new Date().toISOString(),
+                  tags: Array.isArray(p.tags) ? p.tags.map((t: any) => ({ name: t.name, slug: t.slug })) : [],
+                  views: Array.isArray(p.views) ? p.views : [],
+                  content: p.content
+                }))} 
+                navItems={navItems} 
+                initialCursor={nextCursor} 
+              />
+            </section>
+          </main>
+
+          {/* Right Column - Sidebar */}
+          <aside style={{ position: 'sticky', top: '90px' }} className="sidebar">
+            {/* Trending Posts */}
+            <div className="glass" style={{ padding: '1.25rem', marginBottom: '1.5rem' }}>
+              <TrendingPosts initialPosts={trendingPosts.map((p: any) => ({
+                id: p.id,
+                title: p.title,
+                slug: p.slug,
+                content: p.content,
+                createdAt: typeof p.createdAt === 'string' ? p.createdAt : p.createdAt?.toISOString() || new Date().toISOString(),
+                author: { 
+                  username: p.author?.username || 'admin', 
+                  firstName: p.author?.firstName || null 
+                },
+                tags: Array.isArray(p.tags) ? p.tags.map((t: any) => ({ name: t.name, slug: t.slug })) : [],
+                views: Array.isArray(p.views) ? p.views : p.views ? [p.views] : []
+              }))} />
+            </div>
+
+            {/* Quick Stats or Info Card (optional) */}
+            <div className="glass" style={{ padding: '1.25rem' }}>
+              <h4 style={{ 
+                fontSize: '0.9rem', 
+                fontWeight: 600, 
+                marginBottom: '0.75rem',
+                color: 'var(--text-primary)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
+                gap: '0.5rem'
+              }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M12 16v-4"></path>
+                  <path d="M12 8h.01"></path>
+                </svg>
+                About
+              </h4>
+              <p style={{ 
+                fontSize: '0.85rem', 
+                color: 'var(--text-secondary)', 
+                lineHeight: 1.6,
+                margin: 0
+              }}>
+                Discover articles on technology, creativity, and personal growth. 
+                Use the search or browse by tags to find what interests you.
+              </p>
             </div>
-            <div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>Latest Stories</h2>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>Fresh from the blog</p>
-            </div>
-          </div>
+          </aside>
+        </div>
+      </div>
 
-          <DynamicPostGrid 
-            initialPosts={latestPosts.map((p: any) => ({
-              id: p.id,
-              title: p.title,
-              slug: p.slug,
-              isFeatured: p.isFeatured,
-              author: { 
-                username: p.author?.username || 'admin', 
-                firstName: p.author?.firstName || 'Admin' 
-              },
-              createdAt: typeof p.createdAt === 'string' ? p.createdAt : p.createdAt?.toISOString() || new Date().toISOString(),
-              tags: Array.isArray(p.tags) ? p.tags.map((t: any) => ({ name: t.name, slug: t.slug })) : [],
-              views: Array.isArray(p.views) ? p.views : [],
-              content: p.content
-            }))} 
-            navItems={navItems} 
-            initialCursor={nextCursor} 
-          />
-        </section>
-      </main>
-
-      <footer style={{ 
+      {/* Footer */}
+      <footer className="container" style={{ 
         marginTop: '5rem', 
         borderTop: '1px solid var(--border-color)', 
         paddingTop: '2rem', 

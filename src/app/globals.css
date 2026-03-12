@@ -276,14 +276,49 @@ h1, h2, h3, h4 {
   50% { opacity: 0.5; }
 }
 
+/* ===== Home Layout - 2 Column Grid ===== */
+.home-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 2.5rem;
+}
+
+/* Trending Sidebar */
+.trending-item:hover {
+  border-color: var(--accent-color) !important;
+  background: var(--bg-color-secondary) !important;
+}
+
+.trending-item:hover h4 {
+  color: var(--accent-hover);
+}
+
 /* ===== Responsive Adjustments ===== */
+@media (max-width: 1024px) {
+  .home-layout {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .sidebar {
+    position: static !important;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .sidebar > div {
+    margin-bottom: 0 !important;
+  }
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 0 1rem;
   }
   
   .main-content {
-    padding: 2rem 0;
+    padding: 1rem 0;
   }
   
   .featured-carousel .carousel-content {
@@ -295,13 +330,8 @@ h1, h2, h3, h4 {
     height: 36px !important;
   }
   
-  .trending-section .trending-card {
-    flex-direction: column;
-  }
-  
-  .trending-section .trending-card > div:last-child {
-    width: 100% !important;
-    height: 120px !important;
+  .sidebar {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -328,4 +358,243 @@ h1, h2, h3, h4 {
 ::selection {
   background: var(--accent-color);
   color: white;
+}
+
+/* ===== Toast & Dialog Animations ===== */
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dialogScaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== Admin Panel Typography & Spacing Overrides ===== */
+/* The public site needs the punchy gradient headings and heavy weights,
+   but the admin panel should feel calm, quiet, and functional. */
+
+.dashboard-layout {
+  font-weight: 400;
+}
+
+.dashboard-layout h1,
+.dashboard-layout h2,
+.dashboard-layout h3,
+.dashboard-layout h4 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.dashboard-layout .heading-xl {
+  font-weight: 600;
+  background: none;
+  -webkit-background-clip: unset;
+  -webkit-text-fill-color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.dashboard-layout .admin-page-title {
+  font-size: 1.625rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.dashboard-layout .admin-page-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 400;
+  margin-top: 0.25rem;
+  line-height: 1.5;
+}
+
+.dashboard-layout .glass {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06);
+}
+
+.dashboard-layout table th {
+  font-weight: 500;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.dashboard-layout table td {
+  font-size: 0.9rem;
+}
+
+.dashboard-layout label {
+  font-weight: 500;
+}
+
+.dashboard-main {
+  line-height: 1.6;
+}
+
+/* ===== Admin Loading Skeleton ===== */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--border-color) 25%,
+    rgba(255,255,255,0.05) 50%,
+    var(--border-color) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
+
+/* ===== Admin Focus & Accessibility ===== */
+.btn:focus-visible,
+.input-field:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== Admin Input Field ===== */
+.input-field {
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-color);
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: border-color var(--transition-fast);
+}
+
+.input-field:focus {
+  border-color: var(--accent-color);
+}
+
+/* ===== Admin Responsive Table Wrapper ===== */
+.admin-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-table-wrapper table {
+  min-width: 600px;
+}
+
+/* ===== Admin Mobile Responsiveness ===== */
+@media (max-width: 768px) {
+  .admin-header {
+    flex-direction: column !important;
+    gap: 1rem;
+    align-items: flex-start !important;
+  }
+
+  .admin-header .admin-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .editor-toolbar {
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+
+  .editor-header {
+    flex-direction: column !important;
+    gap: 1rem;
+    align-items: flex-start !important;
+  }
+
+  .editor-header > div {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+/* ===== Admin Status Badge ===== */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.775rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.status-badge--published {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.status-badge--draft {
+  background: rgba(234, 179, 8, 0.1);
+  color: #eab308;
+}
+
+/* ===== Password Strength Meter ===== */
+.password-strength {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.password-strength-bar {
+  height: 3px;
+  flex: 1;
+  border-radius: 2px;
+  background: var(--border-color);
+  transition: background var(--transition-fast);
+}
+
+/* ===== Autosave Indicator ===== */
+.autosave-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.autosave-indicator--saving {
+  color: var(--accent-color);
+}
+
+.autosave-indicator--saved {
+  color: #22c55e;
+}
+
+.autosave-indicator--error {
+  color: #ef4444;
+}
+
+.autosave-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--accent-color);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
 }

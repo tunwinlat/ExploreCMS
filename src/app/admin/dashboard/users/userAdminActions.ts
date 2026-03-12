@@ -12,7 +12,7 @@ import { revalidatePath } from 'next/cache'
 
 export async function updateUserRole(userId: string, newRole: string) {
   const payload = await verifySession()
-  if (!payload || payload.role !== 'ADMIN') {
+  if (!payload || payload.role !== 'OWNER') {
     throw new Error('Unauthorized')
   }
 
@@ -31,7 +31,7 @@ export async function updateUserRole(userId: string, newRole: string) {
 
 export async function deleteUser(userId: string) {
   const payload = await verifySession()
-  if (!payload || payload.role !== 'ADMIN') {
+  if (!payload || payload.role !== 'OWNER') {
     throw new Error('Unauthorized')
   }
 
