@@ -101,9 +101,29 @@ export function SearchBox() {
   }
 
   const highlightMatch = (text: string, query: string) => {
-    if (!query.trim()) return text
+    if (!query.trim()) return <>{text}</>
+
+    // Split the text by the query, keeping the matched part
     const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
-    return text.replace(regex, '<mark style="background: var(--accent-color); color: white; padding: 0 2px; border-radius: 2px;">$1</mark>')
+    const parts = text.split(regex)
+
+    return (
+      <>
+        {parts.map((part, i) => {
+          if (part.toLowerCase() === query.toLowerCase()) {
+            return (
+              <mark
+                key={i}
+                style={{ background: 'var(--accent-color)', color: 'white', padding: '0 2px', borderRadius: '2px' }}
+              >
+                {part}
+              </mark>
+            )
+          }
+          return <span key={i}>{part}</span>
+        })}
+      </>
+    )
   }
 
   return (
@@ -287,8 +307,9 @@ export function SearchBox() {
                             marginBottom: '0.5rem',
                             color: 'var(--text-primary)'
                           }}
-                          dangerouslySetInnerHTML={{ __html: highlightMatch(post.title, query) }}
-                        />
+                        >
+                          {highlightMatch(post.title, query)}
+                        </h4>
                         <p 
                           style={{ 
                             fontSize: '0.875rem', 
@@ -299,8 +320,9 @@ export function SearchBox() {
                             WebkitBoxOrient: 'vertical',
                             overflow: 'hidden'
                           }}
-                          dangerouslySetInnerHTML={{ __html: highlightMatch(excerpt, query) }}
-                        />
+                        >
+                          {highlightMatch(excerpt, query)}
+                        </p>
                         <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                           {post.author.firstName || post.author.username} • {new Date(post.createdAt).toLocaleDateString()}
                         </div>
