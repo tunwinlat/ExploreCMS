@@ -13,6 +13,7 @@ import { SearchBox } from "@/components/SearchBox";
 import { FeaturedPostsCarousel } from "@/components/FeaturedPostsCarousel";
 import { TrendingPosts } from "@/components/TrendingPosts";
 import DynamicPostGrid from "@/components/DynamicPostGrid";
+import { PopupToast } from "@/components/PopupToast";
 
 // Force dynamic rendering — the homepage reads from whichever DB is active
 // and must always show the latest published posts
@@ -131,12 +132,24 @@ async function getSettings() {
   }
 }
 
+async function getPopupConfig() {
+  try {
+    const config = await prisma.popupConfig.findUnique({
+      where: { id: 'singleton' }
+    });
+    return config;
+  } catch (error) {
+    return null;
+  }
+}
+
 export default async function Home() {
-  const [featuredPosts, trendingPosts, { posts: latestPosts, nextCursor }, settings] = await Promise.all([
+  const [featuredPosts, trendingPosts, { posts: latestPosts, nextCursor }, settings, popupConfig] = await Promise.all([
     getFeaturedPosts(),
     getTrendingPosts(),
     getLatestPosts(),
-    getSettings()
+    getSettings(),
+    getPopupConfig()
   ]);
 
   let navItems = [];
@@ -321,16 +334,23 @@ export default async function Home() {
       </div>
 
       {/* Footer */}
-      <footer className="container" style={{ 
-        marginTop: '5rem', 
-        borderTop: '1px solid var(--border-color)', 
-        paddingTop: '2rem', 
-        textAlign: 'center', 
-        color: 'var(--text-secondary)', 
-        fontSize: '0.9rem' 
+      <footer className="container" style={{
+        marginTop: '5rem',
+        borderTop: '1px solid var(--border-color)',
+        paddingTop: '2rem',
+        textAlign: 'center',
+        color: 'var(--text-secondary)',
+        fontSize: '0.9rem'
       }}>
-        <p>© {new Date().getFullYear()} {settings?.title || 'ExploreCMS'}. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} {settings?.footerText || `${settings?.title || 'ExploreCMS'}. All rights reserved.`}</p>
       </footer>
+      {popupConfig?.enabled && popupConfig.content && (
+        <PopupToast
+          title={popupConfig.title || ''}
+          content={popupConfig.content}
+          displayMode={popupConfig.displayMode || 'once'}
+        />
+      )}
       <ViewTracker />
     </div>
   );

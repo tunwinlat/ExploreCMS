@@ -145,11 +145,39 @@ h1, h2, h3, h4 {
 
 .heading-xl {
   font-size: clamp(2rem, 4vw, 3.5rem);
-  background: linear-gradient(to right, var(--text-primary), var(--text-secondary));
+  background: linear-gradient(
+    90deg,
+    var(--accent-color) 0%,
+    var(--accent-hover) 25%,
+    var(--text-primary) 50%,
+    var(--accent-hover) 75%,
+    var(--accent-color) 100%
+  );
+  background-size: 300% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
   margin-bottom: 0.5rem;
   letter-spacing: -0.03em;
+  animation: gradientFlow 5s ease-in-out infinite;
+}
+
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% center;
+  }
+  50% {
+    background-position: 100% center;
+  }
+  100% {
+    background-position: 0% center;
+  }
+}
+
+/* Static gradient for non-animated headings */
+.heading-xl--static {
+  animation: none;
+  background: linear-gradient(to right, var(--text-primary), var(--text-secondary));
 }
 
 .text-gradient {

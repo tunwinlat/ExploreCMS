@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const{PrismaClient}=require\\(''@prisma/client''\\);const p=new PrismaClient\\(\\);p.siteSettings.findUnique\\({where:{id:''singleton''},select:{faviconUrl:true,title:true}}\\).then\\(r=>console.log\\(JSON.stringify\\(r\\)\\)\\).finally\\(\\(\\)=>p.$disconnect\\(\\)\\)\")"
+    ]
+  }
+}

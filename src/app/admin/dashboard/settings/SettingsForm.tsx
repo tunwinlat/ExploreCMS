@@ -398,7 +398,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 500, margin: 0 }}>Bunny Storage (CDN)</h3>
             {bunnyStorageEnabled && (
-              <span className="status-badge status-badge--published" style={{ fontSize: '0.75rem', background: '#22c55e' }}>STORAGE CONNECTED</span>
+              <span style={{ fontSize: '0.75rem', background: '#22c55e', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontWeight: 500 }}>STORAGE CONNECTED</span>
             )}
           </div>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1rem' }}>
@@ -414,13 +414,17 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
             className="input-field"
             style={{ opacity: bunnyStorageEnabled ? 0.6 : 1 }}
           >
-            <option value="">Auto (Default)</option>
+            <option value="">Auto (Default - Falkenstein)</option>
             <option value="fsn1">Falkenstein (fsn1)</option>
-            <option value="ny">New York (ny)</option>
-            <option value="sg">Singapore (sg)</option>
+            <option value="de">Frankfurt (de)</option>
             <option value="uk">London (uk)</option>
-            <option value="syd">Sydney (syd)</option>
+            <option value="se">Stockholm (se)</option>
+            <option value="ny">New York (ny)</option>
             <option value="la">Los Angeles (la)</option>
+            <option value="sg">Singapore (sg)</option>
+            <option value="syd">Sydney (syd)</option>
+            <option value="br">Sao Paulo (br)</option>
+            <option value="jh">Johannesburg (jh)</option>
           </select>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
             Only select a region if you created a region-specific storage zone. Most users should leave this as "Auto".

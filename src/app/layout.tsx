@@ -21,9 +21,6 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
       title: settings?.title || "ExploreCMS",
       description: "A modern, self-hosted minimalistic blogging platform.",
-      icons: settings?.faviconUrl ? {
-        icon: settings.faviconUrl,
-      } : undefined,
     };
   } catch (error) {
     // Fallback if DB isn't ready or Prisma throws
@@ -34,6 +31,16 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
+function faviconType(url: string) {
+  const lowerUrl = url.toLowerCase()
+  if (lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg')) return 'image/jpeg'
+  if (lowerUrl.endsWith('.png')) return 'image/png'
+  if (lowerUrl.endsWith('.svg')) return 'image/svg+xml'
+  if (lowerUrl.endsWith('.webp')) return 'image/webp'
+  if (lowerUrl.endsWith('.gif')) return 'image/gif'
+  return 'image/x-icon'
+}
+
 export default async function RootLayout({
   children,
   modal
@@ -42,15 +49,17 @@ export default async function RootLayout({
   modal: React.ReactNode;
 }) {
   let themeId = 'default';
+  let faviconUrl = '/favicon.ico';
   try {
     const settings = await prisma.siteSettings.findUnique({
       where: { id: 'singleton' }
     });
-    if (settings?.theme) {
-      themeId = settings.theme;
-    }
+    if (settings?.theme) themeId = settings.theme;
+    if (settings?.faviconUrl) faviconUrl = settings.faviconUrl;
+    console.log('[Layout] Favicon URL:', faviconUrl);
   } catch (error) {
     // Database might not be initialized yet
+    console.log('[Layout] Error loading settings:', error);
   }
 
   const activeTheme = getThemeConfig(themeId);
@@ -58,6 +67,10 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning data-theme={activeTheme.id}>
       <head>
+        <link rel="icon" href={faviconUrl} type={faviconType(faviconUrl)} sizes="any" />
+        <link rel="shortcut icon" href={faviconUrl} type={faviconType(faviconUrl)} />
+        <link rel="apple-touch-icon" href={faviconUrl} sizes="180x180" />
+        <meta name="msapplication-TileImage" content={faviconUrl} />
         {activeTheme.fontUrl && (
           <link href={activeTheme.fontUrl} rel="stylesheet" />
         )}

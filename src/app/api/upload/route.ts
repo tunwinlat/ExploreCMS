@@ -22,9 +22,12 @@ class BunnyStorageClient {
     this.apiKey = apiKey
     this.storageZoneName = storageZoneName
     this.region = region
-    this.baseUrl = region && region !== 'de' 
-      ? `${region}.storage.bunnycdn.com`
-      : 'storage.bunnycdn.com'
+    // Storage endpoint: storage.bunnycdn.com (default/Falkenstein/Frankfurt) or region-specific
+    // Region-specific endpoints: la.storage.bunnycdn.com, ny.storage.bunnycdn.com, etc.
+    const defaultRegions = ['', 'fsn1', 'de']
+    this.baseUrl = defaultRegions.includes(region) 
+      ? 'storage.bunnycdn.com'
+      : `${region}.storage.bunnycdn.com`
   }
 
   async uploadFile(path: string, buffer: Buffer, contentType?: string): Promise<string> {
@@ -76,7 +79,14 @@ export async function POST(req: Request) {
 
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-    const fileExtension = file.name.split('.').pop()
+    
+    // Extract and normalize file extension
+    const fileNameLower = file.name.toLowerCase()
+    let fileExtension = fileNameLower.split('.').pop() || ''
+    
+    // Normalize jpeg to jpg for consistency
+    if (fileExtension === 'jpeg') fileExtension = 'jpg'
+    
     const filename = `${uuidv4()}.${fileExtension}`
 
     // Use Bunny Storage if enabled

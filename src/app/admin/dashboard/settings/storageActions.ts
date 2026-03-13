@@ -8,6 +8,7 @@
 
 import { verifySession } from '@/lib/auth'
 import { prisma as localPrisma } from '@/lib/db'
+import { getPostDb } from '@/lib/bunnyDb'
 import { revalidatePath } from 'next/cache'
 import { readFile, access } from 'fs/promises'
 import { join } from 'path'
@@ -23,11 +24,12 @@ class BunnyStorageClient {
     this.apiKey = apiKey
     this.storageZoneName = storageZoneName
     this.region = region
-    // Storage endpoint: storage.bunnycdn.com or region-specific
-    // If no region specified, use the main storage endpoint
-    this.baseUrl = region && region !== '' && region !== 'de' 
-      ? `${region}.storage.bunnycdn.com`
-      : 'storage.bunnycdn.com'
+    // Storage endpoint: storage.bunnycdn.com (default/Falkenstein/Frankfurt) or region-specific
+    // Region-specific endpoints: la.storage.bunnycdn.com, ny.storage.bunnycdn.com, etc.
+    const defaultRegions = ['', 'fsn1', 'de']
+    this.baseUrl = defaultRegions.includes(region) 
+      ? 'storage.bunnycdn.com'
+      : `${region}.storage.bunnycdn.com`
   }
 
   async testConnection(): Promise<{ success: boolean; error?: string; baseUrl: string }> {
@@ -173,6 +175,9 @@ export async function connectBunnyStorage(
     }
 
     const storage = new BunnyStorageClient(apiKey, storageZoneName, region)
+    
+    // Use getPostDb() to get the correct database (local or remote Bunny DB)
+    const postDb = await getPostDb() as any
     const db = localPrisma as any
 
     // Test connection first
@@ -184,9 +189,9 @@ export async function connectBunnyStorage(
     }
     console.log('Connection test successful, using endpoint:', testResult.baseUrl)
 
-    // 1. Get all posts with images
+    // 1. Get all posts with images from the active database
     console.log('Fetching posts with images...')
-    const posts = await db.post.findMany({
+    const posts = await postDb.post.findMany({
       where: {
         content: {
           contains: '<img'
@@ -297,17 +302,17 @@ export async function connectBunnyStorage(
       console.error('Upload errors:', errors)
     }
 
-    // 3. Update post content with new URLs
+    // 3. Update post content with new URLs in the active database
     for (const result of successful) {
       try {
-        const post = await db.post.findUnique({ where: { id: result.postId } })
+        const post = await postDb.post.findUnique({ where: { id: result.postId } })
         if (post) {
           const updatedContent = post.content.replace(
             new RegExp(result.originalSrc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
             result.newSrc
           )
           
-          await db.post.update({
+          await postDb.post.update({
             where: { id: result.postId },
             data: { content: updatedContent }
           })
@@ -319,7 +324,7 @@ export async function connectBunnyStorage(
       }
     }
 
-    // 4. Save settings
+    // 4. Save settings (always to local database)
     await db.siteSettings.update({
       where: { id: 'singleton' },
       data: {
@@ -371,10 +376,12 @@ export async function disconnectBunnyStorage() {
       return { success: true, message: 'Already disconnected' }
     }
 
+    // Use getPostDb() to get the correct database (local or remote Bunny DB)
+    const postDb = await getPostDb() as any
     const db = localPrisma as any
     const publicDir = join(process.cwd(), 'public')
 
-    // 1. Get all posts with Bunny Storage images
+    // 1. Get all posts with Bunny Storage images from the active database
     console.log('Searching for posts with Bunny Storage URL:', settings.bunnyStorageUrl)
     
     // If no bunnyStorageUrl, just disable and return
@@ -391,7 +398,7 @@ export async function disconnectBunnyStorage() {
     console.log('Querying posts...')
     let posts: any[] = []
     try {
-      posts = await db.post.findMany({
+      posts = await postDb.post.findMany({
         where: {
           content: {
             contains: settings.bunnyStorageUrl
@@ -485,17 +492,17 @@ export async function disconnectBunnyStorage() {
 
     console.log(`Successfully downloaded ${successful.length} images`)
 
-    // 3. Update post content with local URLs
+    // 3. Update post content with local URLs in the active database
     for (const result of successful) {
       try {
-        const post = await db.post.findUnique({ where: { id: result.postId } })
+        const post = await postDb.post.findUnique({ where: { id: result.postId } })
         if (post) {
           const updatedContent = post.content.replace(
             new RegExp(result.originalSrc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
             result.newSrc
           )
           
-          await db.post.update({
+          await postDb.post.update({
             where: { id: result.postId },
             data: { content: updatedContent }
           })
@@ -507,7 +514,7 @@ export async function disconnectBunnyStorage() {
       }
     }
 
-    // 4. Disable storage connection
+    // 4. Disable storage connection (always in local database)
     await db.siteSettings.update({
       where: { id: 'singleton' },
       data: { bunnyStorageEnabled: false }
