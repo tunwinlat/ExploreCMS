@@ -60,10 +60,13 @@ export async function connectBunnyDb(url: string, token: string) {
     // 2. Read all local content
     const db = localPrisma as any
     const remote = remotePrisma as any
-    const users = await db.user.findMany()
-    const tags = await db.tag.findMany()
-    const posts = await db.post.findMany()
-    const views = await db.postView.findMany()
+    // ⚡ Bolt: Parallelize independent DB queries to avoid waterfalling
+    const [users, tags, posts, views] = await Promise.all([
+      db.user.findMany(),
+      db.tag.findMany(),
+      db.post.findMany(),
+      db.postView.findMany()
+    ])
 
     // 3. Push to Remote Bunny Database using batch transactions
     await remote.$transaction([
@@ -107,10 +110,13 @@ export async function disconnectBunnyDb() {
     // 1. Fetch Remote Data
     const remote = remotePrisma as any
     const db = localPrisma as any
-    const users = await remote.user.findMany()
-    const tags = await remote.tag.findMany()
-    const posts = await remote.post.findMany()
-    const views = await remote.postView.findMany()
+    // ⚡ Bolt: Parallelize independent DB queries to avoid waterfalling
+    const [users, tags, posts, views] = await Promise.all([
+      remote.user.findMany(),
+      remote.tag.findMany(),
+      remote.post.findMany(),
+      remote.postView.findMany()
+    ])
 
     console.log("Migrating data DOWNWARD (Remote Bunny DB -> Local SQLite)...")
 
