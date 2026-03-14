@@ -11,6 +11,7 @@ import { ViewTracker } from '@/components/ViewTracker'
 import { RelatedPosts } from '@/components/RelatedPosts'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { SearchBox } from '@/components/SearchBox'
+import { sanitizeContent } from '@/lib/sanitize'
 import './post.css'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -137,7 +138,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           <div 
             className="markdown-content" 
             style={{ fontSize: '1.15rem', lineHeight: 1.8 }}
-            dangerouslySetInnerHTML={{ __html: post.content }}
+            dangerouslySetInnerHTML={{ __html: sanitizeContent(post.content) }}
           />
         </article>
 

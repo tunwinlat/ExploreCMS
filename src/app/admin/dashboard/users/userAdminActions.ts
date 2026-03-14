@@ -10,10 +10,16 @@ import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 
+const VALID_ROLES = ['OWNER', 'COLLABORATOR'] as const
+
 export async function updateUserRole(userId: string, newRole: string) {
   const payload = await verifySession()
   if (!payload || payload.role !== 'OWNER') {
     throw new Error('Unauthorized')
+  }
+
+  if (!VALID_ROLES.includes(newRole as (typeof VALID_ROLES)[number])) {
+    throw new Error('Invalid role')
   }
 
   try {

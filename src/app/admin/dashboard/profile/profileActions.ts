@@ -26,6 +26,9 @@ export async function updateUserProfile(formData: FormData) {
     }
 
     if (password) {
+      if (password.length < 8) {
+        return { error: 'Password must be at least 8 characters' }
+      }
       const hashedPassword = await bcrypt.hash(password, 10)
       updateData.password = hashedPassword
     }

@@ -77,16 +77,33 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
     }
 
+    // Enforce file size limit (10 MB)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'File too large. Maximum size is 10 MB.' }, { status: 413 })
+    }
+
+    // Validate file type against an explicit allowlist of safe image types
+    const ALLOWED_MIME_TYPES: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/jpg': 'jpg',
+      'image/png': 'png',
+      'image/gif': 'gif',
+      'image/webp': 'webp',
+      'image/svg+xml': 'svg',
+    }
+
+    const mimeType = file.type.toLowerCase()
+    if (!Object.prototype.hasOwnProperty.call(ALLOWED_MIME_TYPES, mimeType)) {
+      return NextResponse.json({ error: 'Invalid file type. Only images are allowed.' }, { status: 415 })
+    }
+
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-    
-    // Extract and normalize file extension
-    const fileNameLower = file.name.toLowerCase()
-    let fileExtension = fileNameLower.split('.').pop() || ''
-    
-    // Normalize jpeg to jpg for consistency
-    if (fileExtension === 'jpeg') fileExtension = 'jpg'
-    
+
+    // Derive extension from validated MIME type (ignore client-supplied extension)
+    const fileExtension = ALLOWED_MIME_TYPES[mimeType]
+
     const filename = `${uuidv4()}.${fileExtension}`
 
     // Use Bunny Storage if enabled

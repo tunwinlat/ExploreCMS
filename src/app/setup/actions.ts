@@ -15,8 +15,8 @@ export async function setupAdmin(formData: FormData) {
   const username = formData.get('username') as string
   const password = formData.get('password') as string
 
-  if (!username || !password || password.length < 6) {
-    return { error: 'Invalid username or password (min 6 chars)' }
+  if (!username || !password || password.length < 8) {
+    return { error: 'Invalid username or password (min 8 chars)' }
   }
 
   const existingOwner = await prisma.user.findFirst({
