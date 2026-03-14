@@ -8,6 +8,7 @@
 
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { sanitizeContent } from '@/lib/sanitize'
 
 interface PopupToastProps {
   title: string
@@ -122,7 +123,7 @@ export function PopupToast({ title, content, displayMode }: PopupToastProps) {
 
         <div
           className="tiptap"
-          dangerouslySetInnerHTML={{ __html: content }}
+          dangerouslySetInnerHTML={{ __html: sanitizeContent(content) }}
           style={{ fontSize: '0.95rem', lineHeight: 1.6 }}
         />
 
