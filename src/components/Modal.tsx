@@ -78,6 +78,7 @@ export default function Modal({ children }: { children: React.ReactNode }) {
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem', width: '100%' }}>
            <button 
              onClick={onDismiss}
+             aria-label="Close modal"
              style={{
                background: 'var(--bg-color)',
                border: '1px solid var(--border-color)',

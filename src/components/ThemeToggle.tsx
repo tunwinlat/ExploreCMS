@@ -18,12 +18,13 @@ export function ThemeToggle() {
   }, [])
 
   if (!mounted) {
-    return <button suppressHydrationWarning className="btn glass" style={{ padding: '0.5rem', width: '40px', height: '40px' }}></button>
+    return <button suppressHydrationWarning aria-label="Toggle theme" className="btn glass" style={{ padding: '0.5rem', width: '40px', height: '40px' }}></button>
   }
 
   return (
     <button
       suppressHydrationWarning
+      aria-label="Toggle theme"
       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       className="btn glass"
       style={{ padding: '0.5rem', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
