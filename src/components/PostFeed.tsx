@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import { sanitizeContent } from '@/lib/sanitize'
 
 // Create a unified type for the incoming posts from the API
 type FeedPost = {
@@ -118,7 +119,7 @@ export function PostFeed({ initialPosts = [], initialCursor }: { initialPosts?: 
                   overflow: 'hidden',
                   lineHeight: 1.6
                 }}
-                dangerouslySetInnerHTML={{ __html: post.content.substring(0, 200) + '...' }}
+                dangerouslySetInnerHTML={{ __html: sanitizeContent(post.content.substring(0, 200) + '...') }}
               />
               
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>

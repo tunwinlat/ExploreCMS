@@ -7,3 +7,8 @@
 **Vulnerability:** The `SearchBox` component used `dangerouslySetInnerHTML` combined with an insufficiently escaped `highlightMatch` function. The `query` parameter was not HTML-escaped before being interpolated into the `text.replace()` call.
 **Learning:** Using `dangerouslySetInnerHTML` for simple text highlighting is dangerous because it makes XSS easy if user input isn't fully sanitized, and often developers miss escaping edge cases.
 **Prevention:** Avoid `dangerouslySetInnerHTML` whenever possible. Implement highlighting by parsing the text into safe React Elements (`<span>`, `<mark>`) instead of HTML strings.
+
+## 2024-03-14 - [High] XSS Vulnerabilities in PostFeed and PostModalIntercept Components
+**Vulnerability:** The `PostFeed` and `PostModalIntercept` components used `dangerouslySetInnerHTML` directly with user-generated post content without any sanitization.
+**Learning:** This is a High priority XSS vulnerability, as it directly evaluates user-controlled HTML string as HTML in the browser. A malicious user who can create or modify posts could inject harmful scripts into the page.
+**Prevention:** Ensure that any HTML strings rendered using `dangerouslySetInnerHTML` are properly sanitized using the `sanitizeContent` utility from `@/lib/sanitize`. Be careful with truncating HTML strings; they must either be truncated carefully so that no tags are left open, or sanitized *after* truncation (if it doesn't leave broken script tags that are then stripped) or use another safer approach, but at least `sanitizeContent` must be applied.

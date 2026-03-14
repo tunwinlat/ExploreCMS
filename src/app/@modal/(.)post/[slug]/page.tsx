@@ -9,6 +9,7 @@ import { notFound } from 'next/navigation'
 import Modal from '@/components/Modal'
 import { ViewTracker } from '@/components/ViewTracker'
 import '@/app/post/[slug]/post.css' // Import the specific typographic stylesheet
+import { sanitizeContent } from '@/lib/sanitize'
 
 export default async function PostModalIntercept({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -45,7 +46,7 @@ export default async function PostModalIntercept({ params }: { params: Promise<{
         <div 
           className="markdown-content" 
           style={{ fontSize: '1.2rem', lineHeight: 1.8 }}
-          dangerouslySetInnerHTML={{ __html: post.content }}
+          dangerouslySetInnerHTML={{ __html: sanitizeContent(post.content) }}
         />
       </article>
       <ViewTracker slug={post.slug} />
