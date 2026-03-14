@@ -4,6 +4,12 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
+const isProduction = process.env.NODE_ENV === "production";
+
+if (isProduction && !process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL environment variable must be set in production");
+}
+
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
