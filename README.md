@@ -6,7 +6,7 @@ ExploreCMS is a beautifully styled, self-hosted minimalistic blogging platform e
 
 * **Glassmorphic UI**: A stunning, custom-built CSS design system featuring translucent glass containers, smooth transitions, and high-performance fluid animations.
 * **Animated Hero Gradient**: Dynamic flowing gradient animation on the hero title that smoothly transitions through theme colors.
-* **21 Dynamic Themes**: Switch instantly between 21 gorgeous, tailor-made color palettes (Ocean, Cyberpunk, Forest, Sunset, etc), each with their own specialized Google Font pairing and full Light/Dark mode variants.
+* **41 Dynamic Themes**: Switch instantly between 41 gorgeous, tailor-made color palettes, each with their own specialized Google Font pairing and full Light/Dark mode variants. Themes span a wide range of aesthetics — from **Ocean Depth**, **Cyberpunk 2077**, and **Neon Synthwave** to **Aurora Borealis**, **Gothic Cathedral**, **Deep Space**, **Steampunk Workshop**, **Pixel Art 8-bit**, and many more.
 * **Infinite Scroll & Inline Reading**: A frictionless user experience. Navigate a dynamic masonry grid of articles that infinitely paginates using Intersection Observers. Click any article to read it in a sleek sliding Modal Overlay without ever losing your position in the feed! 
 * **Zero-Setup Database**: Built entirely on top of Prisma + SQLite. You don't need a sprawling Postgres cluster or a Redis instance to start writing. Just `npm run dev` and your database lives securely right next to your code.
 * **Rich WYSIWYG Editor**: A beautifully minimal, ghost-style writing experience built on TipTap. Supports slash commands (`/`), image dropping, embedded YouTube videos, and floating toolbars to get out of your way while you write.
