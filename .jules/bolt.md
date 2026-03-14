@@ -4,3 +4,6 @@
 ## 2024-03-24 - Parallelizing Independent Prisma Queries
 **Learning:** During the Bunny DB migration (upward and downward), fetching all tables sequentially (users, tags, posts, views) causes an unnecessary query waterfall, slowing down the data extraction phase. Since these queries don't depend on each other, they can be safely fetched concurrently.
 **Action:** Always wrap independent `PrismaClient.model.findMany()` (or other read operations) in `Promise.all()` to minimize wait times, especially when syncing full databases or fetching multiple unrelated datasets for SSR/admin dashboards.
+## 2024-06-12 - Parallelizing Independent Prisma Queries in Admin Routes
+**Learning:** Found sequential independent database queries in `src/app/admin/dashboard/edit/[id]/page.tsx` (`post` and `availableTags`). This causes an unnecessary query waterfall, slowing down the data extraction phase. Since these queries do not depend on each other, they can be safely fetched concurrently.
+**Action:** Always wrap independent `PrismaClient.model.findUnique()` and `PrismaClient.model.findMany()` (or other read operations) in `Promise.all()` to minimize wait times and prevent request waterfalling in SSR/admin dashboards.
