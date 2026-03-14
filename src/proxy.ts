@@ -20,7 +20,7 @@ const getSecret = () => {
   return new TextEncoder().encode(secret)
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
 
   if (path.startsWith('/admin/dashboard')) {
@@ -47,7 +47,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/admin/dashboard', request.url))
       } catch (e) {}
     }
-    
+
     // Redirect /admin directly to /admin/dashboard or login
     if (path === '/admin') {
       return NextResponse.redirect(new URL('/admin/login', request.url))
