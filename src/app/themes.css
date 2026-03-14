@@ -568,3 +568,634 @@
   --btn-text: #282828;
   --bg-pattern-overlay: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(250, 189, 47, 0.05) 2px, rgba(250, 189, 47, 0.05) 4px);
 }
+
+/* 22. Aurora Borealis - Shimmering northern lights curtains */
+[data-theme="aurora"] {
+  --bg-color: #e3f8f5;
+  --bg-color-secondary: #f0fdfb;
+  --text-primary: #0d4a44;
+  --text-secondary: #0e7a6b;
+  --accent-color: #00c9a7;
+  --accent-hover: #00a889;
+  --border-color: rgba(0, 201, 167, 0.15);
+  --font-primary: 'Raleway', sans-serif;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='200' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 30 Q50 0 100 30 T200 30' fill='none' stroke='%2300c9a7' stroke-width='2' stroke-opacity='0.12'/%3E%3Cpath d='M0 45 Q50 15 100 45 T200 45' fill='none' stroke='%237c3aed' stroke-width='1.5' stroke-opacity='0.08'/%3E%3C/svg%3E");
+  --bg-pattern-size: 200px 60px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="aurora"] {
+  --bg-color: #020f1a;
+  --bg-color-secondary: #071a2e;
+  --text-primary: #a8f5e5;
+  --text-secondary: #4dd9ac;
+  --accent-color: #00e5c3;
+  --accent-hover: #00c9a7;
+  --border-color: rgba(0, 229, 195, 0.2);
+  --btn-text: #020f1a;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='200' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 30 Q50 0 100 30 T200 30' fill='none' stroke='%2300e5c3' stroke-width='2' stroke-opacity='0.3'/%3E%3Cpath d='M0 45 Q50 15 100 45 T200 45' fill='none' stroke='%23a78bfa' stroke-width='1.5' stroke-opacity='0.2'/%3E%3C/svg%3E");
+}
+
+/* 23. Autumn Harvest - Warm falling leaves */
+[data-theme="autumn"] {
+  --bg-color: #fef9ee;
+  --bg-color-secondary: #ffffff;
+  --text-primary: #451a03;
+  --text-secondary: #92400e;
+  --accent-color: #c2600a;
+  --accent-hover: #a34e08;
+  --border-color: rgba(194, 96, 10, 0.15);
+  --font-primary: 'Crimson Pro', serif;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='50' height='50' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M25 5 C32 14 38 18 32 28 C26 38 18 38 12 28 C6 18 18 14 25 5Z' fill='%23c2600a' fill-opacity='0.06'/%3E%3C/svg%3E");
+  --bg-pattern-size: 50px 50px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="autumn"] {
+  --bg-color: #3d1a05;
+  --bg-color-secondary: #5c2a0a;
+  --text-primary: #fef3c7;
+  --text-secondary: #fcd34d;
+  --accent-color: #f97316;
+  --accent-hover: #ea580c;
+  --border-color: rgba(249, 115, 22, 0.2);
+  --btn-text: #3d1a05;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='50' height='50' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M25 5 C32 14 38 18 32 28 C26 38 18 38 12 28 C6 18 18 14 25 5Z' fill='%23f97316' fill-opacity='0.08'/%3E%3C/svg%3E");
+}
+
+/* 24. Vintage Typewriter - Aged paper with key imprints */
+[data-theme="typewriter"] {
+  --bg-color: #f5f0e8;
+  --bg-color-secondary: #faf7f2;
+  --text-primary: #1a1410;
+  --text-secondary: #5c4a36;
+  --accent-color: #3d2b1f;
+  --accent-hover: #5c4030;
+  --border-color: rgba(61, 43, 31, 0.15);
+  --font-primary: 'Special Elite', cursive;
+  --radius-md: 2px;
+  --radius-lg: 4px;
+  --btn-text: #f5f0e8;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='14' fill='none' stroke='%233d2b1f' stroke-width='1' stroke-opacity='0.06'/%3E%3Ccircle cx='30' cy='30' r='9' fill='none' stroke='%233d2b1f' stroke-width='0.5' stroke-opacity='0.04'/%3E%3C/svg%3E");
+  --bg-pattern-size: 60px 60px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="typewriter"] {
+  --bg-color: #1c1a15;
+  --bg-color-secondary: #2a2820;
+  --text-primary: #e8e0d0;
+  --text-secondary: #b8a898;
+  --accent-color: #c8a87a;
+  --accent-hover: #d4b88a;
+  --border-color: rgba(200, 168, 122, 0.15);
+  --btn-text: #1c1a15;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='14' fill='none' stroke='%23c8a87a' stroke-width='1' stroke-opacity='0.1'/%3E%3Ccircle cx='30' cy='30' r='9' fill='none' stroke='%23c8a87a' stroke-width='0.5' stroke-opacity='0.06'/%3E%3C/svg%3E");
+}
+
+/* 25. Neon Noir - Blade Runner city grid with amber glow */
+[data-theme="neon-noir"] {
+  --bg-color: #1a1a1f;
+  --bg-color-secondary: #242429;
+  --text-primary: #e8e0d0;
+  --text-secondary: #a09880;
+  --accent-color: #ff9500;
+  --accent-hover: #e08500;
+  --border-color: rgba(255, 149, 0, 0.2);
+  --font-primary: 'Barlow Condensed', sans-serif;
+  --radius-md: 2px;
+  --radius-lg: 4px;
+  --btn-text: #1a1a1f;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: linear-gradient(rgba(255, 149, 0, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 149, 0, 0.04) 1px, transparent 1px);
+  --bg-pattern-size: 60px 60px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="neon-noir"] {
+  --bg-color: #0d0d10;
+  --bg-color-secondary: #161618;
+  --text-primary: #f0e8d8;
+  --text-secondary: #ff9500;
+  --accent-color: #ffb040;
+  --accent-hover: #ff9500;
+  --border-color: rgba(255, 176, 64, 0.2);
+  --btn-text: #0d0d10;
+  --bg-pattern-overlay: linear-gradient(rgba(255, 176, 64, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 176, 64, 0.06) 1px, transparent 1px);
+}
+
+/* 26. Coral Reef - Tropical underwater colors */
+[data-theme="coral"] {
+  --bg-color: #fff7f0;
+  --bg-color-secondary: #ffffff;
+  --text-primary: #2c1a10;
+  --text-secondary: #0f766e;
+  --accent-color: #ff6b35;
+  --accent-hover: #e05a28;
+  --border-color: rgba(255, 107, 53, 0.15);
+  --font-primary: 'Comfortaa', cursive;
+  --radius-md: 16px;
+  --radius-lg: 32px;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='22' fill='none' stroke='%23ff6b35' stroke-width='1' stroke-opacity='0.1'/%3E%3Ccircle cx='30' cy='30' r='12' fill='none' stroke='%230f766e' stroke-width='1' stroke-opacity='0.08'/%3E%3C/svg%3E");
+  --bg-pattern-size: 60px 60px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="coral"] {
+  --bg-color: #0d2b2a;
+  --bg-color-secondary: #134a48;
+  --text-primary: #fff7f0;
+  --text-secondary: #5eead4;
+  --accent-color: #ff7a4d;
+  --accent-hover: #ff6b35;
+  --border-color: rgba(255, 122, 77, 0.2);
+  --btn-text: #0d2b2a;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='22' fill='none' stroke='%23ff7a4d' stroke-width='1' stroke-opacity='0.15'/%3E%3Ccircle cx='30' cy='30' r='12' fill='none' stroke='%235eead4' stroke-width='1' stroke-opacity='0.1'/%3E%3C/svg%3E");
+}
+
+/* 27. Luxury Marble - White marble with gold veining */
+[data-theme="marble"] {
+  --bg-color: #f8f8f6;
+  --bg-color-secondary: #ffffff;
+  --text-primary: #1a1a1a;
+  --text-secondary: #5c5c5c;
+  --accent-color: #c9a84c;
+  --accent-hover: #a88838;
+  --border-color: rgba(201, 168, 76, 0.2);
+  --font-primary: 'EB Garamond', serif;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 100 Q40 60 80 100 T160 100 T240 100' fill='none' stroke='%23c9a84c' stroke-width='0.8' stroke-opacity='0.12'/%3E%3Cpath d='M0 60 Q60 20 100 60 T200 60' fill='none' stroke='%23888' stroke-width='0.5' stroke-opacity='0.08'/%3E%3Cpath d='M0 140 Q50 100 90 140 T180 140' fill='none' stroke='%23c9a84c' stroke-width='0.6' stroke-opacity='0.09'/%3E%3C/svg%3E");
+  --bg-pattern-size: 200px 200px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="marble"] {
+  --bg-color: #1a1a1a;
+  --bg-color-secondary: #2a2a2a;
+  --text-primary: #f0f0ee;
+  --text-secondary: #a0a0a0;
+  --accent-color: #d4b04e;
+  --accent-hover: #c9a84c;
+  --border-color: rgba(212, 176, 78, 0.2);
+  --btn-text: #1a1a1a;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 100 Q40 60 80 100 T160 100 T240 100' fill='none' stroke='%23d4b04e' stroke-width='0.8' stroke-opacity='0.15'/%3E%3Cpath d='M0 60 Q60 20 100 60 T200 60' fill='none' stroke='%23888' stroke-width='0.5' stroke-opacity='0.1'/%3E%3Cpath d='M0 140 Q50 100 90 140 T180 140' fill='none' stroke='%23d4b04e' stroke-width='0.6' stroke-opacity='0.1'/%3E%3C/svg%3E");
+}
+
+/* 28. Gothic Cathedral - Stone arches and crimson shadows */
+[data-theme="gothic"] {
+  --bg-color: #f0ecec;
+  --bg-color-secondary: #faf8f8;
+  --text-primary: #1a0a0a;
+  --text-secondary: #5c3030;
+  --accent-color: #b91c1c;
+  --accent-hover: #991b1b;
+  --border-color: rgba(185, 28, 28, 0.15);
+  --font-primary: 'Philosopher', serif;
+  --radius-md: 0px;
+  --radius-lg: 2px;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='40' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0 L38 28 Q38 58 20 80 Q2 58 2 28 Z' fill='none' stroke='%23b91c1c' stroke-width='1' stroke-opacity='0.08'/%3E%3C/svg%3E");
+  --bg-pattern-size: 40px 80px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="gothic"] {
+  --bg-color: #120606;
+  --bg-color-secondary: #1e0a0a;
+  --text-primary: #f0e8e8;
+  --text-secondary: #c08080;
+  --accent-color: #dc2626;
+  --accent-hover: #ef4444;
+  --border-color: rgba(220, 38, 38, 0.2);
+  --btn-text: #120606;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='40' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0 L38 28 Q38 58 20 80 Q2 58 2 28 Z' fill='none' stroke='%23dc2626' stroke-width='1' stroke-opacity='0.12'/%3E%3C/svg%3E");
+}
+
+/* 29. Deep Space - Void and nebula star clusters */
+[data-theme="space"] {
+  --bg-color: #e8e8f0;
+  --bg-color-secondary: #f4f4f8;
+  --text-primary: #1e1b4b;
+  --text-secondary: #4338ca;
+  --accent-color: #7c3aed;
+  --accent-hover: #6d28d9;
+  --border-color: rgba(124, 58, 237, 0.15);
+  --font-primary: 'Orbitron', sans-serif;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay:
+    radial-gradient(1px 1px at 15% 25%, rgba(124, 58, 237, 0.4) 100%, transparent),
+    radial-gradient(1.5px 1.5px at 45% 55%, rgba(67, 56, 202, 0.3) 100%, transparent),
+    radial-gradient(1px 1px at 75% 15%, rgba(124, 58, 237, 0.3) 100%, transparent),
+    radial-gradient(2px 2px at 85% 75%, rgba(67, 56, 202, 0.2) 100%, transparent),
+    radial-gradient(1px 1px at 35% 85%, rgba(124, 58, 237, 0.3) 100%, transparent);
+  --bg-pattern-size: 200px 200px;
+  --bg-pattern-opacity: 0.8;
+}
+.dark[data-theme="space"] {
+  --bg-color: #03001c;
+  --bg-color-secondary: #0a0530;
+  --text-primary: #e8e8ff;
+  --text-secondary: #a78bfa;
+  --accent-color: #8b5cf6;
+  --accent-hover: #7c3aed;
+  --border-color: rgba(139, 92, 246, 0.2);
+  --btn-text: #03001c;
+  --bg-pattern-overlay:
+    radial-gradient(1.5px 1.5px at 10% 20%, #ffffff 100%, transparent),
+    radial-gradient(1px 1px at 30% 60%, rgba(255, 255, 255, 0.8) 100%, transparent),
+    radial-gradient(2px 2px at 80% 40%, rgba(167, 139, 250, 0.8) 100%, transparent),
+    radial-gradient(1px 1px at 60% 80%, rgba(255, 255, 255, 0.6) 100%, transparent),
+    radial-gradient(1.5px 1.5px at 20% 90%, rgba(139, 92, 246, 0.9) 100%, transparent),
+    radial-gradient(2.5px 2.5px at 90% 10%, rgba(167, 139, 250, 0.7) 100%, transparent),
+    radial-gradient(1px 1px at 50% 35%, rgba(255, 255, 255, 0.5) 100%, transparent),
+    radial-gradient(1px 1px at 70% 65%, #ffffff 100%, transparent);
+  --bg-pattern-size: 250px 250px;
+  --bg-pattern-opacity: 0.9;
+}
+
+/* 30. Retro 70s - Groovy concentric circles and earth tones */
+[data-theme="retro70s"] {
+  --bg-color: #fdf3d0;
+  --bg-color-secondary: #fef7e0;
+  --text-primary: #2d1a06;
+  --text-secondary: #7c4010;
+  --accent-color: #e17b21;
+  --accent-hover: #c46814;
+  --border-color: rgba(225, 123, 33, 0.15);
+  --font-primary: 'Fredoka', sans-serif;
+  --radius-md: 8px;
+  --radius-lg: 20px;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='40' cy='40' r='36' fill='none' stroke='%23e17b21' stroke-width='1.5' stroke-opacity='0.1'/%3E%3Ccircle cx='40' cy='40' r='24' fill='none' stroke='%23e17b21' stroke-width='1' stroke-opacity='0.08'/%3E%3Ccircle cx='40' cy='40' r='12' fill='none' stroke='%23e17b21' stroke-width='0.5' stroke-opacity='0.06'/%3E%3C/svg%3E");
+  --bg-pattern-size: 80px 80px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="retro70s"] {
+  --bg-color: #2d1a06;
+  --bg-color-secondary: #3f2510;
+  --text-primary: #fdf3d0;
+  --text-secondary: #f4a96f;
+  --accent-color: #f4a44a;
+  --accent-hover: #e17b21;
+  --border-color: rgba(244, 164, 74, 0.2);
+  --btn-text: #2d1a06;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='40' cy='40' r='36' fill='none' stroke='%23f4a44a' stroke-width='1.5' stroke-opacity='0.12'/%3E%3Ccircle cx='40' cy='40' r='24' fill='none' stroke='%23f4a44a' stroke-width='1' stroke-opacity='0.1'/%3E%3Ccircle cx='40' cy='40' r='12' fill='none' stroke='%23f4a44a' stroke-width='0.5' stroke-opacity='0.08'/%3E%3C/svg%3E");
+}
+
+/* 31. Candy Shop - Multicolor sprinkle confetti */
+[data-theme="candy"] {
+  --bg-color: #fff5f9;
+  --bg-color-secondary: #ffffff;
+  --text-primary: #5a1a38;
+  --text-secondary: #c02674;
+  --accent-color: #ff4f9b;
+  --accent-hover: #e03a88;
+  --border-color: rgba(255, 79, 155, 0.15);
+  --font-primary: 'Pacifico', cursive;
+  --radius-md: 24px;
+  --radius-lg: 48px;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='30' height='30' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='8' cy='8' r='3' fill='%23ff4f9b' fill-opacity='0.14'/%3E%3Ccircle cx='22' cy='22' r='2' fill='%2306b6d4' fill-opacity='0.12'/%3E%3Ccircle cx='22' cy='8' r='2' fill='%23f59e0b' fill-opacity='0.12'/%3E%3Ccircle cx='8' cy='22' r='3' fill='%2310b981' fill-opacity='0.1'/%3E%3C/svg%3E");
+  --bg-pattern-size: 30px 30px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="candy"] {
+  --bg-color: #1a0014;
+  --bg-color-secondary: #2d0022;
+  --text-primary: #ffe8f5;
+  --text-secondary: #f9a8d4;
+  --accent-color: #ff79c6;
+  --accent-hover: #ff4f9b;
+  --border-color: rgba(255, 121, 198, 0.2);
+  --btn-text: #1a0014;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='30' height='30' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='8' cy='8' r='3' fill='%23ff79c6' fill-opacity='0.15'/%3E%3Ccircle cx='22' cy='22' r='2' fill='%2306b6d4' fill-opacity='0.12'/%3E%3Ccircle cx='22' cy='8' r='2' fill='%23f59e0b' fill-opacity='0.12'/%3E%3Ccircle cx='8' cy='22' r='3' fill='%234ade80' fill-opacity='0.1'/%3E%3C/svg%3E");
+}
+
+/* 32. Ancient Parchment - Aged paper with manuscript borders */
+[data-theme="parchment"] {
+  --bg-color: #f4e8c4;
+  --bg-color-secondary: #faf2da;
+  --text-primary: #2d1a0a;
+  --text-secondary: #7a4f2b;
+  --accent-color: #8b4513;
+  --accent-hover: #704010;
+  --border-color: rgba(139, 69, 19, 0.2);
+  --font-primary: 'IM Fell English', serif;
+  --btn-text: #f4e8c4;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='4' y='4' width='52' height='52' fill='none' stroke='%238b4513' stroke-width='0.5' stroke-opacity='0.1'/%3E%3Crect x='1' y='1' width='58' height='58' fill='none' stroke='%238b4513' stroke-width='0.3' stroke-opacity='0.06'/%3E%3C/svg%3E");
+  --bg-pattern-size: 60px 60px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="parchment"] {
+  --bg-color: #1e1208;
+  --bg-color-secondary: #2a1a0c;
+  --text-primary: #f0deba;
+  --text-secondary: #c8a87a;
+  --accent-color: #c8a055;
+  --accent-hover: #b8903e;
+  --border-color: rgba(200, 160, 85, 0.2);
+  --btn-text: #1e1208;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='4' y='4' width='52' height='52' fill='none' stroke='%23c8a055' stroke-width='0.5' stroke-opacity='0.12'/%3E%3Crect x='1' y='1' width='58' height='58' fill='none' stroke='%23c8a055' stroke-width='0.3' stroke-opacity='0.08'/%3E%3C/svg%3E");
+}
+
+/* 33. Neon City Rain - Wet streets with electric reflections */
+[data-theme="neon-city"] {
+  --bg-color: #e8eef5;
+  --bg-color-secondary: #f4f8ff;
+  --text-primary: #0c1a2e;
+  --text-secondary: #0369a1;
+  --accent-color: #0ea5e9;
+  --accent-hover: #0284c7;
+  --border-color: rgba(14, 165, 233, 0.15);
+  --font-primary: 'Exo 2', sans-serif;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='40' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='20' y1='0' x2='18' y2='80' stroke='%230ea5e9' stroke-width='0.8' stroke-opacity='0.06'/%3E%3Cline x1='35' y1='20' x2='33' y2='80' stroke='%230ea5e9' stroke-width='0.5' stroke-opacity='0.04'/%3E%3C/svg%3E");
+  --bg-pattern-size: 40px 80px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="neon-city"] {
+  --bg-color: #0a0e14;
+  --bg-color-secondary: #0f1520;
+  --text-primary: #e0f0ff;
+  --text-secondary: #38bdf8;
+  --accent-color: #0ea5e9;
+  --accent-hover: #38bdf8;
+  --border-color: rgba(56, 189, 248, 0.2);
+  --btn-text: #0a0e14;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='40' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='20' y1='0' x2='18' y2='80' stroke='%230ea5e9' stroke-width='0.8' stroke-opacity='0.12'/%3E%3Cline x1='35' y1='20' x2='33' y2='80' stroke='%2338bdf8' stroke-width='0.5' stroke-opacity='0.08'/%3E%3C/svg%3E");
+}
+
+/* 34. Copper & Verdigris - Oxidized metal with organic patina */
+[data-theme="copper"] {
+  --bg-color: #f5f0e8;
+  --bg-color-secondary: #faf7f0;
+  --text-primary: #2c1a0e;
+  --text-secondary: #7a4020;
+  --accent-color: #b87333;
+  --accent-hover: #9a5f25;
+  --border-color: rgba(184, 115, 51, 0.15);
+  --font-primary: 'Spectral', serif;
+  --btn-text: #f5f0e8;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 40 Q20 20 40 40 Q60 60 80 40' fill='none' stroke='%23b87333' stroke-width='1' stroke-opacity='0.1'/%3E%3Cpath d='M0 60 Q20 40 40 60 Q60 80 80 60' fill='none' stroke='%232d9e4e' stroke-width='0.8' stroke-opacity='0.07'/%3E%3C/svg%3E");
+  --bg-pattern-size: 80px 80px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="copper"] {
+  --bg-color: #1a0f06;
+  --bg-color-secondary: #2a1a0c;
+  --text-primary: #f0e8d8;
+  --text-secondary: #d4a060;
+  --accent-color: #c8843e;
+  --accent-hover: #b87333;
+  --border-color: rgba(200, 132, 62, 0.2);
+  --btn-text: #1a0f06;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 40 Q20 20 40 40 Q60 60 80 40' fill='none' stroke='%23c8843e' stroke-width='1' stroke-opacity='0.15'/%3E%3Cpath d='M0 60 Q20 40 40 60 Q60 80 80 60' fill='none' stroke='%234ade80' stroke-width='0.8' stroke-opacity='0.1'/%3E%3C/svg%3E");
+}
+
+/* 35. Technical Blueprint - Engineering drawing on drafting paper */
+[data-theme="blueprint"] {
+  --bg-color: #dbeafe;
+  --bg-color-secondary: #eff6ff;
+  --text-primary: #1e3a5f;
+  --text-secondary: #1d4ed8;
+  --accent-color: #1d4ed8;
+  --accent-hover: #1e40af;
+  --border-color: rgba(29, 78, 216, 0.2);
+  --font-primary: 'Share Tech Mono', monospace;
+  --radius-md: 0px;
+  --radius-lg: 2px;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: linear-gradient(rgba(29, 78, 216, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(29, 78, 216, 0.08) 1px, transparent 1px);
+  --bg-pattern-size: 20px 20px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="blueprint"] {
+  --bg-color: #001a40;
+  --bg-color-secondary: #002255;
+  --text-primary: #dbeafe;
+  --text-secondary: #93c5fd;
+  --accent-color: #3b82f6;
+  --accent-hover: #60a5fa;
+  --border-color: rgba(147, 197, 253, 0.2);
+  --btn-text: #001a40;
+  --bg-pattern-overlay: linear-gradient(rgba(147, 197, 253, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(147, 197, 253, 0.1) 1px, transparent 1px);
+}
+
+/* 36. Steampunk Workshop - Brass gears and Victorian machinery */
+[data-theme="steampunk"] {
+  --bg-color: #f5ead0;
+  --bg-color-secondary: #fdf5e0;
+  --text-primary: #2a1a06;
+  --text-secondary: #7c4a14;
+  --accent-color: #b45309;
+  --accent-hover: #924209;
+  --border-color: rgba(180, 83, 9, 0.15);
+  --font-primary: 'Josefin Slab', serif;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --btn-text: #f5ead0;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='26' fill='none' stroke='%23b45309' stroke-width='1' stroke-opacity='0.1'/%3E%3Cpath d='M30 4 L30 10 M30 50 L30 56 M4 30 L10 30 M50 30 L56 30 M8 8 L13 13 M47 47 L52 52 M52 8 L47 13 M13 47 L8 52' stroke='%23b45309' stroke-width='1.5' stroke-opacity='0.12'/%3E%3Ccircle cx='30' cy='30' r='8' fill='none' stroke='%23b45309' stroke-width='1' stroke-opacity='0.08'/%3E%3C/svg%3E");
+  --bg-pattern-size: 60px 60px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="steampunk"] {
+  --bg-color: #1a0e04;
+  --bg-color-secondary: #2a1a08;
+  --text-primary: #f0deba;
+  --text-secondary: #d4a060;
+  --accent-color: #d97706;
+  --accent-hover: #b45309;
+  --border-color: rgba(217, 119, 6, 0.2);
+  --btn-text: #1a0e04;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='26' fill='none' stroke='%23d97706' stroke-width='1' stroke-opacity='0.12'/%3E%3Cpath d='M30 4 L30 10 M30 50 L30 56 M4 30 L10 30 M50 30 L56 30 M8 8 L13 13 M47 47 L52 52 M52 8 L47 13 M13 47 L8 52' stroke='%23d97706' stroke-width='1.5' stroke-opacity='0.15'/%3E%3Ccircle cx='30' cy='30' r='8' fill='none' stroke='%23d97706' stroke-width='1' stroke-opacity='0.1'/%3E%3C/svg%3E");
+}
+
+/* 37. Zen Garden - Raked sand ripples and stone stillness */
+[data-theme="zen"] {
+  --bg-color: #f0ece4;
+  --bg-color-secondary: #f8f6f2;
+  --text-primary: #1a1610;
+  --text-secondary: #6b6b60;
+  --accent-color: #4b5563;
+  --accent-hover: #374151;
+  --border-color: rgba(75, 85, 99, 0.15);
+  --font-primary: 'Zen Kaku Gothic New', sans-serif;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --btn-text: #f0ece4;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='28' fill='none' stroke='%234b5563' stroke-width='0.5' stroke-opacity='0.12'/%3E%3Ccircle cx='30' cy='30' r='20' fill='none' stroke='%234b5563' stroke-width='0.5' stroke-opacity='0.1'/%3E%3Ccircle cx='30' cy='30' r='12' fill='none' stroke='%234b5563' stroke-width='0.5' stroke-opacity='0.08'/%3E%3C/svg%3E");
+  --bg-pattern-size: 60px 60px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="zen"] {
+  --bg-color: #1a1610;
+  --bg-color-secondary: #252018;
+  --text-primary: #e8e4dc;
+  --text-secondary: #a09880;
+  --accent-color: #a09880;
+  --accent-hover: #8c8470;
+  --border-color: rgba(160, 152, 128, 0.15);
+  --btn-text: #1a1610;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='28' fill='none' stroke='%23a09880' stroke-width='0.5' stroke-opacity='0.15'/%3E%3Ccircle cx='30' cy='30' r='20' fill='none' stroke='%23a09880' stroke-width='0.5' stroke-opacity='0.12'/%3E%3Ccircle cx='30' cy='30' r='12' fill='none' stroke='%23a09880' stroke-width='0.5' stroke-opacity='0.1'/%3E%3C/svg%3E");
+}
+
+/* 38. Tropical Paradise - Vivid cyan seas and lush palm shapes */
+[data-theme="tropical"] {
+  --bg-color: #e0fffe;
+  --bg-color-secondary: #f0ffff;
+  --text-primary: #0a2e2c;
+  --text-secondary: #0f766e;
+  --accent-color: #06b6d4;
+  --accent-hover: #0891b2;
+  --border-color: rgba(6, 182, 212, 0.15);
+  --font-primary: 'Varela Round', sans-serif;
+  --radius-md: 16px;
+  --radius-lg: 32px;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5 Q45 30 30 55 Q15 30 30 5Z' fill='none' stroke='%2306b6d4' stroke-width='1' stroke-opacity='0.1'/%3E%3Cpath d='M5 30 Q30 15 55 30 Q30 45 5 30Z' fill='none' stroke='%2310b981' stroke-width='0.8' stroke-opacity='0.08'/%3E%3C/svg%3E");
+  --bg-pattern-size: 60px 60px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="tropical"] {
+  --bg-color: #002a28;
+  --bg-color-secondary: #003a38;
+  --text-primary: #e0fffe;
+  --text-secondary: #5eead4;
+  --accent-color: #2dd4bf;
+  --accent-hover: #06b6d4;
+  --border-color: rgba(45, 212, 191, 0.2);
+  --btn-text: #002a28;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5 Q45 30 30 55 Q15 30 30 5Z' fill='none' stroke='%232dd4bf' stroke-width='1' stroke-opacity='0.15'/%3E%3Cpath d='M5 30 Q30 15 55 30 Q30 45 5 30Z' fill='none' stroke='%234ade80' stroke-width='0.8' stroke-opacity='0.1'/%3E%3C/svg%3E");
+}
+
+/* 39. Lunar Surface - Moon rock gray with crater rings */
+[data-theme="lunar"] {
+  --bg-color: #e8e8ea;
+  --bg-color-secondary: #f4f4f6;
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a4a6a;
+  --accent-color: #6b6b8e;
+  --accent-hover: #565678;
+  --border-color: rgba(107, 107, 142, 0.15);
+  --font-primary: 'Titillium Web', sans-serif;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='40' cy='40' r='30' fill='none' stroke='%236b6b8e' stroke-width='0.5' stroke-opacity='0.1'/%3E%3Ccircle cx='15' cy='15' r='8' fill='none' stroke='%236b6b8e' stroke-width='0.5' stroke-opacity='0.08'/%3E%3Ccircle cx='65' cy='65' r='5' fill='none' stroke='%236b6b8e' stroke-width='0.5' stroke-opacity='0.07'/%3E%3Ccircle cx='65' cy='15' r='3' fill='none' stroke='%236b6b8e' stroke-width='0.5' stroke-opacity='0.06'/%3E%3C/svg%3E");
+  --bg-pattern-size: 80px 80px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="lunar"] {
+  --bg-color: #080810;
+  --bg-color-secondary: #10101c;
+  --text-primary: #d8d8e8;
+  --text-secondary: #8888aa;
+  --accent-color: #9898b8;
+  --accent-hover: #7878a0;
+  --border-color: rgba(152, 152, 184, 0.2);
+  --btn-text: #080810;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='40' cy='40' r='30' fill='none' stroke='%239898b8' stroke-width='0.5' stroke-opacity='0.15'/%3E%3Ccircle cx='15' cy='15' r='8' fill='none' stroke='%239898b8' stroke-width='0.5' stroke-opacity='0.12'/%3E%3Ccircle cx='65' cy='65' r='5' fill='none' stroke='%239898b8' stroke-width='0.5' stroke-opacity='0.1'/%3E%3Ccircle cx='65' cy='15' r='3' fill='none' stroke='%239898b8' stroke-width='0.5' stroke-opacity='0.08'/%3E%3C/svg%3E");
+}
+
+/* 40. Neon Rainbow - Prismatic diagonal spectrum */
+[data-theme="neon-rainbow"] {
+  --bg-color: #ffffff;
+  --bg-color-secondary: #f9f9ff;
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a4a6a;
+  --accent-color: #f59e0b;
+  --accent-hover: #d97706;
+  --border-color: rgba(245, 158, 11, 0.2);
+  --font-primary: 'Rubik', sans-serif;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --btn-text: #ffffff;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: repeating-linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.04) 0px,
+    rgba(239, 68, 68, 0.04) 8px,
+    rgba(249, 115, 22, 0.03) 8px,
+    rgba(249, 115, 22, 0.03) 16px,
+    rgba(34, 197, 94, 0.04) 16px,
+    rgba(34, 197, 94, 0.04) 24px,
+    rgba(14, 165, 233, 0.04) 24px,
+    rgba(14, 165, 233, 0.04) 32px,
+    rgba(139, 92, 246, 0.03) 32px,
+    rgba(139, 92, 246, 0.03) 40px
+  );
+  --bg-pattern-size: 100% 100%;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="neon-rainbow"] {
+  --bg-color: #0a0a0a;
+  --bg-color-secondary: #141414;
+  --text-primary: #f0f0f0;
+  --text-secondary: #a0a0b0;
+  --accent-color: #f59e0b;
+  --accent-hover: #fbbf24;
+  --border-color: rgba(245, 158, 11, 0.25);
+  --btn-text: #0a0a0a;
+  --bg-pattern-overlay: repeating-linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.07) 0px,
+    rgba(239, 68, 68, 0.07) 8px,
+    rgba(249, 115, 22, 0.06) 8px,
+    rgba(249, 115, 22, 0.06) 16px,
+    rgba(34, 197, 94, 0.07) 16px,
+    rgba(34, 197, 94, 0.07) 24px,
+    rgba(14, 165, 233, 0.07) 24px,
+    rgba(14, 165, 233, 0.07) 32px,
+    rgba(139, 92, 246, 0.06) 32px,
+    rgba(139, 92, 246, 0.06) 40px
+  );
+}
+
+/* 41. Pixel Art 8-bit - Retro game screen checker grid */
+[data-theme="pixel"] {
+  --bg-color: #f0f0e0;
+  --bg-color-secondary: #fafaf0;
+  --text-primary: #1a1a1a;
+  --text-secondary: #555555;
+  --accent-color: #ef4444;
+  --accent-hover: #dc2626;
+  --border-color: rgba(239, 68, 68, 0.2);
+  --font-primary: 'Press Start 2P', cursive;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --btn-text: #f0f0e0;
+  --bg-pattern-base: none;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='4' height='4' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='2' height='2' fill='%23ef4444' fill-opacity='0.04'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%23ef4444' fill-opacity='0.04'/%3E%3C/svg%3E");
+  --bg-pattern-size: 4px 4px;
+  --bg-pattern-opacity: 1;
+}
+.dark[data-theme="pixel"] {
+  --bg-color: #0a0a0a;
+  --bg-color-secondary: #141414;
+  --text-primary: #aaff00;
+  --text-secondary: #00cc00;
+  --accent-color: #ef4444;
+  --accent-hover: #ff5555;
+  --border-color: rgba(170, 255, 0, 0.2);
+  --btn-text: #0a0a0a;
+  --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='4' height='4' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='2' height='2' fill='%23aaff00' fill-opacity='0.05'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%23aaff00' fill-opacity='0.05'/%3E%3C/svg%3E");
+}
