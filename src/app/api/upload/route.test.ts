@@ -63,6 +63,24 @@ describe('POST /api/upload', () => {
     expect(json).toEqual({ error: 'No file uploaded' })
   })
 
+  it('returns 400 if file type is invalid', async () => {
+    vi.mocked(verifySession).mockResolvedValue({ userId: 1 })
+
+    const formData = new FormData()
+    const file = new File(['test content'], 'test.txt', { type: 'text/plain' })
+    formData.append('file', file)
+
+    const req = {
+      formData: async () => formData
+    } as unknown as Request
+
+    const res = await POST(req)
+    expect(res.status).toBe(400)
+
+    const json = await res.json()
+    expect(json).toEqual({ error: 'Invalid file type. Only images are allowed.' })
+  })
+
   it('uploads a file successfully', async () => {
     vi.mocked(verifySession).mockResolvedValue({ userId: 1 })
     vi.mocked(existsSync).mockReturnValue(false) // simulate dir not exists

@@ -13,8 +13,8 @@ export default async function UsersPage() {
   const session = await verifySession()
   if (!session) return null
 
-  // Ensure only OWNER can view this page
-  if (session.role !== 'OWNER') {
+  // Ensure only OWNER or ADMIN can view this page
+  if (session.role !== 'OWNER' && session.role !== 'ADMIN') {
     redirect('/admin/dashboard')
   }
 
@@ -29,10 +29,10 @@ export default async function UsersPage() {
       </header>
       
       <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
-        As an Owner, you can grant or revoke Collaborator access. Collaborators can create and edit posts but cannot manage other users.
+        As an Owner or Admin, you can grant or revoke Contributor access. Admins have similar permissions but cannot manage Owners or other Admins.
       </p>
 
-      <UserList users={users} currentUserId={(session as { userId: string }).userId} />
+      <UserList users={users} currentUserId={(session as { userId: string }).userId} currentUserRole={(session as { role: string }).role} />
     </div>
   )
 }

@@ -18,7 +18,7 @@ type User = {
   createdAt: Date
 }
 
-export default function UserList({ users, currentUserId }: { users: User[], currentUserId: string }) {
+export default function UserList({ users, currentUserId, currentUserRole }: { users: User[], currentUserId: string, currentUserRole: string }) {
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -64,35 +64,51 @@ export default function UserList({ users, currentUserId }: { users: User[], curr
             </tr>
           </thead>
           <tbody>
-            {users.map(user => (
-              <tr key={user.id} style={{ borderBottom: '1px solid var(--border-color)', opacity: loadingId === user.id ? 0.5 : 1 }}>
-                <td style={{ padding: '1rem' }}>{user.username} {user.id === currentUserId && '(You)'}</td>
-                <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>
-                  {user.firstName || user.lastName ? `${user.firstName || ''} ${user.lastName || ''}` : '-'}
-                </td>
-                <td style={{ padding: '1rem' }}>
-                  <select 
-                    disabled={user.id === currentUserId || loadingId === user.id}
-                    value={user.role}
-                    onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                    style={{ padding: '0.4rem', borderRadius: '4px', background: 'var(--bg-color)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}
-                  >
-                    <option value="OWNER">OWNER</option>
-                    <option value="COLLABORATOR">COLLABORATOR</option>
-                  </select>
-                </td>
-                <td style={{ padding: '1rem' }}>
-                  <button 
-                    disabled={user.id === currentUserId || loadingId === user.id}
-                    onClick={() => handleDelete(user.id)}
-                    className="btn"
-                    style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
-                  >
-                    Remove
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {users.map(user => {
+              const isSelf = user.id === currentUserId
+              const isTargetOwner = user.role === 'OWNER'
+              const isTargetAdmin = user.role === 'ADMIN'
+              const isDisabled = isSelf || loadingId === user.id || isTargetOwner || (currentUserRole === 'ADMIN' && isTargetAdmin)
+
+              return (
+                <tr key={user.id} style={{ borderBottom: '1px solid var(--border-color)', opacity: loadingId === user.id ? 0.5 : 1 }}>
+                  <td style={{ padding: '1rem' }}>{user.username} {isSelf && '(You)'}</td>
+                  <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>
+                    {user.firstName || user.lastName ? `${user.firstName || ''} ${user.lastName || ''}` : '-'}
+                  </td>
+                  <td style={{ padding: '1rem' }}>
+                    <select
+                      disabled={isDisabled}
+                      value={user.role}
+                      onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                      style={{ padding: '0.4rem', borderRadius: '4px', background: 'var(--bg-color)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}
+                    >
+                      {/* Only display OWNER if this user is the OWNER, since others cannot be made OWNER */}
+                      {isTargetOwner && <option value="OWNER">OWNER</option>}
+                      <option value="ADMIN">ADMIN</option>
+                      <option value="CONTRIBUTOR">CONTRIBUTOR</option>
+                    </select>
+                  </td>
+                  <td style={{ padding: '1rem' }}>
+                    <button
+                      disabled={isDisabled}
+                      onClick={() => handleDelete(user.id)}
+                      className="btn"
+                      style={{
+                        background: isDisabled ? 'transparent' : 'rgba(239, 68, 68, 0.1)',
+                        color: isDisabled ? 'var(--text-secondary)' : '#ef4444',
+                        border: 'none',
+                        padding: '0.4rem 0.8rem',
+                        fontSize: '0.85rem',
+                        cursor: isDisabled ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
