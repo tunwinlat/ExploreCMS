@@ -7,3 +7,6 @@
 ## 2024-06-12 - Parallelizing Independent Prisma Queries in Admin Routes
 **Learning:** Found sequential independent database queries in `src/app/admin/dashboard/edit/[id]/page.tsx` (`post` and `availableTags`). This causes an unnecessary query waterfall, slowing down the data extraction phase. Since these queries do not depend on each other, they can be safely fetched concurrently.
 **Action:** Always wrap independent `PrismaClient.model.findUnique()` and `PrismaClient.model.findMany()` (or other read operations) in `Promise.all()` to minimize wait times and prevent request waterfalling in SSR/admin dashboards.
+## 2026-03-15 - Prevent Duplicate Database Queries with React.cache
+**Learning:** Next.js App Router performs sequential rendering for `generateMetadata` and the actual page layout/component. Unlike `fetch`, Prisma database queries are not automatically memoized per request. This results in duplicate, sequential database queries if the same data is needed for metadata and page content.
+**Action:** Always wrap independent server-side database queries used by both `generateMetadata` and the page/layout component in React's `cache` function to ensure they are executed only once per request lifecycle.

@@ -5,6 +5,7 @@
  */
 
 import type { Metadata } from "next";
+import { cache } from "react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 import "./themes.css";
@@ -13,11 +14,21 @@ import { prisma } from "@/lib/db";
 import { getThemeConfig } from "@/lib/themes";
 import { ensureMigrations } from "@/lib/db-init";
 
-export async function generateMetadata(): Promise<Metadata> {
+// ⚡ Bolt: Memoize the siteSettings query to avoid duplicate database calls
+// between generateMetadata and the RootLayout component during a single request.
+const getSettings = cache(async () => {
   try {
-    const settings = await prisma.siteSettings.findUnique({
+    return await prisma.siteSettings.findUnique({
       where: { id: 'singleton' }
     });
+  } catch {
+    return null;
+  }
+});
+
+export async function generateMetadata(): Promise<Metadata> {
+  try {
+    const settings = await getSettings();
 
     return {
       title: settings?.title || "ExploreCMS",
@@ -55,9 +66,7 @@ export default async function RootLayout({
   let themeId = 'default';
   let faviconUrl = '/favicon.ico';
   try {
-    const settings = await prisma.siteSettings.findUnique({
-      where: { id: 'singleton' }
-    });
+    const settings = await getSettings();
     if (settings?.theme) themeId = settings.theme;
     if (settings?.faviconUrl) faviconUrl = settings.faviconUrl;
     console.log('[Layout] Favicon URL:', faviconUrl);
