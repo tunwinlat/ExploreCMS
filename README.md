@@ -173,7 +173,27 @@ The database includes tables for:
 | Variable | Description | Required In |
 |----------|-------------|-------------|
 | `DATABASE_URL` | LibSQL connection string | All environments |
+| `DATABASE_AUTH_TOKEN` | Auth token for hosted LibSQL (Turso, Bunny.net) | When using hosted DB |
 | `JWT_SECRET` | Secret key for session signing | Production |
+
+### Database URL Examples
+
+**Local SQLite (Development):**
+```env
+DATABASE_URL="file:./dev.db"
+```
+
+**Turso:**
+```env
+DATABASE_URL="libsql://your-db.turso.io"
+DATABASE_AUTH_TOKEN="your-token"
+```
+
+**Bunny.net:**
+```env
+DATABASE_URL="libsql://your-db.lite.bunnydb.net/"
+DATABASE_AUTH_TOKEN="your-jwt-token"
+```
 
 ### Optional (Storage)
 

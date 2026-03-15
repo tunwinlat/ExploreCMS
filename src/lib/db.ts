@@ -13,6 +13,7 @@ const globalForPrisma = globalThis as unknown as {
 
 function createPrismaClient() {
   const url = process.env.DATABASE_URL
+  const authToken = process.env.DATABASE_AUTH_TOKEN
   
   if (!url) {
     throw new Error(
@@ -22,7 +23,13 @@ function createPrismaClient() {
     )
   }
   
-  const adapter = new PrismaLibSql({ url })
+  // Configure adapter with or without auth token
+  const adapterConfig: { url: string; authToken?: string } = { url }
+  if (authToken) {
+    adapterConfig.authToken = authToken
+  }
+  
+  const adapter = new PrismaLibSql(adapterConfig)
   return new PrismaClient({ adapter })
 }
 
