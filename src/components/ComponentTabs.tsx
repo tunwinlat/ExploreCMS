@@ -66,14 +66,16 @@ export function ComponentTabs({ enabledComponents, defaultComponent }: Component
   }
 
   return (
-    <div style={{
-      display: 'flex',
+    <div className="component-tabs-scroll">
+    <div className="component-tabs" style={{
+      display: 'inline-flex',
       alignItems: 'center',
       gap: '0.25rem',
       padding: '0.25rem',
       background: 'var(--bg-color-secondary, rgba(0,0,0,0.05))',
       borderRadius: '14px',
       border: '1px solid var(--border-color)',
+      minWidth: 'max-content',
     }}>
       {enabledComponents.map(comp => {
         const active = isActive(comp)
@@ -105,6 +107,7 @@ export function ComponentTabs({ enabledComponents, defaultComponent }: Component
           </Link>
         )
       })}
+    </div>
     </div>
   )
 }
