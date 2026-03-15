@@ -38,9 +38,20 @@ function createPrismaClient() {
   return new PrismaClient({ adapter })
 }
 
+// In serverless environments, create a new client for each request if needed
+// Use globalThis to persist across hot reloads in development
 export const prisma = globalForPrisma.prisma ?? createPrismaClient()
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+
+// Helper to get a fresh Prisma instance (useful for server actions)
+export function getPrismaClient() {
+  // Always create a new client in production/serverless to ensure env vars are fresh
+  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+    return createPrismaClient()
+  }
+  return prisma
+}
 
 /**
  * Check if the database is properly configured and accessible.

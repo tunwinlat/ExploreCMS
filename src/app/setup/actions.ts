@@ -6,10 +6,13 @@
 
 'use server'
 
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import { hash } from 'bcryptjs'
 import { createSession } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
+
+// Get a fresh Prisma client for each server action
+const prisma = getPrismaClient()
 
 // Bunny Storage API Client for testing during setup
 class BunnyStorageClient {
