@@ -135,6 +135,8 @@ export function SearchBox() {
           setTimeout(() => inputRef.current?.focus(), 100)
         }}
         className="search-trigger glass"
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -172,6 +174,9 @@ export function SearchBox() {
       {isOpen && (
         <div 
           className="search-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Search posts"
           style={{
             position: 'fixed',
             top: 0,
@@ -198,8 +203,9 @@ export function SearchBox() {
             }}
           >
             {/* Search Input */}
-            <form onSubmit={handleSubmit} style={{ position: 'relative' }}>
+            <form onSubmit={handleSubmit} style={{ position: 'relative' }} role="search">
               <svg 
+                aria-hidden="true"
                 width="20" 
                 height="20" 
                 viewBox="0 0 24 24" 
@@ -224,6 +230,7 @@ export function SearchBox() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search posts by title or content..."
+                aria-label="Search posts"
                 style={{
                   width: '100%',
                   padding: '1.25rem 1.25rem 1.25rem 3.5rem',

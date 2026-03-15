@@ -47,6 +47,8 @@ export default function Modal({ children }: { children: React.ReactNode }) {
   return (
     <div
       ref={overlay}
+      role="dialog"
+      aria-modal="true"
       style={{
         position: 'fixed',
         zIndex: 100,
