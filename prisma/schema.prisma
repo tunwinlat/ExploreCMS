@@ -56,6 +56,10 @@ model SiteSettings {
   theme             String   @default("default")
   footerText        String   @default("")
 
+  // Component System
+  enabledComponents String   @default("[\"blog\"]") // JSON array of enabled component IDs
+  defaultComponent  String   @default("blog")       // which component is served at /
+
   // Remote DB Config
   bunnyEnabled      Boolean  @default(false)
   bunnyUrl          String?
@@ -69,6 +73,63 @@ model SiteSettings {
   bunnyStorageUrl       String?  // CDN URL like https://my-zone.b-cdn.net
 
   updatedAt         DateTime @updatedAt
+}
+
+model Project {
+  id          String         @id @default(cuid())
+  title       String
+  slug        String         @unique
+  tagline     String         @default("")
+  content     String         @default("") // rich HTML content
+  coverImage  String?
+  status      String         @default("completed") // completed, in_progress, archived
+  featured    Boolean        @default(false)
+  published   Boolean        @default(false)
+  githubUrl   String?
+  liveUrl     String?
+  techTags    String         @default("[]") // JSON array of tech strings
+  order       Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  images      ProjectImage[]
+}
+
+model ProjectImage {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  url       String
+  caption   String  @default("")
+  order     Int     @default(0)
+}
+
+model PhotoAlbum {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String   @default("")
+  coverImage  String?
+  published   Boolean  @default(false)
+  featured    Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  photos      Photo[]
+}
+
+model Photo {
+  id           String     @id @default(cuid())
+  albumId      String
+  album        PhotoAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  title        String     @default("")
+  description  String     @default("")
+  url          String
+  location     String     @default("")
+  takenAt      DateTime?
+  order        Int        @default(0)
+  featured     Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 }
 
 model PopupConfig {

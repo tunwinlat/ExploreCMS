@@ -11,6 +11,7 @@ import "./themes.css";
 
 import { prisma } from "@/lib/db";
 import { getThemeConfig } from "@/lib/themes";
+import { ensureMigrations } from "@/lib/db-init";
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
@@ -48,6 +49,9 @@ export default async function RootLayout({
   children: React.ReactNode;
   modal: React.ReactNode;
 }) {
+  // Ensure schema migrations are applied for LibSQL/Turso deployments
+  await ensureMigrations();
+
   let themeId = 'default';
   let faviconUrl = '/favicon.ico';
   try {
