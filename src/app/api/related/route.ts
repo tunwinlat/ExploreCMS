@@ -10,9 +10,10 @@ import { getPostDb } from '@/lib/bunnyDb'
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const slug = searchParams.get('slug')
-  const limit = Math.min(parseInt(searchParams.get('limit') || '4'), 6)
+  const parsedLimit = parseInt(searchParams.get('limit') || '4')
+  const limit = Math.min(Number.isNaN(parsedLimit) ? 4 : parsedLimit, 6)
 
-  if (!slug) {
+  if (!slug || slug.length > 300) {
     return NextResponse.json({ error: 'Slug is required' }, { status: 400 })
   }
 

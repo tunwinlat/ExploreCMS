@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     
     const listUrl = `https://${baseUrl}/${storageZoneName}/`
     
-    console.log('Testing Bunny Storage connection to:', listUrl)
+    console.log('Testing Bunny Storage connection...')
 
     const response = await fetch(listUrl, {
       method: 'GET',
@@ -38,10 +38,9 @@ export async function POST(req: Request) {
 
     if (!response.ok) {
       const error = await response.text()
-      console.error('Bunny Storage test failed:', response.status, error)
-      return NextResponse.json({ 
-        error: `Connection failed: ${response.status}`, 
-        details: error 
+      console.error('Bunny Storage test failed:', response.status)
+      return NextResponse.json({
+        error: 'Connection failed. Please verify your credentials and storage zone name.'
       }, { status: 500 })
     }
 
@@ -55,9 +54,9 @@ export async function POST(req: Request) {
     })
 
   } catch (error: any) {
-    console.error('Test Bunny Storage Error:', error)
-    return NextResponse.json({ 
-      error: error.message || 'Failed to test connection' 
+    console.error('Test Bunny Storage Error:', error?.message)
+    return NextResponse.json({
+      error: 'Failed to test connection'
     }, { status: 500 })
   }
 }

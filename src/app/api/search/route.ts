@@ -10,9 +10,10 @@ import { getPostDb } from '@/lib/bunnyDb'
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const query = searchParams.get('q')?.trim()
-  const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 20)
+  const parsedLimit = parseInt(searchParams.get('limit') || '10')
+  const limit = Math.min(Number.isNaN(parsedLimit) ? 10 : parsedLimit, 20)
 
-  if (!query || query.length < 2) {
+  if (!query || query.length < 2 || query.length > 200) {
     return NextResponse.json({ posts: [] })
   }
 

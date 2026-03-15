@@ -42,6 +42,8 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
   const tagsString = formData.get('tags') as string || ''
 
   if (!title || !content) return { error: 'Title and content are required' }
+  if (title.length > 500) return { error: 'Title must be 500 characters or fewer' }
+  if (content.length > 500000) return { error: 'Content is too large' }
 
   // Process Tags
   const tagNames = tagsString.split(',').map(t => t.trim()).filter(t => t.length > 0)
@@ -101,8 +103,15 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
 export async function deletePost(id: string) {
   const session = await verifySession()
   if (!session) throw new Error('Unauthorized')
-  
+
   const postDb = await getPostDb();
+
+  // Verify the post exists and the user has permission to delete it
+  const post = await postDb.post.findUnique({ where: { id } })
+  if (!post) throw new Error('Post not found')
+  if (session.role !== 'OWNER' && post.authorId !== session.userId) {
+    throw new Error('Permission denied')
+  }
 
   await postDb.post.delete({ where: { id } })
   revalidatePath('/')

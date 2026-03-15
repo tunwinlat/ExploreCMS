@@ -48,6 +48,17 @@ export async function updatePopupConfig(
     throw new Error('Unauthorized')
   }
 
+  if (title && title.length > 500) {
+    return { error: 'Title must be 500 characters or fewer' }
+  }
+  if (content && content.length > 10000) {
+    return { error: 'Content must be 10,000 characters or fewer' }
+  }
+  const validModes = ['toast', 'modal', 'banner']
+  if (displayMode && !validModes.includes(displayMode)) {
+    return { error: 'Invalid display mode' }
+  }
+
   try {
     await prisma.popupConfig.upsert({
       where: { id: 'singleton' },
