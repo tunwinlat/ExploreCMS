@@ -12,23 +12,38 @@ ExploreCMS is a beautifully styled, self-hosted minimalistic blogging platform e
 * **Rich WYSIWYG Editor**: A beautifully minimal, ghost-style writing experience built on TipTap. Supports slash commands (`/`), image dropping, embedded YouTube videos, and floating toolbars to get out of your way while you write.
 * **Built-in Analytics**: Complete with total site views and per-article unique view tracking, plotted in a beautiful native Admin Dashboard.
 * **Instant Auto-Save & Drafts**: Never lose your writing. ExploreCMS automatically saves your progress in the background to your Drafts queue every 5 seconds.
-* **Custom Favicon**: Upload a custom favicon (PNG recommended) to personalize your site branding.
+* **Custom Favicon**: Upload a custom favicon (PNG, ICO, SVG) to personalize your site branding.
 
 ### 🌐 Storage Integration
 
-**Bunny Storage (CDN)**: Store all images and assets on Bunny's global CDN. When connecting, all existing local images are migrated to storage and post URLs are automatically updated. New uploads go directly to Bunny Storage.
+**Bunny Storage (CDN)**: Store all images and assets on Bunny's global CDN.
 - Supports all 11 Bunny Storage regions: Falkenstein (fsn1), Frankfurt (de), London (uk), Stockholm (se), New York (ny), Los Angeles (la), Singapore (sg), Sydney (syd), Sao Paulo (br), Johannesburg (jh)
-- Automatic image URL migration when connecting/disconnecting
+- Automatic image URL migration when switching storage providers
 - Easy setup wizard during initial configuration
 
-**S3-Compatible Storage**: Also supports AWS S3, Cloudflare R2, MinIO, and any S3-compatible storage provider.
+**S3-Compatible Storage**: Supports AWS S3, Cloudflare R2, MinIO, and any S3-compatible storage provider.
 
-### 🔧 One-Command Setup Wizard
+### 🗄️ Migration Tools
 
-First-time setup is handled through a beautiful web-based wizard that runs on initial deployment:
-- **Step 1**: Create your admin account (username, password, name)
-- **Step 2**: Configure media storage (Bunny Storage or skip for later)
-- **Step 3**: Review and complete
+**Database Migration**: Migrate your entire database to any LibSQL-compatible provider.
+- Connect to target database (Turso, Bunny.net, etc.)
+- Test connection before migrating
+- Migrate all data: users, posts, tags, views, settings, analytics
+- Perfect for backups or switching database providers
+
+**Storage Migration**: Switch between storage providers seamlessly.
+- Migrate from local storage to Bunny/S3
+- Switch between different S3 providers
+- Automatic URL updates in all posts
+- Files transferred with progress tracking
+
+### 🔧 Setup Wizard
+
+First-time setup is handled through an intuitive web-based wizard:
+- **Step 1**: Welcome and introduction
+- **Step 2**: Create your admin account (username, password, name)
+- **Step 3**: Configure media storage (Bunny/S3) or skip for later
+- **Step 4**: Review and complete
 
 No manual database seeding or configuration files needed!
 
@@ -74,8 +89,7 @@ npx prisma generate
 # For local SQLite only:
 npx prisma db push
 
-# For hosted LibSQL (Turso/Bunny.net), apply migrations manually
-# See "Deploying to Vercel" section below
+# For hosted LibSQL (Turso/Bunny.net), tables are created automatically on first setup
 ```
 
 4. Run the development server:
@@ -90,12 +104,7 @@ npm run dev
 
 On your very first run, you will be automatically redirected to `/setup`. 
 
-The setup wizard will guide you through:
-1. **Creating your admin account** - Set up the OWNER account with full access
-2. **Configuring media storage** - Connect Bunny Storage or S3-compatible storage for images
-3. **Review & complete** - Confirm your settings and finish setup
-
-Once established, the setup screen locks itself down permanently, and you will be routed straight to your new Admin Dashboard to begin writing.
+The setup wizard will guide you through creating your admin account and configuring optional media storage. Once established, the setup screen locks itself down permanently, and you will be routed straight to your new Admin Dashboard to begin writing.
 
 ## 🚀 Deploying to Vercel
 
@@ -116,41 +125,7 @@ turso db show explore-cms
 turso db tokens create explore-cms
 ```
 
-### 2. Apply Database Schema
-
-Before deploying, you need to create the database tables. For LibSQL databases (Turso, Bunny.net), use this script:
-
-```bash
-# Install the LibSQL client
-npm install @libsql/client
-
-# Create a migration script (migrate.js)
-cat > migrate.js << 'EOF'
-const { createClient } = require('@libsql/client');
-const fs = require('fs');
-
-const client = createClient({
-  url: process.env.DATABASE_URL,
-  authToken: process.env.DATABASE_AUTH_TOKEN,
-});
-
-const sql = fs.readFileSync('prisma/migrations/init.sql', 'utf8');
-client.executeMultiple(sql).then(() => {
-  console.log('Migrations applied!');
-  process.exit(0);
-}).catch(err => {
-  console.error('Migration failed:', err);
-  process.exit(1);
-});
-EOF
-
-# Run the migration
-node migrate.js
-```
-
-Or manually run the SQL from `prisma/migrations/` using your database provider's CLI or dashboard.
-
-### 3. Deploy to Vercel
+### 2. Deploy to Vercel
 
 Click the button below to deploy:
 
@@ -163,7 +138,7 @@ npm i -g vercel
 vercel --prod
 ```
 
-### 4. Configure Environment Variables
+### 3. Configure Environment Variables
 
 Set these environment variables in your Vercel project settings:
 
@@ -175,7 +150,7 @@ Set these environment variables in your Vercel project settings:
 
 **Note:** Do not set `DATABASE_URL` to a `file:` path on Vercel - file system is ephemeral and your data will be lost.
 
-### 5. Run Setup
+### 4. Run Setup
 
 After deployment, visit your site URL. You'll be redirected to the setup wizard to create your admin account and configure storage.
 
@@ -201,11 +176,42 @@ The database includes tables for:
 - **SiteAnalytics** - View tracking and analytics
 - **PostView** - Per-post view statistics
 
+### Database Migration
+
+To migrate to a new database:
+1. Go to **Admin** → **Settings** → **Database Migration**
+2. Enter the new database URL and auth token
+3. Click **"Test Connection"** to verify
+4. Click **"Migrate Data"** to transfer all data
+5. Update your `DATABASE_URL` environment variable in Vercel
+6. Redeploy - the site now uses the new database!
+
+## 📦 Storage Architecture
+
+### External Storage (Required for Vercel)
+
+Vercel's filesystem is ephemeral, so **external storage is required for production**. The platform supports:
+
+- **Bunny Storage** - Recommended for ease of use
+- **AWS S3** - Industry standard
+- **Cloudflare R2** - Zero egress fees
+- **MinIO** - Self-hosted S3-compatible
+
+### Storage Migration
+
+To switch storage providers:
+1. Go to **Admin** → **Settings** → **Storage Migration**
+2. Select your provider (Bunny or S3-Compatible)
+3. Enter credentials and CDN URL
+4. Click **"Test Connection"** to verify access
+5. Click **"Migrate Files"** to transfer all images
+6. All post URLs are automatically updated
+
 ## ⚠️ Known Issues & Limitations
 
 * **Favicon Format**: JPEG favicons may not display correctly in some browsers. For best compatibility, use PNG format (32x32 or 180x180 pixels recommended).
 * **Bunny Storage Region Selection**: You must select the correct storage region that matches your Bunny Storage zone configuration. Using "Auto (Default)" only works for Falkenstein (fsn1) and Frankfurt (de) regions. For all other regions (LA, NY, Singapore, etc.), you must select the specific region from the dropdown.
-* **Image Migration**: When connecting Bunny Storage, the migration only processes images in posts. Standalone files in `public/uploads/` that are not referenced in posts will not be automatically migrated.
+* **Large File Migrations**: When migrating storage with many files, the transfer may pass through Vercel's serverless functions. For large migrations (>100 files), consider using direct storage-to-storage transfer tools instead.
 
 ## 📝 Environment Variables Reference
 
@@ -236,19 +242,24 @@ DATABASE_URL="libsql://your-db.lite.bunnydb.net/"
 DATABASE_AUTH_TOKEN="your-jwt-token"
 ```
 
-### Optional (Storage)
+## 🤖 Development & AI Disclosure
 
-| Variable | Description |
-|----------|-------------|
-| `BUNNY_STORAGE_REGION` | Bunny Storage region |
-| `BUNNY_STORAGE_ZONE_NAME` | Bunny Storage zone name |
-| `BUNNY_STORAGE_API_KEY` | Bunny Storage API key |
-| `BUNNY_STORAGE_CDN_URL` | Bunny CDN URL |
-| `S3_ENDPOINT` | S3-compatible endpoint |
-| `S3_ACCESS_KEY_ID` | S3 access key |
-| `S3_SECRET_ACCESS_KEY` | S3 secret key |
-| `S3_BUCKET` | S3 bucket name |
-| `S3_REGION` | S3 region (default: us-east-1) |
+This project is developed with assistance from advanced AI systems:
+
+- **Code Generation**: Google Gemini 2.5 Pro, Moonshot Kimi K2.5, Anthropic Claude Opus 4.6, and Claude Sonnet 4.6
+- **Quality Assurance**: Google Jules using Gemini 2.5 Pro for proactive performance, UX, and security reviews
+- **Security Assessment**: Weekly vulnerability scans conducted by Kimi K2.5 Agent Swarm and Claude Opus 4.6
+- **Penetration Testing**: Simulated attacks performed in AgentZero by MiniMax Agent K2.5
+
+### Production Readiness
+
+While we employ multiple AI systems for quality assurance and security testing, this software is provided as-is. **Use at your own risk for production environments.** We welcome:
+- Bug reports and issue submissions
+- Security vulnerability disclosures
+- Feature suggestions and pull requests
+- Performance optimization recommendations
+
+Community contributions help improve the project for everyone. Please open an issue or submit a PR if you encounter any problems.
 
 ## 📜 License
 
