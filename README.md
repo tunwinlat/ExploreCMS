@@ -70,7 +70,12 @@ JWT_SECRET="your-secret-key-here"
 
 ```bash
 npx prisma generate
+
+# For local SQLite only:
 npx prisma db push
+
+# For hosted LibSQL (Turso/Bunny.net), apply migrations manually
+# See "Deploying to Vercel" section below
 ```
 
 4. Run the development server:
@@ -111,7 +116,41 @@ turso db show explore-cms
 turso db tokens create explore-cms
 ```
 
-### 2. Deploy to Vercel
+### 2. Apply Database Schema
+
+Before deploying, you need to create the database tables. For LibSQL databases (Turso, Bunny.net), use this script:
+
+```bash
+# Install the LibSQL client
+npm install @libsql/client
+
+# Create a migration script (migrate.js)
+cat > migrate.js << 'EOF'
+const { createClient } = require('@libsql/client');
+const fs = require('fs');
+
+const client = createClient({
+  url: process.env.DATABASE_URL,
+  authToken: process.env.DATABASE_AUTH_TOKEN,
+});
+
+const sql = fs.readFileSync('prisma/migrations/init.sql', 'utf8');
+client.executeMultiple(sql).then(() => {
+  console.log('Migrations applied!');
+  process.exit(0);
+}).catch(err => {
+  console.error('Migration failed:', err);
+  process.exit(1);
+});
+EOF
+
+# Run the migration
+node migrate.js
+```
+
+Or manually run the SQL from `prisma/migrations/` using your database provider's CLI or dashboard.
+
+### 3. Deploy to Vercel
 
 Click the button below to deploy:
 
@@ -124,17 +163,19 @@ npm i -g vercel
 vercel --prod
 ```
 
-### 3. Configure Environment Variables
+### 4. Configure Environment Variables
 
 Set these environment variables in your Vercel project settings:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `DATABASE_URL` | Your LibSQL database URL | `libsql://your-db.turso.io` |
-| `DATABASE_AUTH_TOKEN` | Auth token for Turso (if needed) | `eyJ...` |
+| `DATABASE_AUTH_TOKEN` | Auth token for Turso/Bunny | `eyJ...` |
 | `JWT_SECRET` | Secret for session signing | Generate with `openssl rand -base64 32` |
 
-### 4. Run Setup
+**Note:** Do not set `DATABASE_URL` to a `file:` path on Vercel - file system is ephemeral and your data will be lost.
+
+### 5. Run Setup
 
 After deployment, visit your site URL. You'll be redirected to the setup wizard to create your admin account and configure storage.
 
