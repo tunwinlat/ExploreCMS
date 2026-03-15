@@ -24,9 +24,10 @@ import './editor.css'
 interface TipTapEditorProps {
   initialContent?: string;
   onChange: (html: string) => void;
+  editable?: boolean;
 }
 
-export default function TipTapEditor({ initialContent = '', onChange }: TipTapEditorProps) {
+export default function TipTapEditor({ initialContent = '', onChange, editable = true }: TipTapEditorProps) {
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -67,6 +68,7 @@ export default function TipTapEditor({ initialContent = '', onChange }: TipTapEd
       })
     ],
     immediatelyRender: false,
+    editable,
     content: initialContent,
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML())

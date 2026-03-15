@@ -36,6 +36,11 @@ model Post {
   author     User     @relation(fields: [authorId], references: [id])
   tags       Tag[]
   views      PostView?
+
+  // Craft.do integration
+  craftDocumentId      String?   // Craft document ID, null for local posts
+  craftLastModifiedAt  String?   // ISO timestamp of last Craft modification
+  craftUnlinked        Boolean   @default(false) // true = was from Craft but user unlinked it
 }
 
 model Tag {
@@ -71,6 +76,15 @@ model SiteSettings {
   bunnyStorageZoneName  String?  // e.g., "my-zone"
   bunnyStorageApiKey    String?
   bunnyStorageUrl       String?  // CDN URL like https://my-zone.b-cdn.net
+
+  // Craft.do Integration
+  craftServerUrl    String?   // https://connect.craft.do/links/{serverID}/api/v1
+  craftApiToken     String?   // Bearer token
+  craftFolderId     String?   // Selected folder ID
+  craftFolderName   String?   // Folder name for display
+  craftSyncMode     String?   // "read-only" | "backup" | "full-sync"
+  craftEnabled      Boolean   @default(false)
+  craftLastSyncAt   String?   // ISO timestamp
 
   updatedAt         DateTime @updatedAt
 }

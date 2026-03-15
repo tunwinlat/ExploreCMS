@@ -28,5 +28,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
 
   if (!post) notFound()
 
-  return <PostEditor post={post} availableTags={availableTags} />
+  const isCraftLinked = !!(post as any).craftDocumentId && !(post as any).craftUnlinked
+
+  return <PostEditor post={post} availableTags={availableTags} readOnly={isCraftLinked} craftPostId={isCraftLinked ? post.id : undefined} />
 }

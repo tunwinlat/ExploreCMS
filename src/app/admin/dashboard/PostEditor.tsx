@@ -8,6 +8,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { savePost, deletePost } from './postActions'
+import { unlinkCraftPost } from './integrations/craftActions'
 import Link from 'next/link'
 import TipTapEditor from '@/components/editor/TipTapEditor'
 import TagSelector from '@/components/editor/TagSelector'
@@ -19,13 +20,17 @@ type AutosaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export default function PostEditor({
   post,
-  availableTags = []
+  availableTags = [],
+  readOnly = false,
+  craftPostId,
 }: {
   post?: Post & {
     tags?: {name: string, slug: string}[]
     isFeatured?: boolean
   }
   availableTags?: {name: string, slug: string}[]
+  readOnly?: boolean
+  craftPostId?: string
 }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -34,13 +39,28 @@ export default function PostEditor({
   const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>('idle')
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [unlinkLoading, setUnlinkLoading] = useState(false)
   const initialTags = post?.tags?.map(t => t.name) || []
 
   const formRef = useRef<HTMLFormElement>(null)
   const { toast } = useToast()
 
+  const handleUnlink = useCallback(async () => {
+    if (!craftPostId) return
+    setUnlinkLoading(true)
+    const res = await unlinkCraftPost(craftPostId)
+    if (res.success) {
+      toast('Post unlinked from Craft. Reloading...', 'success')
+      setTimeout(() => window.location.reload(), 1000)
+    } else {
+      toast(res.error || 'Failed to unlink.', 'error')
+      setUnlinkLoading(false)
+    }
+  }, [craftPostId, toast])
+
   // Background Auto-Save (Debounced 5 seconds after typing stops)
   useEffect(() => {
+    if (readOnly) return // Don't autosave read-only Craft posts
     const timer = setTimeout(async () => {
       if (!formRef.current || !post?.id) return
 
@@ -140,8 +160,39 @@ export default function PostEditor({
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
-      <form ref={formRef} onSubmit={handleSubmit} className="fade-in-up glass" style={{ display: 'flex', flexDirection: 'column', padding: '2rem' }}>
+      <form ref={formRef} onSubmit={readOnly ? (e) => e.preventDefault() : handleSubmit} className="fade-in-up glass" style={{ display: 'flex', flexDirection: 'column', padding: '2rem' }}>
         {post && <input type="hidden" name="id" value={post.id} />}
+
+        {readOnly && (
+          <div style={{
+            padding: '1rem 1.25rem',
+            marginBottom: '1.5rem',
+            background: 'rgba(99, 102, 241, 0.1)',
+            border: '1px solid #6366f1',
+            borderRadius: 'var(--radius-md)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
+          }}>
+            <div>
+              <strong style={{ color: '#6366f1', fontSize: '0.9rem' }}>Synced from Craft.do</strong>
+              <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                This post is managed by Craft. Editing is disabled. Unlink to enable editing (sync will stop for this post).
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleUnlink}
+              disabled={unlinkLoading}
+              className="btn"
+              style={{ background: '#6366f1', color: 'white', border: 'none', whiteSpace: 'nowrap' }}
+            >
+              {unlinkLoading ? 'Unlinking...' : 'Unlink from Craft'}
+            </button>
+          </div>
+        )}
 
         <div className="editor-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', alignItems: 'center', gap: '1rem' }}>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -151,52 +202,54 @@ export default function PostEditor({
             <h1 style={{ fontSize: '1.25rem', fontWeight: 500, margin: 0, color: 'var(--text-primary)' }}>
               {post?.title ? post.title : post?.published ? 'Editing Published Post' : 'New Post'}
             </h1>
-            {renderAutosaveIndicator()}
+            {!readOnly && renderAutosaveIndicator()}
           </div>
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="btn"
-              style={{ background: showAdvanced ? 'var(--border-color)' : 'transparent', border: '1px solid var(--border-color)' }}
-              aria-expanded={showAdvanced}
-              aria-controls="advanced-settings"
-            >
-              Settings
-            </button>
-
-            <button
-              type="submit"
-              name="action"
-              value={post?.published ? 'unpublish' : 'draft'}
-              disabled={loading}
-              className="btn"
-              style={{ background: 'rgba(234, 179, 8, 0.1)', color: '#eab308', border: 'none' }}
-            >
-              {loading ? 'Saving...' : post?.published ? 'Unpublish' : 'Save Draft'}
-            </button>
-            <button
-              type="submit"
-              name="action"
-              value="publish"
-              disabled={loading}
-              className="btn btn-primary"
-              style={{ background: '#10b981', color: 'white' }}
-            >
-              {loading ? 'Publishing...' : 'Publish'}
-            </button>
-            {post && (
+          {!readOnly && (
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <button
                 type="button"
-                onClick={() => setShowDeleteDialog(true)}
+                onClick={() => setShowAdvanced(!showAdvanced)}
                 className="btn"
-                style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none' }}
-                aria-label="Delete this post"
+                style={{ background: showAdvanced ? 'var(--border-color)' : 'transparent', border: '1px solid var(--border-color)' }}
+                aria-expanded={showAdvanced}
+                aria-controls="advanced-settings"
               >
-                Delete
+                Settings
               </button>
-            )}
-          </div>
+
+              <button
+                type="submit"
+                name="action"
+                value={post?.published ? 'unpublish' : 'draft'}
+                disabled={loading}
+                className="btn"
+                style={{ background: 'rgba(234, 179, 8, 0.1)', color: '#eab308', border: 'none' }}
+              >
+                {loading ? 'Saving...' : post?.published ? 'Unpublish' : 'Save Draft'}
+              </button>
+              <button
+                type="submit"
+                name="action"
+                value="publish"
+                disabled={loading}
+                className="btn btn-primary"
+                style={{ background: '#10b981', color: 'white' }}
+              >
+                {loading ? 'Publishing...' : 'Publish'}
+              </button>
+              {post && (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="btn"
+                  style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none' }}
+                  aria-label="Delete this post"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {error && (
@@ -212,6 +265,7 @@ export default function PostEditor({
             placeholder="Start with a brilliant title..."
             required
             defaultValue={post?.title}
+            readOnly={readOnly}
             aria-label="Post title"
             style={{
               fontSize: '1.5rem',
@@ -221,11 +275,12 @@ export default function PostEditor({
               color: 'var(--text-primary)',
               padding: '0.5rem 0',
               outline: 'none',
-              letterSpacing: '-0.5px'
+              letterSpacing: '-0.5px',
+              opacity: readOnly ? 0.7 : 1,
             }}
           />
 
-          {showAdvanced && (
+          {showAdvanced && !readOnly && (
             <div id="advanced-settings" className="fade-in-up" style={{
               background: 'var(--bg-color-secondary)',
               padding: '1.5rem',
@@ -266,7 +321,8 @@ export default function PostEditor({
 
           <TipTapEditor
             initialContent={post?.content || ''}
-            onChange={setContent}
+            onChange={readOnly ? () => {} : setContent}
+            editable={!readOnly}
           />
         </div>
       </form>

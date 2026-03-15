@@ -12,6 +12,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { BlogContent } from "@/components/blog/BlogContent";
 import { parseComponentConfig, COMPONENTS } from "@/lib/components-config";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -104,6 +105,16 @@ export default async function Home() {
 
   // Blog is default — render blog content
   const { featuredPosts, trendingPosts, latestPosts, nextCursor } = await getBlogData();
+
+  // Trigger Craft sync in the background after the response is sent
+  after(async () => {
+    try {
+      const { runCraftSync } = await import("@/lib/craftSync");
+      await runCraftSync();
+    } catch {
+      // Non-critical: sync failures should not affect the page
+    }
+  });
 
   let navItems: any[] = [];
   try {

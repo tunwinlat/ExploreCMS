@@ -80,6 +80,7 @@ export default function AdminSidebarNav({ role }: { role: string }) {
           {navItem('/admin/dashboard/navigation', 'Nav Builder')}
           {navItem('/admin/dashboard/popup', 'Popup Toast')}
           {navItem('/admin/dashboard/components', 'Components')}
+          {navItem('/admin/dashboard/integrations', 'Integrations')}
           {navItem('/admin/dashboard/settings', 'Site Settings')}
         </>
       )}
