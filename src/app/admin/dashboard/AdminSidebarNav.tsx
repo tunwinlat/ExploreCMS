@@ -28,7 +28,7 @@ export default function AdminSidebarNav({ role }: { role: string }) {
           fontWeight: isActive ? 500 : 400,
           color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
           fontSize: '0.875rem',
-          transition: 'all var(--transition-fast)'
+          transition: 'all var(--transition-fast)',
         }}
       >
         {label}
@@ -46,7 +46,7 @@ export default function AdminSidebarNav({ role }: { role: string }) {
       color: 'var(--text-secondary)',
       textTransform: 'uppercase',
       letterSpacing: '0.05em',
-      opacity: 0.6
+      opacity: 0.6,
     }}>
       {title}
     </div>
@@ -56,10 +56,18 @@ export default function AdminSidebarNav({ role }: { role: string }) {
     <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem', flex: 1 }}>
       {navItem('/admin/dashboard', 'Dashboard')}
 
-      {navSection('Content')}
+      {navSection('Blog')}
       {navItem('/admin/dashboard/posts/drafts', 'Drafts')}
       {navItem('/admin/dashboard/posts/published', 'Published')}
       {navItem('/admin/dashboard/new', 'New Post')}
+
+      {navSection('Projects')}
+      {navItem('/admin/dashboard/projects', 'All Projects')}
+      {navItem('/admin/dashboard/projects/new', 'New Project')}
+
+      {navSection('Photos')}
+      {navItem('/admin/dashboard/photos', 'Albums')}
+      {navItem('/admin/dashboard/photos/new-album', 'New Album')}
 
       {navSection('Account')}
       {navItem('/admin/dashboard/profile', 'My Profile')}
@@ -71,6 +79,7 @@ export default function AdminSidebarNav({ role }: { role: string }) {
           {navItem('/admin/dashboard/tags', 'Manage Tags')}
           {navItem('/admin/dashboard/navigation', 'Nav Builder')}
           {navItem('/admin/dashboard/popup', 'Popup Toast')}
+          {navItem('/admin/dashboard/components', 'Components')}
           {navItem('/admin/dashboard/settings', 'Site Settings')}
         </>
       )}

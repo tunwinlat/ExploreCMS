@@ -11,7 +11,7 @@ import { PopupToast } from "@/components/PopupToast";
 import { SiteHeader } from "@/components/SiteHeader";
 import { BlogContent } from "@/components/blog/BlogContent";
 import { parseComponentConfig, COMPONENTS } from "@/lib/components-config";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -90,19 +90,16 @@ function normalizePosts(posts: any[]) {
   }));
 }
 
-export default async function Home() {
+export default async function BlogPage() {
   const [settings, popupConfig] = await Promise.all([getSettings(), getPopupConfig()]);
 
   const componentConfig = parseComponentConfig(settings);
   const { enabledComponents, defaultComponent } = componentConfig;
+
+  // If blog is not enabled, 404
+  if (!enabledComponents.includes('blog')) notFound();
+
   const enabledMeta = COMPONENTS.filter(c => enabledComponents.includes(c.id));
-
-  // If default component is not blog, redirect to its canonical path
-  if (defaultComponent !== 'blog') {
-    redirect(defaultComponent === 'projects' ? '/projects' : '/photos');
-  }
-
-  // Blog is default — render blog content
   const { featuredPosts, trendingPosts, latestPosts, nextCursor } = await getBlogData();
 
   let navItems: any[] = [];
@@ -120,7 +117,6 @@ export default async function Home() {
         defaultComponent={defaultComponent}
       />
 
-      {/* Hero Section */}
       <div className="container" style={{ marginBottom: '2rem' }}>
         <div style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 2rem' }}>
           <h1 className="heading-xl">{settings?.headerTitle || "Explore. Create. Inspire."}</h1>

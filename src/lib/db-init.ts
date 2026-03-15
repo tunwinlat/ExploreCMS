@@ -142,14 +142,73 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
       );
 
       CREATE UNIQUE INDEX "PostView_postId_key" ON "PostView"("postId");
+
+      CREATE TABLE "Project" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "title" TEXT NOT NULL,
+          "slug" TEXT NOT NULL,
+          "tagline" TEXT NOT NULL DEFAULT '',
+          "content" TEXT NOT NULL DEFAULT '',
+          "coverImage" TEXT,
+          "status" TEXT NOT NULL DEFAULT 'completed',
+          "featured" BOOLEAN NOT NULL DEFAULT false,
+          "published" BOOLEAN NOT NULL DEFAULT false,
+          "githubUrl" TEXT,
+          "liveUrl" TEXT,
+          "techTags" TEXT NOT NULL DEFAULT '[]',
+          "order" INTEGER NOT NULL DEFAULT 0,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" DATETIME NOT NULL
+      );
+
+      CREATE UNIQUE INDEX "Project_slug_key" ON "Project"("slug");
+
+      CREATE TABLE "ProjectImage" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "projectId" TEXT NOT NULL,
+          "url" TEXT NOT NULL,
+          "caption" TEXT NOT NULL DEFAULT '',
+          "order" INTEGER NOT NULL DEFAULT 0,
+          CONSTRAINT "ProjectImage_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+      );
+
+      CREATE TABLE "PhotoAlbum" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "title" TEXT NOT NULL,
+          "slug" TEXT NOT NULL,
+          "description" TEXT NOT NULL DEFAULT '',
+          "coverImage" TEXT,
+          "published" BOOLEAN NOT NULL DEFAULT false,
+          "featured" BOOLEAN NOT NULL DEFAULT false,
+          "order" INTEGER NOT NULL DEFAULT 0,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" DATETIME NOT NULL
+      );
+
+      CREATE UNIQUE INDEX "PhotoAlbum_slug_key" ON "PhotoAlbum"("slug");
+
+      CREATE TABLE "Photo" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "albumId" TEXT NOT NULL,
+          "title" TEXT NOT NULL DEFAULT '',
+          "description" TEXT NOT NULL DEFAULT '',
+          "url" TEXT NOT NULL,
+          "location" TEXT NOT NULL DEFAULT '',
+          "takenAt" DATETIME,
+          "order" INTEGER NOT NULL DEFAULT 0,
+          "featured" BOOLEAN NOT NULL DEFAULT false,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" DATETIME NOT NULL,
+          CONSTRAINT "Photo_albumId_fkey" FOREIGN KEY ("albumId") REFERENCES "PhotoAlbum" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+      );
     `;
-    
+
     // Split and execute statements one by one
     const statements = schemaSQL
       .split(';')
       .map(s => s.trim())
       .filter(s => s.length > 0);
-    
+
     for (const stmt of statements) {
       try {
         await client.execute(stmt + ';');
@@ -158,6 +217,19 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
         if (!err.message?.includes('already exists')) {
           console.warn('[DB Init] Statement warning:', err.message);
         }
+      }
+    }
+
+    // Add component system columns to SiteSettings if they don't exist (migration for existing DBs)
+    const alterStatements = [
+      `ALTER TABLE "SiteSettings" ADD COLUMN "enabledComponents" TEXT NOT NULL DEFAULT '["blog"]'`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "defaultComponent" TEXT NOT NULL DEFAULT 'blog'`,
+    ];
+    for (const stmt of alterStatements) {
+      try {
+        await client.execute(stmt + ';');
+      } catch {
+        // Column already exists — safe to ignore
       }
     }
     
