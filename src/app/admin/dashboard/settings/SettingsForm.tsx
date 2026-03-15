@@ -9,7 +9,7 @@
 import { useState } from 'react'
 import { updateSiteSettings } from './settingsActions'
 import { testTargetConnection, migrateToTarget } from './migrationActions'
-import { testStorageConnection, migrateStorage, disconnectBunnyStorage, type StorageType } from './storageActions'
+import { testStorageConnection, migrateStorage, type StorageType } from './storageActions'
 import { THEMES } from '@/lib/themes'
 import { useToast } from '@/components/admin/Toast'
 import ConfirmDialog from '@/components/admin/ConfirmDialog'
@@ -208,23 +208,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
     setStorageLoading(false)
   }
 
-  const handleStorageDisconnect = async () => {
-    setStorageLoading(true)
-    toast('Downloading files from storage to local... This may take a moment.', 'info')
 
-    try {
-      const res = await disconnectBunnyStorage()
-      if (res.success) {
-        setCurrentStorageEnabled(false)
-        toast(`Successfully disconnected. Downloaded ${res.stats?.filesDownloaded || 0} files.`, 'success')
-      } else {
-        toast(res.error || 'Failed to disconnect.', 'error')
-      }
-    } catch (err: any) {
-      toast(`Disconnect failed: ${err.message}`, 'error')
-    }
-    setStorageLoading(false)
-  }
 
   return (
     <>
@@ -481,7 +465,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
             )}
           </div>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1rem' }}>
-            Migrate your images to a new storage provider. Supports Bunny Storage and any S3-compatible service (AWS S3, Cloudflare R2, MinIO, etc.). All image URLs in posts will be automatically updated.
+            Store and serve images from an external CDN. Supports Bunny Storage and any S3-compatible service (AWS S3, Cloudflare R2, MinIO, etc.). <strong>Required for Vercel deployment</strong> - local storage is not persistent on serverless platforms.
           </p>
 
           {currentStorageEnabled && (
@@ -492,17 +476,21 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
               marginBottom: '1rem'
             }}>
               <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                You are currently using external storage. You can migrate to a different storage provider below, or disconnect to use local storage.
+                You are currently using external storage. You can migrate to a different storage provider below.
               </p>
-              <button 
-                type="button" 
-                onClick={handleStorageDisconnect} 
-                disabled={storageLoading} 
-                className="btn" 
-                style={{ marginTop: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444' }}
-              >
-                {storageLoading ? 'Downloading...' : 'Disconnect & Use Local Storage'}
-              </button>
+            </div>
+          )}
+
+          {!currentStorageEnabled && (
+            <div style={{ 
+              padding: '1rem', 
+              background: 'rgba(234, 179, 8, 0.1)', 
+              borderRadius: 'var(--radius-md)',
+              marginBottom: '1rem'
+            }}>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: '#eab308' }}>
+                You are using local storage. <strong>Not recommended for production</strong> - uploaded files may not persist on serverless platforms like Vercel. Consider migrating to external storage.
+              </p>
             </div>
           )}
 
