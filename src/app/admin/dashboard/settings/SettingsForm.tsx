@@ -69,7 +69,7 @@ function ExpandableSection({
       </button>
       
       {expanded && (
-        <div style={{ padding: '0 1.25rem 1.25rem', borderTop: '1px solid var(--border-color)' }}>
+        <div style={{ padding: '1.5rem', borderTop: '1px solid var(--border-color)' }}>
           {children}
         </div>
       )}
@@ -270,11 +270,9 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
   }
 
   return (
-    <form onSubmit={handleSubmit} className="glass" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
-      
-      {/* Basic Settings - Always expanded by default */}
+    <form onSubmit={handleSubmit} className="glass" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%' }}>
       <ExpandableSection title="Basic Information" icon="📝" defaultExpanded={true}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div>
             <label htmlFor="title" style={{ fontWeight: 400 }}>Global Site Title</label>
             <input
@@ -308,9 +306,8 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
         </div>
       </ExpandableSection>
 
-      {/* Landing Page */}
       <ExpandableSection title="Landing Page" icon="🏠">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div>
             <label htmlFor="headerTitle" style={{ fontWeight: 400 }}>Header Title</label>
             <input
@@ -340,9 +337,8 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
         </div>
       </ExpandableSection>
 
-      {/* Sidebar */}
       <ExpandableSection title="Sidebar" icon="📰">
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <label htmlFor="sidebarAbout" style={{ fontWeight: 400 }}>About Text</label>
           <textarea
             id="sidebarAbout"
@@ -359,9 +355,8 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
         </div>
       </ExpandableSection>
 
-      {/* Branding */}
       <ExpandableSection title="Branding" icon="🎨">
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <label style={{ fontWeight: 400 }}>Site Favicon</label>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '0.5rem' }}>
             {faviconUrl && (
@@ -397,9 +392,8 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
         </div>
       </ExpandableSection>
 
-      {/* Theme */}
       <ExpandableSection title="Theme" icon="🎭">
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.75rem' }}>
             Select the core aesthetic of your entire platform. Each theme changes fonts, colors, accents, and roundness.
           </p>
@@ -454,13 +448,12 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
         </div>
       </ExpandableSection>
 
-      {/* Database Migration */}
       <ExpandableSection 
         title="Database Migration" 
         icon="🗄️"
         badge={targetUrl ? <span style={{ fontSize: '0.7rem', background: 'var(--accent-color)', color: 'white', padding: '0.125rem 0.5rem', borderRadius: '9999px' }}>configured</span> : undefined}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
             Migrate your data to another LibSQL-compatible database. Useful for backups or switching providers.
           </p>
@@ -537,13 +530,12 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
         </div>
       </ExpandableSection>
 
-      {/* Storage Migration */}
       <ExpandableSection 
         title="Storage Configuration" 
         icon="☁️"
         badge={currentStorageEnabled ? <span style={{ fontSize: '0.7rem', background: '#22c55e', color: 'white', padding: '0.125rem 0.5rem', borderRadius: '9999px' }}>active</span> : undefined}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
           {!currentStorageEnabled && (
             <div style={{ 
@@ -781,7 +773,6 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
         </div>
       </ExpandableSection>
 
-      {/* Save Button */}
       <button type="submit" disabled={loading} className="btn btn-primary" style={{ marginTop: '0.5rem', padding: '0.75rem', fontSize: '1rem' }}>
         {loading ? 'Saving...' : 'Save All Settings'}
       </button>
