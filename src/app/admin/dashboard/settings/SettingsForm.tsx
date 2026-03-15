@@ -8,8 +8,8 @@
 
 import { useState } from 'react'
 import { updateSiteSettings } from './settingsActions'
-import { connectBunnyDb, disconnectBunnyDb } from './bunnyActions'
 import { connectBunnyStorage, disconnectBunnyStorage } from './storageActions'
+import { testTargetConnection, migrateToTarget } from './migrationActions'
 import { THEMES } from '@/lib/themes'
 import { useToast } from '@/components/admin/Toast'
 import ConfirmDialog from '@/components/admin/ConfirmDialog'
@@ -23,12 +23,11 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
   const [footerText, setFooterText] = useState(initialSettings?.footerText || '')
   const [sidebarAbout, setSidebarAbout] = useState(initialSettings?.sidebarAbout || 'Discover articles on technology, creativity, and personal growth. Use the search or browse by tags to find what interests you.')
 
-  // Remote DB State
-  const [bunnyEnabled, setBunnyEnabled] = useState(initialSettings?.bunnyEnabled || false)
-  const [bunnyUrl, setBunnyUrl] = useState(initialSettings?.bunnyUrl || '')
-  const [bunnyToken, setBunnyToken] = useState(initialSettings?.bunnyToken || '')
-  const [bunnyLoading, setBunnyLoading] = useState(false)
-  const [showDisconnectDialog, setShowDisconnectDialog] = useState(false)
+  // Database Migration State
+  const [targetUrl, setTargetUrl] = useState('')
+  const [targetToken, setTargetToken] = useState('')
+  const [migrationLoading, setMigrationLoading] = useState(false)
+  const [migrationResult, setMigrationResult] = useState<any>(null)
 
   // Bunny Storage State
   const [bunnyStorageEnabled, setBunnyStorageEnabled] = useState(initialSettings?.bunnyStorageEnabled || false)
@@ -88,38 +87,42 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
     setLoading(false)
   }
 
-  const handleBunnyConnect = async () => {
-    if (!bunnyUrl || !bunnyToken) {
-      toast('URL and Token are required to connect.', 'warning')
+  const handleTestTargetConnection = async () => {
+    if (!targetUrl) {
+      toast('Target database URL is required.', 'warning')
       return
     }
 
-    setBunnyLoading(true)
-    toast('Connecting to Bunny DB... This may take a moment.', 'info')
+    setMigrationLoading(true)
+    toast('Testing connection to target database...', 'info')
 
-    const res = await connectBunnyDb(bunnyUrl, bunnyToken)
+    const res = await testTargetConnection(targetUrl, targetToken || undefined)
     if (res.success) {
-      setBunnyEnabled(true)
-      toast('Successfully connected and migrated to Bunny DB!', 'success')
+      toast(res.message || 'Connection successful!', 'success')
     } else {
-      toast(res.error || 'Failed to connect to Bunny DB.', 'error')
+      toast(res.error || 'Connection failed.', 'error')
     }
-    setBunnyLoading(false)
+    setMigrationLoading(false)
   }
 
-  const handleBunnyDisconnect = async () => {
-    setShowDisconnectDialog(false)
-    setBunnyLoading(true)
-    toast('Disconnecting... Pulling data back to local storage.', 'info')
-
-    const res = await disconnectBunnyDb()
-    if (res.success) {
-      setBunnyEnabled(false)
-      toast('Successfully disconnected. All data is restored locally.', 'success')
-    } else {
-      toast(res.error || 'Failed to disconnect.', 'error')
+  const handleMigrate = async () => {
+    if (!targetUrl) {
+      toast('Target database URL is required.', 'warning')
+      return
     }
-    setBunnyLoading(false)
+
+    setMigrationLoading(true)
+    setMigrationResult(null)
+    toast('Starting migration... This may take a moment.', 'info')
+
+    const res = await migrateToTarget(targetUrl, targetToken || undefined)
+    if (res.success) {
+      setMigrationResult(res.stats)
+      toast(`Migration complete! Migrated ${res.stats?.posts || 0} posts, ${res.stats?.users || 0} users.`, 'success')
+    } else {
+      toast(res.error || 'Migration failed.', 'error')
+    }
+    setMigrationLoading(false)
   }
 
   const handleBunnyStorageConnect = async () => {
@@ -344,54 +347,83 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'var(--bg-color-secondary)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: bunnyEnabled ? '2px solid var(--accent-color)' : '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'var(--bg-color-secondary)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 500, margin: 0 }}>Bunny Edge Database</h3>
-            {bunnyEnabled && (
-              <span className="status-badge status-badge--published" style={{ fontSize: '0.75rem' }}>CONNECTED TO EDGE</span>
-            )}
+            <h3 style={{ fontSize: '1rem', fontWeight: 500, margin: 0 }}>Database Migration</h3>
           </div>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1rem' }}>
-            Offloads Post and Analytics querying to a lightning-fast Global Edge network. Local setup handles only Author configurations. Connect to automatically migrate existing posts upwards!
+            Migrate your data to another LibSQL-compatible database. Useful for backups or preparing to switch databases. 
+            After migration, update your <code>DATABASE_URL</code> environment variable and redeploy to use the new database.
           </p>
 
-          <label htmlFor="bunnyUrl" style={{ fontWeight: 400 }}>LibSQL HTTP URL</label>
+          <label htmlFor="targetUrl" style={{ fontWeight: 400 }}>Target Database URL</label>
           <input
-            id="bunnyUrl"
+            id="targetUrl"
             type="url"
-            value={bunnyUrl}
-            onChange={(e) => setBunnyUrl(e.target.value)}
-            placeholder="libsql://yourapp-id.lite.bunnydb.net"
-            disabled={bunnyEnabled || bunnyLoading}
+            value={targetUrl}
+            onChange={(e) => setTargetUrl(e.target.value)}
+            placeholder="libsql://your-db.lite.bunnydb.net or libsql://your-db.turso.io"
+            disabled={migrationLoading}
             suppressHydrationWarning
             className="input-field"
-            style={{ opacity: bunnyEnabled ? 0.6 : 1 }}
           />
 
-          <label htmlFor="bunnyToken" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Auth Token</label>
+          <label htmlFor="targetToken" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Auth Token (Optional)</label>
           <input
-            id="bunnyToken"
+            id="targetToken"
             type="password"
-            value={bunnyToken}
-            onChange={(e) => setBunnyToken(e.target.value)}
-            placeholder="ey..."
-            disabled={bunnyEnabled || bunnyLoading}
+            value={targetToken}
+            onChange={(e) => setTargetToken(e.target.value)}
+            placeholder="ey... (required for most hosted databases)"
+            disabled={migrationLoading}
             suppressHydrationWarning
             className="input-field"
-            style={{ opacity: bunnyEnabled ? 0.6 : 1 }}
           />
 
-          <div style={{ marginTop: '1rem' }}>
-            {bunnyEnabled ? (
-              <button type="button" onClick={() => setShowDisconnectDialog(true)} disabled={bunnyLoading} className="btn" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444' }}>
-                {bunnyLoading ? 'Syncing...' : 'Disconnect and Fallback Local'}
-              </button>
-            ) : (
-              <button type="button" onClick={handleBunnyConnect} disabled={bunnyLoading || !bunnyUrl || !bunnyToken} className="btn" style={{ background: 'var(--accent-color)', color: 'white', border: 'none' }}>
-                {bunnyLoading ? 'Migrating Data to Edge...' : 'Connect to Bunny DB'}
-              </button>
-            )}
+          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button 
+              type="button" 
+              onClick={handleTestTargetConnection} 
+              disabled={migrationLoading || !targetUrl} 
+              className="btn" 
+              style={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)' }}
+            >
+              {migrationLoading ? 'Testing...' : 'Test Connection'}
+            </button>
+            <button 
+              type="button" 
+              onClick={handleMigrate} 
+              disabled={migrationLoading || !targetUrl} 
+              className="btn" 
+              style={{ background: 'var(--accent-color)', color: 'white', border: 'none' }}
+            >
+              {migrationLoading ? 'Migrating...' : 'Migrate Data'}
+            </button>
           </div>
+
+          {migrationResult && (
+            <div style={{ 
+              marginTop: '1rem', 
+              padding: '1rem', 
+              background: 'rgba(34, 197, 94, 0.1)', 
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid #22c55e'
+            }}>
+              <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#22c55e' }}>✓ Migration Complete</h4>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                <li>{migrationResult.users} users</li>
+                <li>{migrationResult.posts} posts</li>
+                <li>{migrationResult.tags} tags</li>
+                <li>{migrationResult.postViews} post view records</li>
+                {migrationResult.siteSettings && <li>Site settings</li>}
+                {migrationResult.popupConfig && <li>Popup configuration</li>}
+                {migrationResult.siteAnalytics && <li>Site analytics</li>}
+              </ul>
+              <p style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                To use this database, update your <code>DATABASE_URL</code> environment variable and redeploy.
+              </p>
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'var(--bg-color-secondary)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: bunnyStorageEnabled ? '2px solid #22c55e' : '1px solid var(--border-color)' }}>
@@ -523,18 +555,6 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
           {loading ? 'Saving...' : 'Save Site Settings'}
         </button>
       </form>
-
-      <ConfirmDialog
-        open={showDisconnectDialog}
-        title="Disconnect from Bunny DB?"
-        message="This will pull all remote data back to your local database and stop using the edge network. Your data will remain safe during the migration."
-        confirmLabel="Disconnect"
-        cancelLabel="Stay Connected"
-        variant="warning"
-        loading={bunnyLoading}
-        onConfirm={handleBunnyDisconnect}
-        onCancel={() => setShowDisconnectDialog(false)}
-      />
 
       <ConfirmDialog
         open={showStorageDisconnectDialog}
