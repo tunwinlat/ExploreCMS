@@ -272,7 +272,6 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
   return (
     <form onSubmit={handleSubmit} className="glass" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%' }}
       
-      {/* Basic Settings - Always expanded by default */}
       <ExpandableSection title="Basic Information" icon="📝" defaultExpanded={true}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div>
@@ -308,7 +307,6 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
         </div>
       </ExpandableSection>
 
-      {/* Landing Page */}
       <ExpandableSection title="Landing Page" icon="🏠">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div>
@@ -340,7 +338,6 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
         </div>
       </ExpandableSection>
 
-      {/* Sidebar */}
       <ExpandableSection title="Sidebar" icon="📰">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <label htmlFor="sidebarAbout" style={{ fontWeight: 400 }}>About Text</label>
@@ -359,7 +356,6 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
         </div>
       </ExpandableSection>
 
-      {/* Branding */}
       <ExpandableSection title="Branding" icon="🎨">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <label style={{ fontWeight: 400 }}>Site Favicon</label>
@@ -397,7 +393,6 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
         </div>
       </ExpandableSection>
 
-      {/* Theme */}
       <ExpandableSection title="Theme" icon="🎭">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.75rem' }}>
@@ -454,7 +449,6 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
         </div>
       </ExpandableSection>
 
-      {/* Database Migration */}
       <ExpandableSection 
         title="Database Migration" 
         icon="🗄️"
@@ -537,7 +531,6 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
         </div>
       </ExpandableSection>
 
-      {/* Storage Migration */}
       <ExpandableSection 
         title="Storage Configuration" 
         icon="☁️"
@@ -781,7 +774,6 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
         </div>
       </ExpandableSection>
 
-      {/* Save Button */}
       <button type="submit" disabled={loading} className="btn btn-primary" style={{ marginTop: '0.5rem', padding: '0.75rem', fontSize: '1rem' }}>
         {loading ? 'Saving...' : 'Save All Settings'}
       </button>
