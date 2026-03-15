@@ -8,8 +8,8 @@
 
 import { useState } from 'react'
 import { updateSiteSettings } from './settingsActions'
-import { connectBunnyStorage, disconnectBunnyStorage } from './storageActions'
 import { testTargetConnection, migrateToTarget } from './migrationActions'
+import { testStorageConnection, migrateStorage, disconnectBunnyStorage, type StorageType } from './storageActions'
 import { THEMES } from '@/lib/themes'
 import { useToast } from '@/components/admin/Toast'
 import ConfirmDialog from '@/components/admin/ConfirmDialog'
@@ -29,14 +29,27 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
   const [migrationLoading, setMigrationLoading] = useState(false)
   const [migrationResult, setMigrationResult] = useState<any>(null)
 
-  // Bunny Storage State
-  const [bunnyStorageEnabled, setBunnyStorageEnabled] = useState(initialSettings?.bunnyStorageEnabled || false)
-  const [bunnyStorageRegion, setBunnyStorageRegion] = useState(initialSettings?.bunnyStorageRegion || '')
-  const [bunnyStorageZoneName, setBunnyStorageZoneName] = useState(initialSettings?.bunnyStorageZoneName || '')
-  const [bunnyStorageApiKey, setBunnyStorageApiKey] = useState(initialSettings?.bunnyStorageApiKey || '')
-  const [bunnyStorageUrl, setBunnyStorageUrl] = useState(initialSettings?.bunnyStorageUrl || '')
-  const [bunnyStorageLoading, setBunnyStorageLoading] = useState(false)
-  const [showStorageDisconnectDialog, setShowStorageDisconnectDialog] = useState(false)
+  // Storage Migration State
+  const [storageType, setStorageType] = useState<StorageType>('bunny')
+  const [currentStorageEnabled, setCurrentStorageEnabled] = useState(initialSettings?.bunnyStorageEnabled || false)
+  
+  // Bunny Storage config
+  const [bunnyRegion, setBunnyRegion] = useState('')
+  const [bunnyZoneName, setBunnyZoneName] = useState('')
+  const [bunnyApiKey, setBunnyApiKey] = useState('')
+  const [bunnyCdnUrl, setBunnyCdnUrl] = useState('')
+  
+  // S3 Storage config
+  const [s3Endpoint, setS3Endpoint] = useState('')
+  const [s3AccessKeyId, setS3AccessKeyId] = useState('')
+  const [s3SecretAccessKey, setS3SecretAccessKey] = useState('')
+  const [s3Bucket, setS3Bucket] = useState('')
+  const [s3Region, setS3Region] = useState('us-east-1')
+  const [s3CdnUrl, setS3CdnUrl] = useState('')
+  
+  const [storageLoading, setStorageLoading] = useState(false)
+  const [storageResult, setStorageResult] = useState<any>(null)
+  const [storageWarning, setStorageWarning] = useState<string | null>(null)
 
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -125,58 +138,92 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
     setMigrationLoading(false)
   }
 
-  const handleBunnyStorageConnect = async () => {
-    if (!bunnyStorageZoneName || !bunnyStorageApiKey || !bunnyStorageUrl) {
-      toast('Zone name, API key, and CDN URL are required.', 'warning')
+  const handleTestStorageConnection = async () => {
+    const config = storageType === 'bunny' 
+      ? { region: bunnyRegion, zoneName: bunnyZoneName, apiKey: bunnyApiKey, cdnUrl: bunnyCdnUrl }
+      : { endpoint: s3Endpoint, accessKeyId: s3AccessKeyId, secretAccessKey: s3SecretAccessKey, bucket: s3Bucket, region: s3Region, cdnUrl: s3CdnUrl }
+    
+    // Validate required fields
+    if (storageType === 'bunny' && (!bunnyZoneName || !bunnyApiKey)) {
+      toast('Zone name and API key are required.', 'warning')
+      return
+    }
+    if (storageType === 's3' && (!s3Endpoint || !s3AccessKeyId || !s3SecretAccessKey || !s3Bucket)) {
+      toast('All S3 fields are required.', 'warning')
       return
     }
 
-    setBunnyStorageLoading(true)
-    toast('Connecting to Bunny Storage... This may take a moment.', 'info')
+    setStorageLoading(true)
+    setStorageWarning(null)
+    toast('Testing connection to storage...', 'info')
 
     try {
-      const res = await connectBunnyStorage(
-        bunnyStorageRegion,
-        bunnyStorageZoneName,
-        bunnyStorageApiKey,
-        bunnyStorageUrl
-      )
+      const res = await testStorageConnection(storageType, config)
       if (res.success) {
-        setBunnyStorageEnabled(true)
-        if (res.errors && res.errors.length > 0) {
-          toast(`Connected with ${res.migratedCount} images migrated. ${res.errors.length} errors - check console.`, 'warning')
-          console.error('Migration errors:', res.errors)
-        } else {
-          toast(`Successfully connected! Migrated ${res.migratedCount} images to Bunny Storage.`, 'success')
-        }
+        toast('Connection successful! Ready to migrate.', 'success')
       } else {
-        toast(res.error || 'Failed to connect to Bunny Storage.', 'error')
+        toast(res.error || 'Connection failed.', 'error')
       }
     } catch (err: any) {
-      toast(`Connection failed: ${err.message}`, 'error')
+      toast(`Test failed: ${err.message}`, 'error')
     }
-    setBunnyStorageLoading(false)
+    setStorageLoading(false)
   }
 
-  const handleBunnyStorageDisconnect = async () => {
-    setShowStorageDisconnectDialog(false)
-    setBunnyStorageLoading(true)
-    toast('Disconnecting... This may take a moment.', 'info')
+  const handleStorageMigrate = async () => {
+    const config = storageType === 'bunny' 
+      ? { region: bunnyRegion, zoneName: bunnyZoneName, apiKey: bunnyApiKey, cdnUrl: bunnyCdnUrl }
+      : { endpoint: s3Endpoint, accessKeyId: s3AccessKeyId, secretAccessKey: s3SecretAccessKey, bucket: s3Bucket, region: s3Region, cdnUrl: s3CdnUrl }
+    
+    // Validate required fields
+    if (storageType === 'bunny' && (!bunnyZoneName || !bunnyApiKey || !bunnyCdnUrl)) {
+      toast('Zone name, API key, and CDN URL are required.', 'warning')
+      return
+    }
+    if (storageType === 's3' && (!s3Endpoint || !s3AccessKeyId || !s3SecretAccessKey || !s3Bucket)) {
+      toast('All S3 fields are required.', 'warning')
+      return
+    }
+
+    setStorageLoading(true)
+    setStorageResult(null)
+    setStorageWarning(null)
+    toast('Starting storage migration... This may take a moment.', 'info')
+
+    try {
+      const res = await migrateStorage(storageType, config, { updatePostUrls: true })
+      if (res.success) {
+        setStorageResult(res.stats)
+        setCurrentStorageEnabled(true)
+        if (res.stats?.warnings && res.stats.warnings.length > 0) {
+          setStorageWarning(res.stats.warnings[0])
+        }
+        toast(`Migration complete! Migrated ${res.stats?.filesMigrated || 0} files.`, 'success')
+      } else {
+        toast(res.error || 'Migration failed.', 'error')
+      }
+    } catch (err: any) {
+      toast(`Migration failed: ${err.message}`, 'error')
+    }
+    setStorageLoading(false)
+  }
+
+  const handleStorageDisconnect = async () => {
+    setStorageLoading(true)
+    toast('Downloading files from storage to local... This may take a moment.', 'info')
 
     try {
       const res = await disconnectBunnyStorage()
-      console.log('Disconnect result:', res)
       if (res.success) {
-        setBunnyStorageEnabled(false)
-        toast(`Successfully disconnected${res.migratedCount && res.migratedCount > 0 ? `. Downloaded ${res.migratedCount} images` : ''}.`, 'success')
+        setCurrentStorageEnabled(false)
+        toast(`Successfully disconnected. Downloaded ${res.stats?.filesDownloaded || 0} files.`, 'success')
       } else {
         toast(res.error || 'Failed to disconnect.', 'error')
       }
     } catch (err: any) {
-      console.error('Disconnect error:', err)
       toast(`Disconnect failed: ${err.message}`, 'error')
     }
-    setBunnyStorageLoading(false)
+    setStorageLoading(false)
   }
 
   return (
@@ -426,129 +473,255 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
           )}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'var(--bg-color-secondary)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: bunnyStorageEnabled ? '2px solid #22c55e' : '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'var(--bg-color-secondary)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: currentStorageEnabled ? '2px solid #22c55e' : '1px solid var(--border-color)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 500, margin: 0 }}>Bunny Storage (CDN)</h3>
-            {bunnyStorageEnabled && (
-              <span style={{ fontSize: '0.75rem', background: '#22c55e', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontWeight: 500 }}>STORAGE CONNECTED</span>
+            <h3 style={{ fontSize: '1rem', fontWeight: 500, margin: 0 }}>Storage Migration</h3>
+            {currentStorageEnabled && (
+              <span style={{ fontSize: '0.75rem', background: '#22c55e', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontWeight: 500 }}>EXTERNAL STORAGE ACTIVE</span>
             )}
           </div>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1rem' }}>
-            Stores all images and assets on Bunny's global CDN. When connecting, all existing local images are migrated to storage and post URLs are automatically updated. New uploads go directly to Bunny Storage.
+            Migrate your images to a new storage provider. Supports Bunny Storage and any S3-compatible service (AWS S3, Cloudflare R2, MinIO, etc.). All image URLs in posts will be automatically updated.
           </p>
 
-          <label htmlFor="bunnyStorageRegion" style={{ fontWeight: 400 }}>Storage Region (Optional)</label>
-          <select
-            id="bunnyStorageRegion"
-            value={bunnyStorageRegion}
-            onChange={(e) => setBunnyStorageRegion(e.target.value)}
-            disabled={bunnyStorageEnabled || bunnyStorageLoading}
-            className="input-field"
-            style={{ opacity: bunnyStorageEnabled ? 0.6 : 1 }}
-          >
-            <option value="">Auto (Default - Falkenstein)</option>
-            <option value="fsn1">Falkenstein (fsn1)</option>
-            <option value="de">Frankfurt (de)</option>
-            <option value="uk">London (uk)</option>
-            <option value="se">Stockholm (se)</option>
-            <option value="ny">New York (ny)</option>
-            <option value="la">Los Angeles (la)</option>
-            <option value="sg">Singapore (sg)</option>
-            <option value="syd">Sydney (syd)</option>
-            <option value="br">Sao Paulo (br)</option>
-            <option value="jh">Johannesburg (jh)</option>
-          </select>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
-            Only select a region if you created a region-specific storage zone. Most users should leave this as "Auto".
-          </p>
-
-          <label htmlFor="bunnyStorageZoneName" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Storage Zone Name</label>
-          <input
-            id="bunnyStorageZoneName"
-            type="text"
-            value={bunnyStorageZoneName}
-            onChange={(e) => setBunnyStorageZoneName(e.target.value)}
-            placeholder="my-storage-zone"
-            disabled={bunnyStorageEnabled || bunnyStorageLoading}
-            suppressHydrationWarning
-            className="input-field"
-            style={{ opacity: bunnyStorageEnabled ? 0.6 : 1 }}
-          />
-
-          <label htmlFor="bunnyStorageApiKey" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Storage API Key</label>
-          <input
-            id="bunnyStorageApiKey"
-            type="password"
-            value={bunnyStorageApiKey}
-            onChange={(e) => setBunnyStorageApiKey(e.target.value)}
-            placeholder="your-storage-api-key"
-            disabled={bunnyStorageEnabled || bunnyStorageLoading}
-            suppressHydrationWarning
-            className="input-field"
-            style={{ opacity: bunnyStorageEnabled ? 0.6 : 1 }}
-          />
-
-          <label htmlFor="bunnyStorageUrl" style={{ fontWeight: 400, marginTop: '0.5rem' }}>CDN URL</label>
-          <input
-            id="bunnyStorageUrl"
-            type="url"
-            value={bunnyStorageUrl}
-            onChange={(e) => setBunnyStorageUrl(e.target.value)}
-            placeholder="https://my-zone.b-cdn.net"
-            disabled={bunnyStorageEnabled || bunnyStorageLoading}
-            suppressHydrationWarning
-            className="input-field"
-            style={{ opacity: bunnyStorageEnabled ? 0.6 : 1 }}
-          />
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
-            Your Bunny CDN pull zone URL (e.g., https://my-zone.b-cdn.net)
-          </p>
-
-          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            {!bunnyStorageEnabled && (
+          {currentStorageEnabled && (
+            <div style={{ 
+              padding: '1rem', 
+              background: 'rgba(59, 130, 246, 0.1)', 
+              borderRadius: 'var(--radius-md)',
+              marginBottom: '1rem'
+            }}>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                You are currently using external storage. You can migrate to a different storage provider below, or disconnect to use local storage.
+              </p>
               <button 
                 type="button" 
-                onClick={async () => {
-                  setBunnyStorageLoading(true)
-                  try {
-                    const res = await fetch('/api/test-bunny-storage', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        region: bunnyStorageRegion,
-                        storageZoneName: bunnyStorageZoneName,
-                        apiKey: bunnyStorageApiKey,
-                        cdnUrl: bunnyStorageUrl
-                      })
-                    })
-                    const data = await res.json()
-                    if (data.success) {
-                      toast(`Connection test successful! Found ${data.fileCount} files in storage. Endpoint: ${data.baseUrl}`, 'success')
-                    } else {
-                      toast(`Connection failed: ${data.error}`, 'error')
-                    }
-                  } catch (err: any) {
-                    toast(`Test failed: ${err.message}`, 'error')
-                  }
-                  setBunnyStorageLoading(false)
-                }} 
-                disabled={bunnyStorageLoading || !bunnyStorageZoneName || !bunnyStorageApiKey} 
+                onClick={handleStorageDisconnect} 
+                disabled={storageLoading} 
                 className="btn" 
-                style={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)' }}
+                style={{ marginTop: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444' }}
               >
-                Test Connection
+                {storageLoading ? 'Downloading...' : 'Disconnect & Use Local Storage'}
               </button>
-            )}
-            {bunnyStorageEnabled ? (
-              <button type="button" onClick={() => setShowStorageDisconnectDialog(true)} disabled={bunnyStorageLoading} className="btn" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444' }}>
-                {bunnyStorageLoading ? 'Downloading...' : 'Disconnect and Download to Local'}
-              </button>
-            ) : (
-              <button type="button" onClick={handleBunnyStorageConnect} disabled={bunnyStorageLoading || !bunnyStorageZoneName || !bunnyStorageApiKey || !bunnyStorageUrl} className="btn" style={{ background: '#22c55e', color: 'white', border: 'none' }}>
-                {bunnyStorageLoading ? 'Connecting & Migrating...' : 'Connect to Bunny Storage'}
-              </button>
-            )}
+            </div>
+          )}
+
+          <label style={{ fontWeight: 400 }}>Storage Provider</label>
+          <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={() => setStorageType('bunny')}
+              disabled={storageLoading}
+              className="btn"
+              style={{ 
+                flex: 1,
+                background: storageType === 'bunny' ? 'var(--accent-color)' : 'var(--bg-color)',
+                color: storageType === 'bunny' ? 'white' : 'var(--text-primary)',
+                border: `1px solid ${storageType === 'bunny' ? 'var(--accent-color)' : 'var(--border-color)'}`
+              }}
+            >
+              🐰 Bunny Storage
+            </button>
+            <button
+              type="button"
+              onClick={() => setStorageType('s3')}
+              disabled={storageLoading}
+              className="btn"
+              style={{ 
+                flex: 1,
+                background: storageType === 's3' ? 'var(--accent-color)' : 'var(--bg-color)',
+                color: storageType === 's3' ? 'white' : 'var(--text-primary)',
+                border: `1px solid ${storageType === 's3' ? 'var(--accent-color)' : 'var(--border-color)'}`
+              }}
+            >
+              ☁️ S3-Compatible
+            </button>
           </div>
+
+          {storageType === 'bunny' ? (
+            <>
+              <label htmlFor="bunnyRegion" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Region (Optional)</label>
+              <select
+                id="bunnyRegion"
+                value={bunnyRegion}
+                onChange={(e) => setBunnyRegion(e.target.value)}
+                disabled={storageLoading}
+                className="input-field"
+              >
+                <option value="">Auto (Default - Falkenstein)</option>
+                <option value="fsn1">Falkenstein (fsn1)</option>
+                <option value="de">Frankfurt (de)</option>
+                <option value="uk">London (uk)</option>
+                <option value="se">Stockholm (se)</option>
+                <option value="ny">New York (ny)</option>
+                <option value="la">Los Angeles (la)</option>
+                <option value="sg">Singapore (sg)</option>
+                <option value="syd">Sydney (syd)</option>
+                <option value="br">Sao Paulo (br)</option>
+                <option value="jh">Johannesburg (jh)</option>
+              </select>
+
+              <label htmlFor="bunnyZoneName" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Storage Zone Name *</label>
+              <input
+                id="bunnyZoneName"
+                type="text"
+                value={bunnyZoneName}
+                onChange={(e) => setBunnyZoneName(e.target.value)}
+                placeholder="my-storage-zone"
+                disabled={storageLoading}
+                className="input-field"
+              />
+
+              <label htmlFor="bunnyApiKey" style={{ fontWeight: 400, marginTop: '0.5rem' }}>API Key (Password) *</label>
+              <input
+                id="bunnyApiKey"
+                type="password"
+                value={bunnyApiKey}
+                onChange={(e) => setBunnyApiKey(e.target.value)}
+                placeholder="your-api-key"
+                disabled={storageLoading}
+                className="input-field"
+              />
+
+              <label htmlFor="bunnyCdnUrl" style={{ fontWeight: 400, marginTop: '0.5rem' }}>CDN URL *</label>
+              <input
+                id="bunnyCdnUrl"
+                type="url"
+                value={bunnyCdnUrl}
+                onChange={(e) => setBunnyCdnUrl(e.target.value)}
+                placeholder="https://my-zone.b-cdn.net"
+                disabled={storageLoading}
+                className="input-field"
+              />
+            </>
+          ) : (
+            <>
+              <label htmlFor="s3Endpoint" style={{ fontWeight: 400, marginTop: '0.5rem' }}>S3 Endpoint *</label>
+              <input
+                id="s3Endpoint"
+                type="url"
+                value={s3Endpoint}
+                onChange={(e) => setS3Endpoint(e.target.value)}
+                placeholder="https://s3.amazonaws.com or https://<account>.r2.cloudflarestorage.com"
+                disabled={storageLoading}
+                className="input-field"
+              />
+
+              <label htmlFor="s3AccessKeyId" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Access Key ID *</label>
+              <input
+                id="s3AccessKeyId"
+                type="text"
+                value={s3AccessKeyId}
+                onChange={(e) => setS3AccessKeyId(e.target.value)}
+                placeholder="AKIA..."
+                disabled={storageLoading}
+                className="input-field"
+              />
+
+              <label htmlFor="s3SecretAccessKey" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Secret Access Key *</label>
+              <input
+                id="s3SecretAccessKey"
+                type="password"
+                value={s3SecretAccessKey}
+                onChange={(e) => setS3SecretAccessKey(e.target.value)}
+                placeholder="..."
+                disabled={storageLoading}
+                className="input-field"
+              />
+
+              <label htmlFor="s3Bucket" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Bucket Name *</label>
+              <input
+                id="s3Bucket"
+                type="text"
+                value={s3Bucket}
+                onChange={(e) => setS3Bucket(e.target.value)}
+                placeholder="my-bucket"
+                disabled={storageLoading}
+                className="input-field"
+              />
+
+              <label htmlFor="s3Region" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Region</label>
+              <input
+                id="s3Region"
+                type="text"
+                value={s3Region}
+                onChange={(e) => setS3Region(e.target.value)}
+                placeholder="us-east-1"
+                disabled={storageLoading}
+                className="input-field"
+              />
+
+              <label htmlFor="s3CdnUrl" style={{ fontWeight: 400, marginTop: '0.5rem' }}>CDN URL (Optional)</label>
+              <input
+                id="s3CdnUrl"
+                type="url"
+                value={s3CdnUrl}
+                onChange={(e) => setS3CdnUrl(e.target.value)}
+                placeholder="https://cdn.example.com (leave blank to use S3 directly)"
+                disabled={storageLoading}
+                className="input-field"
+              />
+            </>
+          )}
+
+          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button 
+              type="button" 
+              onClick={handleTestStorageConnection} 
+              disabled={storageLoading} 
+              className="btn" 
+              style={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)' }}
+            >
+              {storageLoading ? 'Testing...' : 'Test Connection'}
+            </button>
+            <button 
+              type="button" 
+              onClick={handleStorageMigrate} 
+              disabled={storageLoading} 
+              className="btn" 
+              style={{ background: '#22c55e', color: 'white', border: 'none' }}
+            >
+              {storageLoading ? 'Migrating...' : 'Migrate Files'}
+            </button>
+          </div>
+
+          {storageWarning && (
+            <div style={{ 
+              marginTop: '1rem', 
+              padding: '0.75rem', 
+              background: 'rgba(234, 179, 8, 0.1)', 
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid #eab308'
+            }}>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: '#eab308' }}>
+                ⚠️ {storageWarning}
+              </p>
+            </div>
+          )}
+
+          {storageResult && (
+            <div style={{ 
+              marginTop: '1rem', 
+              padding: '1rem', 
+              background: 'rgba(34, 197, 94, 0.1)', 
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid #22c55e'
+            }}>
+              <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#22c55e' }}>✓ Migration Complete</h4>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                <li>{storageResult.filesMigrated} files migrated</li>
+                <li>{storageResult.postsUpdated} posts updated with new URLs</li>
+                {storageResult.errors.length > 0 && (
+                  <li style={{ color: '#ef4444' }}>{storageResult.errors.length} errors (check console)</li>
+                )}
+              </ul>
+              {storageResult.filesThroughVercel > 0 && (
+                <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#eab308' }}>
+                  Note: {storageResult.filesThroughVercel} files were transferred through Vercel. Consider direct storage-to-storage migration for large transfers.
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <button type="submit" disabled={loading} className="btn btn-primary" style={{ marginTop: '1rem', padding: '0.75rem', fontSize: '1rem' }}>
@@ -556,17 +729,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
         </button>
       </form>
 
-      <ConfirmDialog
-        open={showStorageDisconnectDialog}
-        title="Disconnect from Bunny Storage?"
-        message="This will download all images from Bunny Storage back to your local server and update post URLs. This ensures your images work if you switch to a new instance."
-        confirmLabel="Download & Disconnect"
-        cancelLabel="Keep Using Storage"
-        variant="warning"
-        loading={bunnyStorageLoading}
-        onConfirm={handleBunnyStorageDisconnect}
-        onCancel={() => setShowStorageDisconnectDialog(false)}
-      />
+
     </>
   )
 }

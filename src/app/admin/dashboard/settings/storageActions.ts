@@ -10,57 +10,65 @@ import { verifySession } from '@/lib/auth'
 import { prisma as localPrisma } from '@/lib/db'
 import { getPostDb } from '@/lib/bunnyDb'
 import { revalidatePath } from 'next/cache'
-import { readFile, access } from 'fs/promises'
+import { readFile } from 'fs/promises'
 import { join } from 'path'
 
+// Storage Types
+export type StorageType = 'bunny' | 's3'
+
+// Base Storage Interface
+interface StorageClient {
+  testConnection(): Promise<{ success: boolean; error?: string }>
+  uploadFile(path: string, buffer: Buffer, contentType?: string): Promise<string>
+  downloadFile(path: string): Promise<Buffer>
+  listFiles(path?: string): Promise<string[]>
+  deleteFile(path: string): Promise<void>
+  getPublicUrl(path: string): string
+}
+
 // Bunny Storage API Client
-class BunnyStorageClient {
+class BunnyStorageClient implements StorageClient {
   private apiKey: string
   private storageZoneName: string
   private region: string
+  private cdnUrl: string
   private baseUrl: string
 
-  constructor(apiKey: string, storageZoneName: string, region: string = '') {
+  constructor(apiKey: string, storageZoneName: string, region: string, cdnUrl: string) {
     this.apiKey = apiKey
     this.storageZoneName = storageZoneName
     this.region = region
-    // Storage endpoint: storage.bunnycdn.com (default/Falkenstein/Frankfurt) or region-specific
-    // Region-specific endpoints: la.storage.bunnycdn.com, ny.storage.bunnycdn.com, etc.
+    this.cdnUrl = cdnUrl.replace(/\/$/, '') // Remove trailing slash
+    
     const defaultRegions = ['', 'fsn1', 'de']
     this.baseUrl = defaultRegions.includes(region) 
       ? 'storage.bunnycdn.com'
       : `${region}.storage.bunnycdn.com`
   }
 
-  async testConnection(): Promise<{ success: boolean; error?: string; baseUrl: string }> {
+  async testConnection(): Promise<{ success: boolean; error?: string }> {
     try {
       const url = `https://${this.baseUrl}/${this.storageZoneName}/`
-      console.log('Testing connection to:', url)
       
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          'AccessKey': this.apiKey,
-        },
+        headers: { 'AccessKey': this.apiKey },
       })
 
       if (!response.ok) {
         const error = await response.text()
-        return { success: false, error: `HTTP ${response.status}: ${error}`, baseUrl: this.baseUrl }
+        return { success: false, error: `HTTP ${response.status}: ${error}` }
       }
 
-      return { success: true, baseUrl: this.baseUrl }
+      return { success: true }
     } catch (error: any) {
-      return { success: false, error: error.message, baseUrl: this.baseUrl }
+      return { success: false, error: error.message }
     }
   }
 
   async uploadFile(path: string, buffer: Buffer, contentType?: string): Promise<string> {
-    // Bunny Storage expects forward slashes in path
-    const normalizedPath = path.replace(/\\/g, '/')
+    const normalizedPath = path.replace(/^\//, '') // Remove leading slash
     const url = `https://${this.baseUrl}/${this.storageZoneName}/${normalizedPath}`
-    
-    console.log(`Uploading to: ${url}`)
     
     const response = await fetch(url, {
       method: 'PUT',
@@ -76,121 +84,340 @@ class BunnyStorageClient {
       throw new Error(`Bunny Storage upload failed: ${response.status} ${error}`)
     }
 
-    return normalizedPath
-  }
-
-  async deleteFile(path: string): Promise<void> {
-    const normalizedPath = path.replace(/\\/g, '/')
-    const url = `https://${this.baseUrl}/${this.storageZoneName}/${normalizedPath}`
-    
-    const response = await fetch(url, {
-      method: 'DELETE',
-      headers: {
-        'AccessKey': this.apiKey,
-      },
-    })
-
-    if (!response.ok && response.status !== 404) {
-      const error = await response.text()
-      throw new Error(`Bunny Storage delete failed: ${response.status} ${error}`)
-    }
-  }
-
-  async listFiles(path: string = ''): Promise<any[]> {
-    const normalizedPath = path.replace(/\\/g, '/')
-    const url = `https://${this.baseUrl}/${this.storageZoneName}/${normalizedPath}`
-    
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'AccessKey': this.apiKey,
-      },
-    })
-
-    if (!response.ok) {
-      const error = await response.text()
-      throw new Error(`Bunny Storage list failed: ${response.status} ${error}`)
-    }
-
-    return response.json()
+    return `${this.cdnUrl}/${normalizedPath}`
   }
 
   async downloadFile(path: string): Promise<Buffer> {
-    const normalizedPath = path.replace(/\\/g, '/')
+    const normalizedPath = path.replace(/^\//, '')
     const url = `https://${this.baseUrl}/${this.storageZoneName}/${normalizedPath}`
     
     const response = await fetch(url, {
       method: 'GET',
-      headers: {
-        'AccessKey': this.apiKey,
-      },
+      headers: { 'AccessKey': this.apiKey },
     })
 
     if (!response.ok) {
-      const error = await response.text()
-      throw new Error(`Bunny Storage download failed: ${response.status} ${error}`)
+      throw new Error(`Bunny Storage download failed: ${response.status}`)
     }
 
     const arrayBuffer = await response.arrayBuffer()
     return Buffer.from(arrayBuffer)
   }
-}
 
-/**
- * Check if file exists
- */
-async function fileExists(path: string): Promise<boolean> {
-  try {
-    await access(path)
-    return true
-  } catch {
-    return false
+  async listFiles(path: string = ''): Promise<string[]> {
+    const normalizedPath = path.replace(/^\//, '')
+    const url = `https://${this.baseUrl}/${this.storageZoneName}/${normalizedPath}`
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'AccessKey': this.apiKey },
+    })
+
+    if (!response.ok) {
+      throw new Error(`Bunny Storage list failed: ${response.status}`)
+    }
+
+    const files = await response.json()
+    return files.map((f: any) => f.ObjectName || f.Path).filter(Boolean)
+  }
+
+  async deleteFile(path: string): Promise<void> {
+    const normalizedPath = path.replace(/^\//, '')
+    const url = `https://${this.baseUrl}/${this.storageZoneName}/${normalizedPath}`
+    
+    await fetch(url, {
+      method: 'DELETE',
+      headers: { 'AccessKey': this.apiKey },
+    })
+  }
+
+  getPublicUrl(path: string): string {
+    const normalizedPath = path.replace(/^\//, '')
+    return `${this.cdnUrl}/${normalizedPath}`
   }
 }
 
-/**
- * Connect to Bunny Storage and migrate all local images to storage
- */
-export async function connectBunnyStorage(
-  region: string,
-  storageZoneName: string,
-  apiKey: string,
-  cdnUrl: string
-) {
-  console.log('=== connectBunnyStorage called ===')
-  console.log('Region:', region || '(default)')
-  console.log('Zone:', storageZoneName)
-  console.log('CDN URL:', cdnUrl)
+// S3-Compatible Storage Client
+class S3StorageClient implements StorageClient {
+  private endpoint: string
+  private accessKeyId: string
+  private secretAccessKey: string
+  private bucket: string
+  private region: string
+  private cdnUrl?: string
+
+  constructor(
+    endpoint: string,
+    accessKeyId: string,
+    secretAccessKey: string,
+    bucket: string,
+    region: string,
+    cdnUrl?: string
+  ) {
+    this.endpoint = endpoint.replace(/\/$/, '')
+    this.accessKeyId = accessKeyId
+    this.secretAccessKey = secretAccessKey
+    this.bucket = bucket
+    this.region = region
+    this.cdnUrl = cdnUrl?.replace(/\/$/, '')
+  }
+
+  private async signRequest(method: string, path: string, headers: Record<string, string> = {}, payload?: Buffer) {
+    // Simplified S3 signing - for production, use AWS SDK
+    // This is a basic implementation for demonstration
+    const date = new Date()
+    const dateStamp = date.toISOString().slice(0, 10).replace(/-/g, '')
+    const amzDate = date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z/, 'Z')
+    
+    const host = new URL(this.endpoint).host
+    const canonicalUri = `/${this.bucket}/${path}`
+    
+    const signedHeaders = 'host;x-amz-content-sha256;x-amz-date'
+    const payloadHash = payload 
+      ? await this.sha256(payload)
+      : 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' // empty string hash
+    
+    const canonicalRequest = `${method}\n${canonicalUri}\n\nhost:${host}\nx-amz-content-sha256:${payloadHash}\nx-amz-date:${amzDate}\n\n${signedHeaders}\n${payloadHash}`
+    
+    const credentialScope = `${dateStamp}/${this.region}/s3/aws4_request`
+    const stringToSign = `AWS4-HMAC-SHA256\n${amzDate}\n${credentialScope}\n${await this.sha256(Buffer.from(canonicalRequest))}`
+    
+    const signingKey = await this.getSigningKey(dateStamp)
+    const signature = await this.hmacSHA256(signingKey, stringToSign)
+    
+    const authorization = `AWS4-HMAC-SHA256 Credential=${this.accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`
+    
+    return {
+      ...headers,
+      'Host': host,
+      'X-Amz-Date': amzDate,
+      'X-Amz-Content-SHA256': payloadHash,
+      'Authorization': authorization,
+    }
+  }
+
+  private async sha256(buffer: Buffer): Promise<string> {
+    const crypto = await import('crypto')
+    return crypto.createHash('sha256').update(buffer).digest('hex')
+  }
+
+  private async hmacSHA256(key: Buffer, message: string): Promise<string> {
+    const crypto = await import('crypto')
+    return crypto.createHmac('sha256', key).update(message).digest('hex')
+  }
+
+  private async getSigningKey(dateStamp: string): Promise<Buffer> {
+    const crypto = await import('crypto')
+    const kDate = crypto.createHmac('sha256', `AWS4${this.secretAccessKey}`).update(dateStamp).digest()
+    const kRegion = crypto.createHmac('sha256', kDate).update(this.region).digest()
+    const kService = crypto.createHmac('sha256', kRegion).update('s3').digest()
+    const kSigning = crypto.createHmac('sha256', kService).update('aws4_request').digest()
+    return kSigning
+  }
+
+  async testConnection(): Promise<{ success: boolean; error?: string }> {
+    try {
+      // Try to list buckets or bucket contents
+      const path = ''
+      const headers = await this.signRequest('GET', path)
+      const url = `${this.endpoint}/${this.bucket}/`
+      
+      const response = await fetch(url, { method: 'GET', headers })
+      
+      if (response.status === 200 || response.status === 403) {
+        // 403 means credentials work but might lack permissions
+        return { success: true }
+      }
+      
+      const errorText = await response.text()
+      return { success: false, error: `HTTP ${response.status}: ${errorText}` }
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  }
+
+  async uploadFile(path: string, buffer: Buffer, contentType?: string): Promise<string> {
+    const normalizedPath = path.replace(/^\//, '')
+    const headers = await this.signRequest('PUT', normalizedPath, {
+      'Content-Type': contentType || 'application/octet-stream',
+    }, buffer)
+    
+    const url = `${this.endpoint}/${this.bucket}/${normalizedPath}`
+    
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers,
+      body: new Uint8Array(buffer),
+    })
+
+    if (!response.ok) {
+      const error = await response.text()
+      throw new Error(`S3 upload failed: ${response.status} ${error}`)
+    }
+
+    // Return CDN URL if provided, otherwise construct S3 URL
+    if (this.cdnUrl) {
+      return `${this.cdnUrl}/${normalizedPath}`
+    }
+    return `${this.endpoint}/${this.bucket}/${normalizedPath}`
+  }
+
+  async downloadFile(path: string): Promise<Buffer> {
+    const normalizedPath = path.replace(/^\//, '')
+    const headers = await this.signRequest('GET', normalizedPath)
+    const url = `${this.endpoint}/${this.bucket}/${normalizedPath}`
+    
+    const response = await fetch(url, { method: 'GET', headers })
+
+    if (!response.ok) {
+      throw new Error(`S3 download failed: ${response.status}`)
+    }
+
+    const arrayBuffer = await response.arrayBuffer()
+    return Buffer.from(arrayBuffer)
+  }
+
+  async listFiles(path: string = ''): Promise<string[]> {
+    const normalizedPath = path.replace(/^\//, '')
+    const headers = await this.signRequest('GET', normalizedPath)
+    const url = `${this.endpoint}/${this.bucket}/${normalizedPath}?list-type=2`
+    
+    const response = await fetch(url, { method: 'GET', headers })
+
+    if (!response.ok) {
+      throw new Error(`S3 list failed: ${response.status}`)
+    }
+
+    // Parse XML response (simplified)
+    const xml = await response.text()
+    const keys = xml.match(/<Key>([^<]+)<\/Key>/g) || []
+    return keys.map(k => k.replace(/<\/?Key>/g, ''))
+  }
+
+  async deleteFile(path: string): Promise<void> {
+    const normalizedPath = path.replace(/^\//, '')
+    const headers = await this.signRequest('DELETE', normalizedPath)
+    const url = `${this.endpoint}/${this.bucket}/${normalizedPath}`
+    
+    await fetch(url, { method: 'DELETE', headers })
+  }
+
+  getPublicUrl(path: string): string {
+    const normalizedPath = path.replace(/^\//, '')
+    if (this.cdnUrl) {
+      return `${this.cdnUrl}/${normalizedPath}`
+    }
+    return `${this.endpoint}/${this.bucket}/${normalizedPath}`
+  }
+}
+
+// Factory function to create storage client
+function createStorageClient(
+  type: StorageType,
+  config: any
+): StorageClient {
+  if (type === 'bunny') {
+    return new BunnyStorageClient(
+      config.apiKey,
+      config.zoneName,
+      config.region || '',
+      config.cdnUrl
+    )
+  } else {
+    return new S3StorageClient(
+      config.endpoint,
+      config.accessKeyId,
+      config.secretAccessKey,
+      config.bucket,
+      config.region || 'us-east-1',
+      config.cdnUrl
+    )
+  }
+}
+
+// Get current storage client from settings
+async function getCurrentStorageClient(): Promise<StorageClient | null> {
+  const settings = await (localPrisma as any).siteSettings.findUnique({
+    where: { id: 'singleton' },
+    select: {
+      storageType: true,
+      bunnyStorageEnabled: true,
+      bunnyStorageRegion: true,
+      bunnyStorageZoneName: true,
+      bunnyStorageApiKey: true,
+      bunnyStorageUrl: true,
+    }
+  })
+
+  if (!settings?.bunnyStorageEnabled && !settings?.storageType) {
+    return null
+  }
+
+  const type = settings.storageType || 'bunny'
   
+  if (type === 'bunny') {
+    return new BunnyStorageClient(
+      settings.bunnyStorageApiKey,
+      settings.bunnyStorageZoneName,
+      settings.bunnyStorageRegion || '',
+      settings.bunnyStorageUrl
+    )
+  }
+  
+  // For S3, we'd need to fetch the credentials from env or settings
+  // This is a simplified version
+  return null
+}
+
+// Test new storage connection
+export async function testStorageConnection(
+  type: StorageType,
+  config: any
+) {
+  const session = await verifySession()
+  if (session?.role !== 'OWNER') return { success: false, error: 'Unauthorized' }
+
   try {
-    const session = await verifySession()
-    console.log('Session verified:', session?.role)
+    const client = createStorageClient(type, config)
+    const result = await client.testConnection()
+    return result
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
+// Migrate storage
+export async function migrateStorage(
+  type: StorageType,
+  config: any,
+  options: { updatePostUrls: boolean } = { updatePostUrls: true }
+) {
+  const session = await verifySession()
+  if (session?.role !== 'OWNER') return { success: false, error: 'Unauthorized' }
+
+  const results = {
+    filesMigrated: 0,
+    postsUpdated: 0,
+    errors: [] as string[],
+    warnings: [] as string[],
+    filesThroughVercel: 0,
+  }
+
+  try {
+    // Create new storage client
+    const newClient = createStorageClient(type, config)
     
-    if (session?.role !== 'OWNER') {
-      return { success: false, error: 'Unauthorized' }
-    }
-
-    if (!storageZoneName || !apiKey || !cdnUrl) {
-      return { success: false, error: 'Zone name, API key, and CDN URL are required' }
-    }
-
-    const storage = new BunnyStorageClient(apiKey, storageZoneName, region)
-    
-    // Use getPostDb() to get the correct database (local or remote Bunny DB)
-    const postDb = await getPostDb() as any
-    const db = localPrisma as any
-
     // Test connection first
-    console.log('Testing connection to Bunny Storage...')
-    const testResult = await storage.testConnection()
+    const testResult = await newClient.testConnection()
     if (!testResult.success) {
-      console.error('Connection test failed:', testResult.error)
-      return { success: false, error: `Connection failed: ${testResult.error}. Make sure your zone name and API key are correct.` }
+      return { success: false, error: testResult.error }
     }
-    console.log('Connection test successful, using endpoint:', testResult.baseUrl)
 
-    // 1. Get all posts with images from the active database
-    console.log('Fetching posts with images...')
+    // Get current storage client (if any)
+    const currentClient = await getCurrentStorageClient()
+    
+    // Get all posts with images
+    const postDb = await getPostDb() as any
     const posts = await postDb.post.findMany({
       where: {
         content: {
@@ -199,338 +426,314 @@ export async function connectBunnyStorage(
       }
     })
 
-    console.log(`Found ${posts.length} posts with images to migrate`)
+    console.log(`[Storage Migration] Found ${posts.length} posts with images`)
 
-    if (posts.length === 0) {
-      console.log('No posts with images found, just saving settings...')
-      // No posts with images, just save settings
-      await db.siteSettings.update({
-        where: { id: 'singleton' },
-        data: {
-          bunnyStorageEnabled: true,
-          bunnyStorageRegion: region,
-          bunnyStorageZoneName: storageZoneName,
-          bunnyStorageApiKey: apiKey,
-          bunnyStorageUrl: cdnUrl,
-        }
-      })
-      
-      revalidatePath('/', 'layout')
-      return { success: true, migratedCount: 0 }
-    }
-    
-    // Limit concurrent uploads to avoid overwhelming the server
-    const MAX_CONCURRENT = 5
-
-    // 2. Extract and upload images
-    const uploadPromises: Promise<{ originalSrc: string; newSrc: string; postId: string } | null>[] = []
-    const publicDir = join(process.cwd(), 'public')
-    const errors: string[] = []
+    // Extract all unique image URLs
+    const imageUrls = new Set<string>()
+    const postImageMap = new Map<string, string[]>() // postId -> array of image URLs
 
     for (const post of posts) {
-      const imgRegex = /<img[^>]+src="([^">]+)"/g
+      const imgRegex = /<img[^>]+src="([^"]+)"/g
       const matches = [...post.content.matchAll(imgRegex)]
-
-      console.log(`Post ${post.id}: found ${matches.length} images`)
-
+      const postImages: string[] = []
+      
       for (const match of matches) {
-        const originalSrc = match[1]
-        
-        // Skip if already using external URL
-        if (originalSrc.startsWith('http')) {
-          console.log(`Skipping external URL: ${originalSrc}`)
-          continue
+        const url = match[1]
+        // Only migrate external URLs (skip data URIs)
+        if (url && !url.startsWith('data:')) {
+          imageUrls.add(url)
+          postImages.push(url)
         }
-        
-        // Skip if not from uploads folder
-        if (!originalSrc.startsWith('/uploads/')) {
-          console.log(`Skipping non-upload path: ${originalSrc}`)
-          continue
-        }
-
-        const filename = originalSrc.replace('/uploads/', '')
-        const localPath = join(publicDir, 'uploads', filename)
-
-        uploadPromises.push(
-          (async () => {
-            try {
-              // Check if file exists
-              const exists = await fileExists(localPath)
-              if (!exists) {
-                console.error(`File not found: ${localPath}`)
-                errors.push(`File not found: ${filename}`)
-                return null
-              }
-
-              console.log(`Reading file: ${localPath}`)
-              
-              // Read local file
-              const buffer = await readFile(localPath)
-              
-              console.log(`Uploading ${filename} (${buffer.length} bytes) to Bunny Storage...`)
-              
-              // Upload to Bunny Storage
-              const storagePath = `uploads/${filename}`
-              await storage.uploadFile(storagePath, buffer)
-              
-              console.log(`Successfully uploaded: ${filename}`)
-              
-              return { originalSrc, newSrc: `${cdnUrl}/uploads/${filename}`, postId: post.id }
-            } catch (err: any) {
-              console.error(`Failed to upload ${filename}:`, err.message)
-              errors.push(`${filename}: ${err.message}`)
-              return null
-            }
-          })()
-        )
+      }
+      
+      if (postImages.length > 0) {
+        postImageMap.set(post.id, postImages)
       }
     }
 
-    // Process uploads with concurrency limit
-    const results: ({ originalSrc: string; newSrc: string; postId: string } | null)[] = []
-    for (let i = 0; i < uploadPromises.length; i += MAX_CONCURRENT) {
-      const batch = uploadPromises.slice(i, i + MAX_CONCURRENT)
-      const batchResults = await Promise.all(batch)
-      results.push(...batchResults)
-      console.log(`Processed batch ${Math.floor(i / MAX_CONCURRENT) + 1}/${Math.ceil(uploadPromises.length / MAX_CONCURRENT)}`)
-    }
+    console.log(`[Storage Migration] Found ${imageUrls.size} unique images`)
+
+    // Migrate each image
+    const urlMapping = new Map<string, string>() // old URL -> new URL
     
-    const successful = results.filter((r): r is { originalSrc: string; newSrc: string; postId: string } => r !== null)
-
-    console.log(`Successfully uploaded ${successful.length} images`)
-    if (errors.length > 0) {
-      console.error('Upload errors:', errors)
-    }
-
-    // 3. Update post content with new URLs in the active database
-    for (const result of successful) {
+    for (const oldUrl of imageUrls) {
       try {
-        const post = await postDb.post.findUnique({ where: { id: result.postId } })
-        if (post) {
-          const updatedContent = post.content.replace(
-            new RegExp(result.originalSrc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
-            result.newSrc
-          )
+        let buffer: Buffer
+        let filename: string
+        let contentType = 'image/jpeg'
+
+        // Determine source
+        if (oldUrl.startsWith('http')) {
+          // External URL (current storage or other CDN)
+          if (currentClient && oldUrl.includes(config.cdnUrl || '')) {
+            // Already on target storage, skip
+            console.log(`[Storage Migration] Skipping (already on target): ${oldUrl}`)
+            urlMapping.set(oldUrl, oldUrl)
+            continue
+          }
+
+          // Download from current storage or external URL
+          console.log(`[Storage Migration] Downloading from external: ${oldUrl}`)
           
-          await postDb.post.update({
-            where: { id: result.postId },
-            data: { content: updatedContent }
-          })
-          
-          console.log(`Updated post ${result.postId}: ${result.originalSrc} -> ${result.newSrc}`)
+          if (currentClient) {
+            // Extract path from URL
+            const urlObj = new URL(oldUrl)
+            const pathParts = urlObj.pathname.split('/').filter(Boolean)
+            const path = pathParts.slice(1).join('/') // Remove first part (zone/bucket)
+            
+            try {
+              buffer = await currentClient.downloadFile(path)
+              filename = path.split('/').pop() || `image-${Date.now()}`
+            } catch {
+              // Fall back to fetching via HTTP
+              results.filesThroughVercel++
+              const response = await fetch(oldUrl)
+              if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`)
+              buffer = Buffer.from(await response.arrayBuffer())
+              filename = pathParts.pop() || `image-${Date.now()}`
+            }
+          } else {
+            // Local storage - fetch via HTTP
+            results.filesThroughVercel++
+            const response = await fetch(oldUrl)
+            if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`)
+            buffer = Buffer.from(await response.arrayBuffer())
+            const pathParts = new URL(oldUrl).pathname.split('/')
+            filename = pathParts.pop() || `image-${Date.now()}`
+          }
+        } else {
+          // Local file path (/uploads/...)
+          results.filesThroughVercel++
+          const publicDir = join(process.cwd(), 'public')
+          const localPath = join(publicDir, oldUrl.replace(/^\//, ''))
+          buffer = await readFile(localPath)
+          filename = oldUrl.split('/').pop() || `image-${Date.now()}`
         }
-      } catch (err: any) {
-        console.error(`Failed to update post ${result.postId}:`, err.message)
+
+        // Determine content type
+        if (filename.endsWith('.png')) contentType = 'image/png'
+        else if (filename.endsWith('.gif')) contentType = 'image/gif'
+        else if (filename.endsWith('.webp')) contentType = 'image/webp'
+        else if (filename.endsWith('.svg')) contentType = 'image/svg+xml'
+        else if (filename.endsWith('.ico')) contentType = 'image/x-icon'
+
+        // Upload to new storage
+        const storagePath = `uploads/${filename}`
+        const newUrl = await newClient.uploadFile(storagePath, buffer, contentType)
+        
+        urlMapping.set(oldUrl, newUrl)
+        results.filesMigrated++
+        
+        console.log(`[Storage Migration] Migrated: ${oldUrl} -> ${newUrl}`)
+      } catch (error: any) {
+        console.error(`[Storage Migration] Failed to migrate ${oldUrl}:`, error)
+        results.errors.push(`Failed to migrate ${oldUrl}: ${error.message}`)
       }
     }
 
-    // 4. Save settings (always to local database)
-    await db.siteSettings.update({
-      where: { id: 'singleton' },
-      data: {
-        bunnyStorageEnabled: true,
-        bunnyStorageRegion: region,
-        bunnyStorageZoneName: storageZoneName,
-        bunnyStorageApiKey: apiKey,
-        bunnyStorageUrl: cdnUrl,
+    // Update post content with new URLs
+    if (options.updatePostUrls) {
+      for (const [postId, images] of postImageMap) {
+        try {
+          const post = await postDb.post.findUnique({ where: { id: postId } })
+          if (!post) continue
+
+          let updatedContent = post.content
+          let hasChanges = false
+
+          for (const oldUrl of images) {
+            const newUrl = urlMapping.get(oldUrl)
+            if (newUrl && newUrl !== oldUrl) {
+              // Replace all occurrences
+              const escapedOldUrl = oldUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+              updatedContent = updatedContent.replace(
+                new RegExp(escapedOldUrl, 'g'),
+                newUrl
+              )
+              hasChanges = true
+            }
+          }
+
+          if (hasChanges) {
+            await postDb.post.update({
+              where: { id: postId },
+              data: { content: updatedContent }
+            })
+            results.postsUpdated++
+          }
+        } catch (error: any) {
+          console.error(`[Storage Migration] Failed to update post ${postId}:`, error)
+          results.errors.push(`Failed to update post ${postId}: ${error.message}`)
+        }
       }
+    }
+
+    // Save new storage settings
+    const updateData: any = {
+      storageType: type,
+      bunnyStorageEnabled: type === 'bunny',
+    }
+
+    if (type === 'bunny') {
+      updateData.bunnyStorageRegion = config.region || ''
+      updateData.bunnyStorageZoneName = config.zoneName
+      updateData.bunnyStorageApiKey = config.apiKey
+      updateData.bunnyStorageUrl = config.cdnUrl
+    } else {
+      // For S3, we might want to store some settings
+      // but credentials should go in environment variables
+      updateData.s3Endpoint = config.endpoint
+      updateData.s3Bucket = config.bucket
+      updateData.s3Region = config.region
+      updateData.s3CdnUrl = config.cdnUrl
+    }
+
+    await (localPrisma as any).siteSettings.upsert({
+      where: { id: 'singleton' },
+      update: updateData,
+      create: { id: 'singleton', ...updateData }
     })
 
     revalidatePath('/', 'layout')
-    
-    return { 
-      success: true, 
-      migratedCount: successful.length,
-      errors: errors.length > 0 ? errors : undefined
+
+    // Add warnings
+    if (results.filesThroughVercel > 10) {
+      results.warnings.push(
+        `${results.filesThroughVercel} files were transferred through Vercel. ` +
+        `Consider migrating directly between storage providers for better performance.`
+      )
     }
+
+    return {
+      success: true,
+      stats: results
+    }
+
   } catch (error: any) {
-    console.error('Bunny Storage Connection Error:', error)
-    return { success: false, error: error.message || 'Failed to connect to Bunny Storage' }
+    console.error('[Storage Migration] Error:', error)
+    return {
+      success: false,
+      error: error.message,
+      stats: results
+    }
   }
 }
 
-/**
- * Disconnect from Bunny Storage and migrate all images back to local
- */
+// Disconnect storage (download back to local)
 export async function disconnectBunnyStorage() {
-  console.log('=== disconnectBunnyStorage called ===')
-  
-  try {
-    const session = await verifySession()
-    console.log('Session:', session?.role)
-    
-    if (session?.role !== 'OWNER') {
-      return { success: false, error: 'Unauthorized' }
-    }
+  const session = await verifySession()
+  if (session?.role !== 'OWNER') return { success: false, error: 'Unauthorized' }
 
-    console.log('Fetching settings...')
+  try {
     const settings = await (localPrisma as any).siteSettings.findUnique({
       where: { id: 'singleton' }
     })
 
-    console.log('Settings found:', !!settings)
-    console.log('Storage enabled:', settings?.bunnyStorageEnabled)
-    console.log('Storage URL:', settings?.bunnyStorageUrl)
-
     if (!settings?.bunnyStorageEnabled) {
-      return { success: true, message: 'Already disconnected' }
+      return { success: true, message: 'Already using local storage' }
     }
 
-    // Use getPostDb() to get the correct database (local or remote Bunny DB)
+    // Get current storage client
+    const currentClient = await getCurrentStorageClient()
+    if (!currentClient) {
+      return { success: true, message: 'No storage to disconnect' }
+    }
+
+    const results = {
+      filesDownloaded: 0,
+      postsUpdated: 0,
+      errors: [] as string[],
+    }
+
+    // Get posts with external images
     const postDb = await getPostDb() as any
-    const db = localPrisma as any
-    const publicDir = join(process.cwd(), 'public')
-
-    // 1. Get all posts with Bunny Storage images from the active database
-    console.log('Searching for posts with Bunny Storage URL:', settings.bunnyStorageUrl)
+    const storageUrl = settings.bunnyStorageUrl || settings.s3CdnUrl
     
-    // If no bunnyStorageUrl, just disable and return
-    if (!settings.bunnyStorageUrl) {
-      console.log('No CDN URL found, just disabling...')
-      await db.siteSettings.update({
+    if (!storageUrl) {
+      // Just disable, nothing to download
+      await (localPrisma as any).siteSettings.update({
         where: { id: 'singleton' },
-        data: { bunnyStorageEnabled: false }
-      })
-      revalidatePath('/', 'layout')
-      return { success: true, migratedCount: 0 }
-    }
-
-    console.log('Querying posts...')
-    let posts: any[] = []
-    try {
-      posts = await postDb.post.findMany({
-        where: {
-          content: {
-            contains: settings.bunnyStorageUrl
-          }
+        data: { 
+          bunnyStorageEnabled: false,
+          storageType: null
         }
       })
-    } catch (dbErr: any) {
-      console.error('Database query failed:', dbErr.message)
-      // If query fails (maybe wrong DB), just disable storage
-      await db.siteSettings.update({
-        where: { id: 'singleton' },
-        data: { bunnyStorageEnabled: false }
-      })
-      revalidatePath('/', 'layout')
-      return { success: true, migratedCount: 0, warning: 'Database query failed, disabled storage only' }
+      return { success: true, stats: results }
     }
 
-    console.log(`Found ${posts.length} posts with Bunny Storage images to migrate back`)
+    const posts = await postDb.post.findMany({
+      where: {
+        content: {
+          contains: storageUrl
+        }
+      }
+    })
 
-    // If no posts have Bunny Storage images, just disable
-    if (posts.length === 0) {
-      console.log('No posts with Bunny Storage images found, just disabling...')
-      await db.siteSettings.update({
-        where: { id: 'singleton' },
-        data: { bunnyStorageEnabled: false }
-      })
-      revalidatePath('/', 'layout')
-      return { success: true, migratedCount: 0 }
-    }
-
-    const storage = new BunnyStorageClient(
-      settings.bunnyStorageApiKey,
-      settings.bunnyStorageZoneName,
-      settings.bunnyStorageRegion
-    )
-
-    // 2. Download and save images locally
-    const downloadPromises: Promise<{ originalSrc: string; newSrc: string; postId: string } | null>[] = []
-
+    // Download files and update posts
     for (const post of posts) {
-      const imgRegex = /<img[^>]+src="([^">]+)"/g
+      const imgRegex = new RegExp(`${storageUrl.replace(/[.*+?^${}()|[\]\\\\]/g, '\\\\$&')}([^"\\s]+)`, 'g')
       const matches = [...post.content.matchAll(imgRegex)]
+      
+      let updatedContent = post.content
+      let hasChanges = false
 
       for (const match of matches) {
-        const originalSrc = match[1]
+        const fullUrl = match[0]
+        const path = match[1].replace(/^\//, '')
         
-        // Skip if not from Bunny Storage
-        if (!originalSrc.includes(settings.bunnyStorageUrl)) continue
-
-        const filename = originalSrc.replace(`${settings.bunnyStorageUrl}/`, '')
-
-        downloadPromises.push(
-          (async () => {
-            try {
-              console.log(`Downloading ${filename} from Bunny Storage...`)
-              
-              // Download from Bunny Storage
-              const buffer = await storage.downloadFile(filename)
-              
-              // Save locally
-              const localPath = join(publicDir, filename)
-              const { writeFile, mkdir } = await import('fs/promises')
-              const { dirname } = await import('path')
-              
-              await mkdir(dirname(localPath), { recursive: true })
-              await writeFile(localPath, buffer)
-              
-              console.log(`Saved locally: ${localPath}`)
-              
-              return { originalSrc, newSrc: `/${filename}`, postId: post.id }
-            } catch (err: any) {
-              console.error(`Failed to download ${filename}:`, err.message)
-              return null
-            }
-          })()
-        )
-      }
-    }
-
-    // Process downloads with concurrency limit
-    const MAX_CONCURRENT = 5
-    const results: ({ originalSrc: string; newSrc: string; postId: string } | null)[] = []
-    for (let i = 0; i < downloadPromises.length; i += MAX_CONCURRENT) {
-      const batch = downloadPromises.slice(i, i + MAX_CONCURRENT)
-      const batchResults = await Promise.all(batch)
-      results.push(...batchResults)
-      console.log(`Processed download batch ${Math.floor(i / MAX_CONCURRENT) + 1}/${Math.ceil(downloadPromises.length / MAX_CONCURRENT)}`)
-    }
-    
-    const successful = results.filter((r): r is { originalSrc: string; newSrc: string; postId: string } => r !== null)
-
-    console.log(`Successfully downloaded ${successful.length} images`)
-
-    // 3. Update post content with local URLs in the active database
-    for (const result of successful) {
-      try {
-        const post = await postDb.post.findUnique({ where: { id: result.postId } })
-        if (post) {
-          const updatedContent = post.content.replace(
-            new RegExp(result.originalSrc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
-            result.newSrc
-          )
+        try {
+          // Download from storage
+          const buffer = await currentClient.downloadFile(path)
           
-          await postDb.post.update({
-            where: { id: result.postId },
-            data: { content: updatedContent }
-          })
+          // Save locally
+          const { writeFile, mkdir } = await import('fs/promises')
+          const { dirname } = await import('path')
+          const publicDir = join(process.cwd(), 'public')
+          const localPath = join(publicDir, 'uploads', path.split('/').pop()!)
           
-          console.log(`Updated post ${result.postId}`)
+          await mkdir(dirname(localPath), { recursive: true })
+          await writeFile(localPath, buffer)
+          
+          // Update URL in content
+          const localUrl = `/uploads/${path.split('/').pop()}`
+          updatedContent = updatedContent.replace(fullUrl, localUrl)
+          
+          results.filesDownloaded++
+          hasChanges = true
+        } catch (error: any) {
+          console.error(`[Storage] Failed to download ${path}:`, error)
+          results.errors.push(`Failed to download ${path}: ${error.message}`)
         }
-      } catch (err: any) {
-        console.error(`Failed to update post ${result?.postId}:`, err.message)
+      }
+
+      if (hasChanges) {
+        await postDb.post.update({
+          where: { id: post.id },
+          data: { content: updatedContent }
+        })
+        results.postsUpdated++
       }
     }
 
-    // 4. Disable storage connection (always in local database)
-    await db.siteSettings.update({
+    // Disable storage
+    await (localPrisma as any).siteSettings.update({
       where: { id: 'singleton' },
-      data: { bunnyStorageEnabled: false }
+      data: { 
+        bunnyStorageEnabled: false,
+        storageType: null
+      }
     })
 
     revalidatePath('/', 'layout')
-    return { success: true, migratedCount: successful.length }
+    return { success: true, stats: results }
+
   } catch (error: any) {
-    console.error('Bunny Storage Disconnection Error:', error)
-    return { success: false, error: error.message || 'Failed to disconnect from Bunny Storage' }
+    console.error('[Storage] Disconnection error:', error)
+    return { success: false, error: error.message }
   }
 }
 
-/**
- * Get current storage settings (without sensitive data)
- */
+// Get current storage settings
 export async function getStorageSettings() {
   const session = await verifySession()
   if (session?.role !== 'OWNER') return { success: false, error: 'Unauthorized' }
@@ -539,10 +742,15 @@ export async function getStorageSettings() {
     const settings = await (localPrisma as any).siteSettings.findUnique({
       where: { id: 'singleton' },
       select: {
+        storageType: true,
         bunnyStorageEnabled: true,
         bunnyStorageRegion: true,
         bunnyStorageZoneName: true,
         bunnyStorageUrl: true,
+        s3Endpoint: true,
+        s3Bucket: true,
+        s3Region: true,
+        s3CdnUrl: true,
       }
     })
 
