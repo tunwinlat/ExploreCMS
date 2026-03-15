@@ -25,6 +25,17 @@ export async function runSchemaMigrations(): Promise<void> {
     const migrations = [
       `ALTER TABLE "SiteSettings" ADD COLUMN "enabledComponents" TEXT NOT NULL DEFAULT '["blog"]'`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "defaultComponent" TEXT NOT NULL DEFAULT 'blog'`,
+      // v3 → Craft.do integration columns
+      `ALTER TABLE "Post" ADD COLUMN "craftDocumentId" TEXT`,
+      `ALTER TABLE "Post" ADD COLUMN "craftLastModifiedAt" TEXT`,
+      `ALTER TABLE "Post" ADD COLUMN "craftUnlinked" BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "craftServerUrl" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "craftApiToken" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "craftFolderId" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "craftFolderName" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "craftSyncMode" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "craftEnabled" BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "craftLastSyncAt" TEXT`,
       // New tables — CREATE IF NOT EXISTS is not supported by LibSQL, so we use CREATE TABLE and ignore "already exists"
       `CREATE TABLE "Project" (
         "id" TEXT NOT NULL PRIMARY KEY,
@@ -327,6 +338,17 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
     const alterStatements = [
       `ALTER TABLE "SiteSettings" ADD COLUMN "enabledComponents" TEXT NOT NULL DEFAULT '["blog"]'`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "defaultComponent" TEXT NOT NULL DEFAULT 'blog'`,
+      // Craft.do integration
+      `ALTER TABLE "Post" ADD COLUMN "craftDocumentId" TEXT`,
+      `ALTER TABLE "Post" ADD COLUMN "craftLastModifiedAt" TEXT`,
+      `ALTER TABLE "Post" ADD COLUMN "craftUnlinked" BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "craftServerUrl" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "craftApiToken" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "craftFolderId" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "craftFolderName" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "craftSyncMode" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "craftEnabled" BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "craftLastSyncAt" TEXT`,
     ];
     for (const stmt of alterStatements) {
       try {
