@@ -57,7 +57,7 @@ export default function SetupForm() {
           id="password" 
           name="password" 
           required 
-          minLength={6}
+          minLength={8}
           style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
         />
       </div>
