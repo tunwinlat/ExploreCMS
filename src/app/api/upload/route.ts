@@ -91,6 +91,8 @@ export async function POST(req: Request) {
       'image/gif': 'gif',
       'image/webp': 'webp',
       'image/svg+xml': 'svg',
+      'image/x-icon': 'ico',
+      'image/vnd.microsoft.icon': 'ico',
     }
 
     const mimeType = file.type.toLowerCase()
