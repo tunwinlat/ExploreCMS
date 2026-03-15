@@ -195,7 +195,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
       if (res.success) {
         setStorageResult(res.stats)
         setCurrentStorageEnabled(true)
-        if (res.stats?.warnings?.length > 0) {
+        if (res.stats?.warnings && res.stats.warnings.length > 0) {
           setStorageWarning(res.stats.warnings[0])
         }
         toast(`Migration complete! Migrated ${res.stats?.filesMigrated || 0} files.`, 'success')
