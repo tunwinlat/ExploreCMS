@@ -200,9 +200,11 @@ export async function completeSetup(data: SetupData) {
     if (existingOwner) {
       return { error: 'Instance already set up' }
     }
-  } catch {
+  } catch (error: any) {
     // Database might not be ready
-    return { error: 'Database connection failed. Please check your DATABASE_URL.' }
+    console.error('[Setup] Database connection error:', error)
+    const errorMessage = error?.message || 'Unknown error'
+    return { error: `Database connection failed: ${errorMessage}. Please check your DATABASE_URL and DATABASE_AUTH_TOKEN.` }
   }
 
   try {
