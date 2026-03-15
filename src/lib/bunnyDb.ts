@@ -24,9 +24,15 @@ let cachedRemoteUrl: string | null = null
  */
 export async function getPostDb(): Promise<PrismaClient> {
   // Always query the local sqlite database for the single source-of-truth configuration
-  const settings = await (localPrisma as any).siteSettings.findUnique({
-    where: { id: 'singleton' }
-  })
+  let settings = null
+  try {
+    settings = await (localPrisma as any).siteSettings.findUnique({
+      where: { id: 'singleton' }
+    })
+  } catch {
+    // Database tables may not exist yet (e.g. during build)
+    return localPrisma
+  }
 
   // If Bunny DB is disabled, or missing creds, safely fallback to local sqlite
   if (!settings?.bunnyEnabled || !settings?.bunnyUrl || !settings?.bunnyToken) {
