@@ -18,9 +18,14 @@ export default async function SettingsPage() {
     redirect('/admin/dashboard')
   }
 
-  const settings = await prisma.siteSettings.findUnique({
-    where: { id: 'singleton' }
-  })
+  let settings = null
+  try {
+    settings = await prisma.siteSettings.findUnique({
+      where: { id: 'singleton' }
+    })
+  } catch {
+    // Database tables may not exist yet (e.g. during build)
+  }
 
   return (
     <div className="fade-in-up">

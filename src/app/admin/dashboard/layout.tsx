@@ -12,6 +12,9 @@ import AdminSidebarNav from '@/app/admin/dashboard/AdminSidebarNav'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { ToastProvider } from '@/components/admin/Toast'
 
+// Admin pages require authentication and fresh data; never prerender them
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await verifySession()
   if (!session) redirect('/admin/login')

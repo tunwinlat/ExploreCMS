@@ -11,21 +11,27 @@ import Link from 'next/link'
 export const metadata = { title: "Analytics Overview | ExploreCMS" }
 
 export default async function DashboardPage() {
-  const postDb = await getPostDb() as any;
-  const [analytics, totalPosts, draftPosts] = await Promise.all([
-    prisma.siteAnalytics.findUnique({ where: { id: 'singleton' }}),
-    postDb.post.count({ where: { published: true }}),
-    postDb.post.count({ where: { published: false }})
-  ])
-
+  let analytics = null;
+  let totalPosts = 0;
+  let draftPosts = 0;
   let topPosts: any[] = [];
+
   try {
+    const postDb = await getPostDb() as any;
+    [analytics, totalPosts, draftPosts] = await Promise.all([
+      prisma.siteAnalytics.findUnique({ where: { id: 'singleton' }}),
+      postDb.post.count({ where: { published: true }}),
+      postDb.post.count({ where: { published: false }})
+    ]);
+
     topPosts = await postDb.postView.findMany({
       orderBy: { totalViews: 'desc' },
       take: 5,
       include: { post: true }
-    })
-  } catch(e) {}
+    });
+  } catch {
+    // Database tables may not exist yet (e.g. during build)
+  }
 
 
   return (
