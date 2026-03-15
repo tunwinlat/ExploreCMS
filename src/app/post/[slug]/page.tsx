@@ -4,6 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+import { cache } from 'react'
 import { prisma } from '@/lib/db'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -14,19 +15,25 @@ import { SearchBox } from '@/components/SearchBox'
 import { sanitizeContent } from '@/lib/sanitize'
 import './post.css'
 
+// ⚡ Bolt: Memoize the post query to avoid duplicate database calls
+// between generateMetadata and the PostPage component.
+const getPost = cache(async (slug: string) => {
+  return await prisma.post.findUnique({
+    where: { slug },
+    include: { author: true, tags: true }
+  })
+})
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const post = await prisma.post.findUnique({ where: { slug } })
+  const post = await getPost(slug)
   if (!post) return { title: 'Not Found' }
   return { title: `${post.title} | ExploreCMS` }
 }
 
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const post = await prisma.post.findUnique({
-    where: { slug },
-    include: { author: true, tags: true }
-  })
+  const post = await getPost(slug)
 
   // Enforce published check on the public frontend
   if (!post || !post.published) notFound()
