@@ -270,8 +270,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
   }
 
   return (
-    <form onSubmit={handleSubmit} className="glass" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%' }}
-      
+    <form onSubmit={handleSubmit} className="glass" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%' }}>
       <ExpandableSection title="Basic Information" icon="📝" defaultExpanded={true}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div>
