@@ -12,7 +12,70 @@ import { testTargetConnection, migrateToTarget } from './migrationActions'
 import { testStorageConnection, migrateStorage, type StorageType } from './storageActions'
 import { THEMES } from '@/lib/themes'
 import { useToast } from '@/components/admin/Toast'
-import ConfirmDialog from '@/components/admin/ConfirmDialog'
+
+// Expandable Section Component
+function ExpandableSection({ 
+  title, 
+  children, 
+  defaultExpanded = false,
+  badge,
+  icon
+}: { 
+  title: string
+  children: React.ReactNode
+  defaultExpanded?: boolean
+  badge?: React.ReactNode
+  icon?: string
+}) {
+  const [expanded, setExpanded] = useState(defaultExpanded)
+  
+  return (
+    <div style={{ 
+      background: 'var(--bg-color-secondary)', 
+      borderRadius: 'var(--radius-md)', 
+      border: '1px solid var(--border-color)',
+      overflow: 'hidden'
+    }}>
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        style={{
+          width: '100%',
+          padding: '1.25rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          color: 'var(--text-primary)',
+          fontSize: '1rem',
+          fontWeight: 500,
+          textAlign: 'left'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {icon && <span style={{ fontSize: '1.25rem' }}>{icon}</span>}
+          <span>{title}</span>
+          {badge && <span style={{ marginLeft: '0.5rem' }}>{badge}</span>}
+        </div>
+        <span style={{ 
+          transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+          transition: 'transform 0.2s',
+          fontSize: '0.875rem'
+        }}>
+          ▼
+        </span>
+      </button>
+      
+      {expanded && (
+        <div style={{ padding: '0 1.25rem 1.25rem', borderTop: '1px solid var(--border-color)' }}>
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function SettingsForm({ initialSettings }: { initialSettings: any }) {
   const [title, setTitle] = useState(initialSettings?.title || 'ExploreCMS')
@@ -143,7 +206,6 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
       ? { region: bunnyRegion, zoneName: bunnyZoneName, apiKey: bunnyApiKey, cdnUrl: bunnyCdnUrl }
       : { endpoint: s3Endpoint, accessKeyId: s3AccessKeyId, secretAccessKey: s3SecretAccessKey, bucket: s3Bucket, region: s3Region, cdnUrl: s3CdnUrl }
     
-    // Validate required fields
     if (storageType === 'bunny' && (!bunnyZoneName || !bunnyApiKey)) {
       toast('Zone name and API key are required.', 'warning')
       return
@@ -175,7 +237,6 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
       ? { region: bunnyRegion, zoneName: bunnyZoneName, apiKey: bunnyApiKey, cdnUrl: bunnyCdnUrl }
       : { endpoint: s3Endpoint, accessKeyId: s3AccessKeyId, secretAccessKey: s3SecretAccessKey, bucket: s3Bucket, region: s3Region, cdnUrl: s3CdnUrl }
     
-    // Validate required fields
     if (storageType === 'bunny' && (!bunnyZoneName || !bunnyApiKey || !bunnyCdnUrl)) {
       toast('Zone name, API key, and CDN URL are required.', 'warning')
       return
@@ -208,88 +269,100 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
     setStorageLoading(false)
   }
 
-
-
   return (
-    <>
-      <form onSubmit={handleSubmit} className="glass" style={{ padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <label htmlFor="title" style={{ fontWeight: 400 }}>Global Site Title</label>
-          <input
-            id="title"
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="ExploreCMS"
-            required
-            suppressHydrationWarning
-            className="input-field"
-          />
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>This appears in the browser tab and search engines.</p>
+    <form onSubmit={handleSubmit} className="glass" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+      
+      {/* Basic Settings - Always expanded by default */}
+      <ExpandableSection title="Basic Information" icon="📝" defaultExpanded={true}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label htmlFor="title" style={{ fontWeight: 400 }}>Global Site Title</label>
+            <input
+              id="title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="ExploreCMS"
+              required
+              className="input-field"
+            />
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+              This appears in the browser tab and search engines.
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="footerText" style={{ fontWeight: 400 }}>Footer Text</label>
+            <input
+              id="footerText"
+              type="text"
+              value={footerText}
+              onChange={(e) => setFooterText(e.target.value)}
+              placeholder={`${title || 'ExploreCMS'}. All rights reserved.`}
+              className="input-field"
+            />
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+              Everything after "© {new Date().getFullYear()}". Leave blank to use site title.
+            </p>
+          </div>
         </div>
+      </ExpandableSection>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 500, marginTop: '1.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)' }}>Landing Page Customization</h3>
-          <label htmlFor="headerTitle" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Header Title</label>
-          <input
-            id="headerTitle"
-            type="text"
-            value={headerTitle}
-            onChange={(e) => setHeaderTitle(e.target.value)}
-            placeholder="Explore. Create. Inspire."
-            required
-            suppressHydrationWarning
-            className="input-field"
-          />
+      {/* Landing Page */}
+      <ExpandableSection title="Landing Page" icon="🏠">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label htmlFor="headerTitle" style={{ fontWeight: 400 }}>Header Title</label>
+            <input
+              id="headerTitle"
+              type="text"
+              value={headerTitle}
+              onChange={(e) => setHeaderTitle(e.target.value)}
+              placeholder="Explore. Create. Inspire."
+              required
+              className="input-field"
+            />
+          </div>
 
-          <label htmlFor="headerDescription" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Header Description</label>
-          <textarea
-            id="headerDescription"
-            value={headerDescription}
-            onChange={(e) => setHeaderDescription(e.target.value)}
-            placeholder="Welcome to my personal corner of the internet..."
-            rows={3}
-            required
-            suppressHydrationWarning
-            className="input-field"
-            style={{ resize: 'vertical' }}
-          />
+          <div>
+            <label htmlFor="headerDescription" style={{ fontWeight: 400 }}>Header Description</label>
+            <textarea
+              id="headerDescription"
+              value={headerDescription}
+              onChange={(e) => setHeaderDescription(e.target.value)}
+              placeholder="Welcome to my personal corner of the internet..."
+              rows={3}
+              required
+              className="input-field"
+              style={{ resize: 'vertical' }}
+            />
+          </div>
         </div>
+      </ExpandableSection>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 500, marginTop: '1.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)' }}>Sidebar About Section</h3>
-          <label htmlFor="sidebarAbout" style={{ fontWeight: 400, marginTop: '0.5rem' }}>About Text</label>
+      {/* Sidebar */}
+      <ExpandableSection title="Sidebar" icon="📰">
+        <div>
+          <label htmlFor="sidebarAbout" style={{ fontWeight: 400 }}>About Text</label>
           <textarea
             id="sidebarAbout"
             value={sidebarAbout}
             onChange={(e) => setSidebarAbout(e.target.value)}
             placeholder="Discover articles on technology, creativity, and personal growth..."
             rows={4}
-            suppressHydrationWarning
             className="input-field"
             style={{ resize: 'vertical' }}
           />
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>This text appears in the "About" card in the right sidebar on the home page.</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+            This text appears in the "About" card in the right sidebar on the home page.
+          </p>
         </div>
+      </ExpandableSection>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 500, marginTop: '1.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)' }}>Footer</h3>
-          <label htmlFor="footerText" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Footer Text</label>
-          <input
-            id="footerText"
-            type="text"
-            value={footerText}
-            onChange={(e) => setFooterText(e.target.value)}
-            placeholder={`${title || 'ExploreCMS'}. All rights reserved.`}
-            suppressHydrationWarning
-            className="input-field"
-          />
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Everything after "© {new Date().getFullYear()}". Leave blank to default to your site title + "All rights reserved."</p>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 500, marginTop: '1.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)' }}>Site Favicon</h3>
-
+      {/* Branding */}
+      <ExpandableSection title="Branding" icon="🎨">
+        <div>
+          <label style={{ fontWeight: 400 }}>Site Favicon</label>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '0.5rem' }}>
             {faviconUrl && (
               <img src={faviconUrl} alt="Favicon Preview" style={{ width: '48px', height: '48px', objectFit: 'contain', borderRadius: '8px', background: 'var(--bg-color)', padding: '4px' }} />
@@ -309,7 +382,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
                 className="btn"
                 style={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)', cursor: 'pointer', display: 'inline-block', fontSize: '0.9rem', padding: '0.5rem 1rem' }}
               >
-                {uploading ? 'Uploading...' : 'Upload Favicon Image'}
+                {uploading ? 'Uploading...' : 'Upload Favicon'}
               </label>
             </div>
           </div>
@@ -317,23 +390,24 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
             type="text"
             value={faviconUrl}
             onChange={(e) => setFaviconUrl(e.target.value)}
-            placeholder="/favicon.ico or uploaded URL"
-            suppressHydrationWarning
+            placeholder="/favicon.ico or URL"
             className="input-field"
             style={{ marginTop: '0.5rem' }}
           />
         </div>
+      </ExpandableSection>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 500, marginTop: '1.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)' }}>Global Theme Gallery</h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-            Select the core aesthetic of your entire platform. Each theme fundamentally changes fonts, background layers, accents, and roundness. All themes support dynamic Light/Dark swapping!
+      {/* Theme */}
+      <ExpandableSection title="Theme" icon="🎭">
+        <div>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.75rem' }}>
+            Select the core aesthetic of your entire platform. Each theme changes fonts, colors, accents, and roundness.
           </p>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-            gap: '1rem',
-            maxHeight: '400px',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+            gap: '0.75rem',
+            maxHeight: '300px',
             overflowY: 'auto',
             padding: '0.5rem',
             background: 'var(--bg-color)',
@@ -358,7 +432,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
                   }
                 }}
                 style={{
-                  padding: '1rem',
+                  padding: '0.75rem',
                   borderRadius: '8px',
                   border: theme === t.id ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
                   background: 'var(--bg-color-secondary)',
@@ -369,7 +443,8 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
                   alignItems: 'center',
                   justifyContent: 'center',
                   textAlign: 'center',
-                  fontFamily: t.fontFamily || 'unset'
+                  fontFamily: t.fontFamily || 'unset',
+                  fontSize: '0.9rem'
                 }}
               >
                 <strong>{t.name}</strong>
@@ -377,41 +452,46 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
             ))}
           </div>
         </div>
+      </ExpandableSection>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'var(--bg-color-secondary)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 500, margin: 0 }}>Database Migration</h3>
-          </div>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1rem' }}>
-            Migrate your data to another LibSQL-compatible database. Useful for backups or preparing to switch databases. 
-            After migration, update your <code>DATABASE_URL</code> environment variable and redeploy to use the new database.
+      {/* Database Migration */}
+      <ExpandableSection 
+        title="Database Migration" 
+        icon="🗄️"
+        badge={targetUrl ? <span style={{ fontSize: '0.7rem', background: 'var(--accent-color)', color: 'white', padding: '0.125rem 0.5rem', borderRadius: '9999px' }}>configured</span> : undefined}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
+            Migrate your data to another LibSQL-compatible database. Useful for backups or switching providers.
           </p>
 
-          <label htmlFor="targetUrl" style={{ fontWeight: 400 }}>Target Database URL</label>
-          <input
-            id="targetUrl"
-            type="url"
-            value={targetUrl}
-            onChange={(e) => setTargetUrl(e.target.value)}
-            placeholder="libsql://your-db.lite.bunnydb.net or libsql://your-db.turso.io"
-            disabled={migrationLoading}
-            suppressHydrationWarning
-            className="input-field"
-          />
+          <div>
+            <label htmlFor="targetUrl" style={{ fontWeight: 400 }}>Target Database URL</label>
+            <input
+              id="targetUrl"
+              type="url"
+              value={targetUrl}
+              onChange={(e) => setTargetUrl(e.target.value)}
+              placeholder="libsql://your-db.lite.bunnydb.net or libsql://your-db.turso.io"
+              disabled={migrationLoading}
+              className="input-field"
+            />
+          </div>
 
-          <label htmlFor="targetToken" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Auth Token (Optional)</label>
-          <input
-            id="targetToken"
-            type="password"
-            value={targetToken}
-            onChange={(e) => setTargetToken(e.target.value)}
-            placeholder="ey... (required for most hosted databases)"
-            disabled={migrationLoading}
-            suppressHydrationWarning
-            className="input-field"
-          />
+          <div>
+            <label htmlFor="targetToken" style={{ fontWeight: 400 }}>Auth Token (Optional)</label>
+            <input
+              id="targetToken"
+              type="password"
+              value={targetToken}
+              onChange={(e) => setTargetToken(e.target.value)}
+              placeholder="ey... (required for most hosted databases)"
+              disabled={migrationLoading}
+              className="input-field"
+            />
+          </div>
 
-          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <button 
               type="button" 
               onClick={handleTestTargetConnection} 
@@ -434,7 +514,6 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
 
           {migrationResult && (
             <div style={{ 
-              marginTop: '1rem', 
               padding: '1rem', 
               background: 'rgba(34, 197, 94, 0.1)', 
               borderRadius: 'var(--radius-md)',
@@ -456,46 +535,33 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
             </div>
           )}
         </div>
+      </ExpandableSection>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'var(--bg-color-secondary)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: currentStorageEnabled ? '2px solid #22c55e' : '1px solid var(--border-color)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 500, margin: 0 }}>Storage Migration</h3>
-            {currentStorageEnabled && (
-              <span style={{ fontSize: '0.75rem', background: '#22c55e', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontWeight: 500 }}>EXTERNAL STORAGE ACTIVE</span>
-            )}
-          </div>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1rem' }}>
-            Store and serve images from an external CDN. Supports Bunny Storage and any S3-compatible service (AWS S3, Cloudflare R2, MinIO, etc.). <strong>Required for Vercel deployment</strong> - local storage is not persistent on serverless platforms.
-          </p>
-
-          {currentStorageEnabled && (
-            <div style={{ 
-              padding: '1rem', 
-              background: 'rgba(59, 130, 246, 0.1)', 
-              borderRadius: 'var(--radius-md)',
-              marginBottom: '1rem'
-            }}>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                You are currently using external storage. You can migrate to a different storage provider below.
-              </p>
-            </div>
-          )}
-
+      {/* Storage Migration */}
+      <ExpandableSection 
+        title="Storage Configuration" 
+        icon="☁️"
+        badge={currentStorageEnabled ? <span style={{ fontSize: '0.7rem', background: '#22c55e', color: 'white', padding: '0.125rem 0.5rem', borderRadius: '9999px' }}>active</span> : undefined}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          
           {!currentStorageEnabled && (
             <div style={{ 
-              padding: '1rem', 
+              padding: '0.75rem', 
               background: 'rgba(234, 179, 8, 0.1)', 
               borderRadius: 'var(--radius-md)',
-              marginBottom: '1rem'
             }}>
               <p style={{ margin: 0, fontSize: '0.85rem', color: '#eab308' }}>
-                You are using local storage. <strong>Not recommended for production</strong> - uploaded files may not persist on serverless platforms like Vercel. Consider migrating to external storage.
+                You are using local storage. <strong>Not recommended for production</strong> - files may not persist on serverless platforms like Vercel.
               </p>
             </div>
           )}
 
-          <label style={{ fontWeight: 400 }}>Storage Provider</label>
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
+            Store images on an external CDN. Supports Bunny Storage and S3-compatible services (AWS S3, Cloudflare R2, MinIO, etc.).
+          </p>
+
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
               type="button"
               onClick={() => setStorageType('bunny')}
@@ -508,7 +574,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
                 border: `1px solid ${storageType === 'bunny' ? 'var(--accent-color)' : 'var(--border-color)'}`
               }}
             >
-              🐰 Bunny Storage
+              🐰 Bunny
             </button>
             <button
               type="button"
@@ -522,137 +588,147 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
                 border: `1px solid ${storageType === 's3' ? 'var(--accent-color)' : 'var(--border-color)'}`
               }}
             >
-              ☁️ S3-Compatible
+              ☁️ S3
             </button>
           </div>
 
           {storageType === 'bunny' ? (
             <>
-              <label htmlFor="bunnyRegion" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Region (Optional)</label>
-              <select
-                id="bunnyRegion"
-                value={bunnyRegion}
-                onChange={(e) => setBunnyRegion(e.target.value)}
-                disabled={storageLoading}
-                className="input-field"
-              >
-                <option value="">Auto (Default - Falkenstein)</option>
-                <option value="fsn1">Falkenstein (fsn1)</option>
-                <option value="de">Frankfurt (de)</option>
-                <option value="uk">London (uk)</option>
-                <option value="se">Stockholm (se)</option>
-                <option value="ny">New York (ny)</option>
-                <option value="la">Los Angeles (la)</option>
-                <option value="sg">Singapore (sg)</option>
-                <option value="syd">Sydney (syd)</option>
-                <option value="br">Sao Paulo (br)</option>
-                <option value="jh">Johannesburg (jh)</option>
-              </select>
+              <div>
+                <label style={{ fontWeight: 400 }}>Region (Optional)</label>
+                <select
+                  value={bunnyRegion}
+                  onChange={(e) => setBunnyRegion(e.target.value)}
+                  disabled={storageLoading}
+                  className="input-field"
+                >
+                  <option value="">Auto (Falkenstein)</option>
+                  <option value="fsn1">Falkenstein (fsn1)</option>
+                  <option value="de">Frankfurt (de)</option>
+                  <option value="uk">London (uk)</option>
+                  <option value="se">Stockholm (se)</option>
+                  <option value="ny">New York (ny)</option>
+                  <option value="la">Los Angeles (la)</option>
+                  <option value="sg">Singapore (sg)</option>
+                  <option value="syd">Sydney (syd)</option>
+                  <option value="br">Sao Paulo (br)</option>
+                  <option value="jh">Johannesburg (jh)</option>
+                </select>
+              </div>
 
-              <label htmlFor="bunnyZoneName" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Storage Zone Name *</label>
-              <input
-                id="bunnyZoneName"
-                type="text"
-                value={bunnyZoneName}
-                onChange={(e) => setBunnyZoneName(e.target.value)}
-                placeholder="my-storage-zone"
-                disabled={storageLoading}
-                className="input-field"
-              />
+              <div>
+                <label style={{ fontWeight: 400 }}>Zone Name *</label>
+                <input
+                  type="text"
+                  value={bunnyZoneName}
+                  onChange={(e) => setBunnyZoneName(e.target.value)}
+                  placeholder="my-storage-zone"
+                  disabled={storageLoading}
+                  className="input-field"
+                />
+              </div>
 
-              <label htmlFor="bunnyApiKey" style={{ fontWeight: 400, marginTop: '0.5rem' }}>API Key (Password) *</label>
-              <input
-                id="bunnyApiKey"
-                type="password"
-                value={bunnyApiKey}
-                onChange={(e) => setBunnyApiKey(e.target.value)}
-                placeholder="your-api-key"
-                disabled={storageLoading}
-                className="input-field"
-              />
+              <div>
+                <label style={{ fontWeight: 400 }}>API Key *</label>
+                <input
+                  type="password"
+                  value={bunnyApiKey}
+                  onChange={(e) => setBunnyApiKey(e.target.value)}
+                  placeholder="your-api-key"
+                  disabled={storageLoading}
+                  className="input-field"
+                />
+              </div>
 
-              <label htmlFor="bunnyCdnUrl" style={{ fontWeight: 400, marginTop: '0.5rem' }}>CDN URL *</label>
-              <input
-                id="bunnyCdnUrl"
-                type="url"
-                value={bunnyCdnUrl}
-                onChange={(e) => setBunnyCdnUrl(e.target.value)}
-                placeholder="https://my-zone.b-cdn.net"
-                disabled={storageLoading}
-                className="input-field"
-              />
+              <div>
+                <label style={{ fontWeight: 400 }}>CDN URL *</label>
+                <input
+                  type="url"
+                  value={bunnyCdnUrl}
+                  onChange={(e) => setBunnyCdnUrl(e.target.value)}
+                  placeholder="https://my-zone.b-cdn.net"
+                  disabled={storageLoading}
+                  className="input-field"
+                />
+              </div>
             </>
           ) : (
             <>
-              <label htmlFor="s3Endpoint" style={{ fontWeight: 400, marginTop: '0.5rem' }}>S3 Endpoint *</label>
-              <input
-                id="s3Endpoint"
-                type="url"
-                value={s3Endpoint}
-                onChange={(e) => setS3Endpoint(e.target.value)}
-                placeholder="https://s3.amazonaws.com or https://<account>.r2.cloudflarestorage.com"
-                disabled={storageLoading}
-                className="input-field"
-              />
+              <div>
+                <label style={{ fontWeight: 400 }}>S3 Endpoint *</label>
+                <input
+                  type="url"
+                  value={s3Endpoint}
+                  onChange={(e) => setS3Endpoint(e.target.value)}
+                  placeholder="https://s3.amazonaws.com or https://<account>.r2.cloudflarestorage.com"
+                  disabled={storageLoading}
+                  className="input-field"
+                />
+              </div>
 
-              <label htmlFor="s3AccessKeyId" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Access Key ID *</label>
-              <input
-                id="s3AccessKeyId"
-                type="text"
-                value={s3AccessKeyId}
-                onChange={(e) => setS3AccessKeyId(e.target.value)}
-                placeholder="AKIA..."
-                disabled={storageLoading}
-                className="input-field"
-              />
+              <div>
+                <label style={{ fontWeight: 400 }}>Access Key ID *</label>
+                <input
+                  type="text"
+                  value={s3AccessKeyId}
+                  onChange={(e) => setS3AccessKeyId(e.target.value)}
+                  placeholder="AKIA..."
+                  disabled={storageLoading}
+                  className="input-field"
+                />
+              </div>
 
-              <label htmlFor="s3SecretAccessKey" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Secret Access Key *</label>
-              <input
-                id="s3SecretAccessKey"
-                type="password"
-                value={s3SecretAccessKey}
-                onChange={(e) => setS3SecretAccessKey(e.target.value)}
-                placeholder="..."
-                disabled={storageLoading}
-                className="input-field"
-              />
+              <div>
+                <label style={{ fontWeight: 400 }}>Secret Access Key *</label>
+                <input
+                  type="password"
+                  value={s3SecretAccessKey}
+                  onChange={(e) => setS3SecretAccessKey(e.target.value)}
+                  placeholder="..."
+                  disabled={storageLoading}
+                  className="input-field"
+                />
+              </div>
 
-              <label htmlFor="s3Bucket" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Bucket Name *</label>
-              <input
-                id="s3Bucket"
-                type="text"
-                value={s3Bucket}
-                onChange={(e) => setS3Bucket(e.target.value)}
-                placeholder="my-bucket"
-                disabled={storageLoading}
-                className="input-field"
-              />
+              <div>
+                <label style={{ fontWeight: 400 }}>Bucket Name *</label>
+                <input
+                  type="text"
+                  value={s3Bucket}
+                  onChange={(e) => setS3Bucket(e.target.value)}
+                  placeholder="my-bucket"
+                  disabled={storageLoading}
+                  className="input-field"
+                />
+              </div>
 
-              <label htmlFor="s3Region" style={{ fontWeight: 400, marginTop: '0.5rem' }}>Region</label>
-              <input
-                id="s3Region"
-                type="text"
-                value={s3Region}
-                onChange={(e) => setS3Region(e.target.value)}
-                placeholder="us-east-1"
-                disabled={storageLoading}
-                className="input-field"
-              />
+              <div>
+                <label style={{ fontWeight: 400 }}>Region</label>
+                <input
+                  type="text"
+                  value={s3Region}
+                  onChange={(e) => setS3Region(e.target.value)}
+                  placeholder="us-east-1"
+                  disabled={storageLoading}
+                  className="input-field"
+                />
+              </div>
 
-              <label htmlFor="s3CdnUrl" style={{ fontWeight: 400, marginTop: '0.5rem' }}>CDN URL (Optional)</label>
-              <input
-                id="s3CdnUrl"
-                type="url"
-                value={s3CdnUrl}
-                onChange={(e) => setS3CdnUrl(e.target.value)}
-                placeholder="https://cdn.example.com (leave blank to use S3 directly)"
-                disabled={storageLoading}
-                className="input-field"
-              />
+              <div>
+                <label style={{ fontWeight: 400 }}>CDN URL (Optional)</label>
+                <input
+                  type="url"
+                  value={s3CdnUrl}
+                  onChange={(e) => setS3CdnUrl(e.target.value)}
+                  placeholder="https://cdn.example.com"
+                  disabled={storageLoading}
+                  className="input-field"
+                />
+              </div>
             </>
           )}
 
-          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <button 
               type="button" 
               onClick={handleTestStorageConnection} 
@@ -675,11 +751,9 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
 
           {storageWarning && (
             <div style={{ 
-              marginTop: '1rem', 
               padding: '0.75rem', 
               background: 'rgba(234, 179, 8, 0.1)', 
               borderRadius: 'var(--radius-md)',
-              border: '1px solid #eab308'
             }}>
               <p style={{ margin: 0, fontSize: '0.85rem', color: '#eab308' }}>
                 ⚠️ {storageWarning}
@@ -689,7 +763,6 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
 
           {storageResult && (
             <div style={{ 
-              marginTop: '1rem', 
               padding: '1rem', 
               background: 'rgba(34, 197, 94, 0.1)', 
               borderRadius: 'var(--radius-md)',
@@ -698,26 +771,20 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
               <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#22c55e' }}>✓ Migration Complete</h4>
               <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                 <li>{storageResult.filesMigrated} files migrated</li>
-                <li>{storageResult.postsUpdated} posts updated with new URLs</li>
+                <li>{storageResult.postsUpdated} posts updated</li>
                 {storageResult.errors.length > 0 && (
-                  <li style={{ color: '#ef4444' }}>{storageResult.errors.length} errors (check console)</li>
+                  <li style={{ color: '#ef4444' }}>{storageResult.errors.length} errors</li>
                 )}
               </ul>
-              {storageResult.filesThroughVercel > 0 && (
-                <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#eab308' }}>
-                  Note: {storageResult.filesThroughVercel} files were transferred through Vercel. Consider direct storage-to-storage migration for large transfers.
-                </p>
-              )}
             </div>
           )}
         </div>
+      </ExpandableSection>
 
-        <button type="submit" disabled={loading} className="btn btn-primary" style={{ marginTop: '1rem', padding: '0.75rem', fontSize: '1rem' }}>
-          {loading ? 'Saving...' : 'Save Site Settings'}
-        </button>
-      </form>
-
-
-    </>
+      {/* Save Button */}
+      <button type="submit" disabled={loading} className="btn btn-primary" style={{ marginTop: '0.5rem', padding: '0.75rem', fontSize: '1rem' }}>
+        {loading ? 'Saving...' : 'Save All Settings'}
+      </button>
+    </form>
   )
 }
