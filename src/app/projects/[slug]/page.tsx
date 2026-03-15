@@ -11,6 +11,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { ViewTracker } from "@/components/ViewTracker";
+import { sanitizeContent } from "@/lib/sanitize";
 
 export const dynamic = 'force-dynamic'
 
@@ -221,7 +222,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
         {/* Rich content */}
         {project.content && (
-          <div className="post-content" dangerouslySetInnerHTML={{ __html: project.content }} />
+          <div className="post-content" dangerouslySetInnerHTML={{ __html: sanitizeContent(project.content) }} />
         )}
 
         {/* Image gallery */}

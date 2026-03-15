@@ -10,6 +10,7 @@ import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import { updatePopupConfig, togglePopupEnabled } from './popupActions'
 import { useToast } from '@/components/admin/Toast'
+import { sanitizeContent } from '@/lib/sanitize'
 
 const TipTapEditor = dynamic(() => import('@/components/editor/TipTapEditor'), { ssr: false })
 
@@ -198,7 +199,7 @@ export default function PopupEditor({ initialConfig }: { initialConfig: any }) {
             {title && (
               <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>{title}</h3>
             )}
-            <div className="tiptap" dangerouslySetInnerHTML={{ __html: content }} style={{ fontSize: '0.95rem', lineHeight: 1.6 }} />
+            <div className="tiptap" dangerouslySetInnerHTML={{ __html: sanitizeContent(content) }} style={{ fontSize: '0.95rem', lineHeight: 1.6 }} />
           </div>
         </div>
       )}
