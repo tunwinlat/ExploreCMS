@@ -249,6 +249,11 @@ h1, h2, h3, h4 {
   color: var(--text-primary);
 }
 
+.search-close-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-color-secondary) !important;
+}
+
 .search-result-item:hover {
   background: var(--bg-color) !important;
 }
@@ -325,7 +330,7 @@ h1, h2, h3, h4 {
 @media (max-width: 1024px) {
   .home-layout {
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 1.5rem;
   }
   
   .sidebar {
@@ -344,23 +349,80 @@ h1, h2, h3, h4 {
   .container {
     padding: 0 1rem;
   }
-  
+
   .main-content {
     padding: 1rem 0;
   }
-  
-  .featured-carousel .carousel-content {
-    padding: 1.5rem !important;
+
+  /* ===== Carousel Mobile ===== */
+  .featured-carousel {
+    --carousel-min-height: 320px;
+    --carousel-content-padding: 1.5rem;
+    margin-bottom: 2rem !important;
   }
-  
+
   .featured-carousel .carousel-nav-btn {
     width: 36px !important;
     height: 36px !important;
   }
-  
+
+  /* Always show nav arrows on touch devices */
+  .featured-carousel .carousel-nav-btn {
+    opacity: 1 !important;
+  }
+
+  /* ===== Sidebar Mobile ===== */
   .sidebar {
     grid-template-columns: 1fr;
   }
+
+  /* ===== Latest Posts Section Spacing ===== */
+  .latest-posts-section {
+    margin-top: 1.5rem !important;
+  }
+}
+
+/* ===== Search Trigger: Icon-only on mobile ===== */
+@media (max-width: 640px) {
+  .search-trigger {
+    padding: 0.6rem !important;
+    min-width: 44px;
+    justify-content: center;
+    gap: 0 !important;
+  }
+
+  .search-trigger-text,
+  .search-trigger-kbd {
+    display: none;
+  }
+
+  /* Search modal: full-width from top with less top gap */
+  .search-modal {
+    padding: 0.75rem !important;
+    align-items: flex-start !important;
+  }
+
+  /* Hide keyboard hint footer on mobile (no physical keyboard) */
+  .search-footer {
+    display: none !important;
+  }
+
+  /* Larger close label hidden on very small screens */
+  .search-close-label {
+    display: none;
+  }
+}
+
+/* ===== ComponentTabs: horizontal scrollable ===== */
+.component-tabs-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.component-tabs-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 /* ===== Scrollbar Styling ===== */

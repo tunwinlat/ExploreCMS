@@ -70,7 +70,7 @@ export function FeaturedPostsCarousel({ posts }: FeaturedPostsCarouselProps) {
           position: 'relative',
           borderRadius: 'var(--radius-lg)',
           overflow: 'hidden',
-          minHeight: '450px',
+          minHeight: 'var(--carousel-min-height, 450px)',
           display: 'flex',
           flexDirection: 'column'
         }}
@@ -99,12 +99,12 @@ export function FeaturedPostsCarousel({ posts }: FeaturedPostsCarouselProps) {
         </div>
 
         {/* Content */}
-        <div 
+        <div
           className="carousel-content fade-in-up"
           style={{
             position: 'relative',
             zIndex: 2,
-            padding: '3rem',
+            padding: 'var(--carousel-content-padding, 3rem)',
             marginTop: 'auto',
             color: 'white'
           }}
