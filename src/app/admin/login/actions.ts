@@ -18,21 +18,25 @@ export async function loginUser(formData: FormData) {
     return { error: 'Missing credentials.' }
   }
 
-  const user = await prisma.user.findUnique({
-    where: { username }
-  })
+  try {
+    const user = await prisma.user.findUnique({
+      where: { username }
+    })
 
-  if (!user) {
-    return { error: 'Invalid username or password.' }
+    if (!user) {
+      return { error: 'Invalid username or password.' }
+    }
+
+    const matches = await compare(password, user.password)
+
+    if (!matches) {
+      return { error: 'Invalid username or password.' }
+    }
+
+    await createSession({ userId: user.id, username: user.username, role: user.role })
+
+    return { success: true }
+  } catch {
+    return { error: 'Unable to sign in. Please try again.' }
   }
-
-  const matches = await compare(password, user.password)
-
-  if (!matches) {
-    return { error: 'Invalid username or password.' }
-  }
-
-  await createSession({ userId: user.id, username: user.username, role: user.role })
-
-  return { success: true }
 }

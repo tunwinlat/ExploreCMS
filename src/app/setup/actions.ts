@@ -18,25 +18,32 @@ export async function setupAdmin(formData: FormData) {
     return { error: 'Invalid username or password (min 8 chars)' }
   }
 
-  const existingOwner = await prisma.user.findFirst({
-    where: { role: 'OWNER' }
-  })
+  try {
+    const existingOwner = await prisma.user.findFirst({
+      where: { role: 'OWNER' }
+    })
 
-  if (existingOwner) {
-    return { error: 'Instance already set up' }
-  }
-
-  const hashedPassword = await hash(password, 10)
-
-  const user = await prisma.user.create({
-    data: {
-      username,
-      password: hashedPassword,
-      role: 'OWNER'
+    if (existingOwner) {
+      return { error: 'Instance already set up' }
     }
-  })
 
-  await createSession({ userId: user.id, username: user.username, role: user.role })
+    const hashedPassword = await hash(password, 10)
 
-  return { success: true }
+    const user = await prisma.user.create({
+      data: {
+        username,
+        password: hashedPassword,
+        role: 'OWNER'
+      }
+    })
+
+    await createSession({ userId: user.id, username: user.username, role: user.role })
+
+    return { success: true }
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Unique constraint')) {
+      return { error: 'That username is already taken.' }
+    }
+    return { error: 'Failed to create account. Please try again.' }
+  }
 }
