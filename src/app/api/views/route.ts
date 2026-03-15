@@ -15,9 +15,8 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const { slug } = body;
 
-    if (!slug) {
-      return NextResponse.json({ error: 'Slug is required' }, { status: 400 })
-    }
+    // Slug is optional - if provided, we track post views
+    // If not provided, we only track global site views
 
     const postDb = await getPostDb();
     
