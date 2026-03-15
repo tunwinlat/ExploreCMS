@@ -9,9 +9,14 @@ import { redirect } from 'next/navigation'
 import SetupForm from './SetupForm'
 
 export default async function SetupPage() {
-  const owner = await prisma.user.findFirst({
-    where: { role: 'OWNER' }
-  })
+  let owner = null
+  try {
+    owner = await prisma.user.findFirst({
+      where: { role: 'OWNER' }
+    })
+  } catch {
+    // Database tables may not exist yet — show the setup form
+  }
 
   // If already setup, redirect to login or home
   if (owner) {
