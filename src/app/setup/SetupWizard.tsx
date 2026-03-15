@@ -18,11 +18,15 @@ import {
 type Step = 'welcome' | 'admin' | 'storage' | 'review'
 type StorageType = 'bunny' | 's3' | 'none'
 
-export default function SetupWizard() {
+interface SetupWizardProps {
+  initError?: string | null
+}
+
+export default function SetupWizard({ initError }: SetupWizardProps) {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState<Step>('welcome')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(initError || null)
   
   // Form data
   const [adminData, setAdminData] = useState({

@@ -6,9 +6,25 @@
 
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/db'
+import { initializeDatabase } from '@/lib/db-init'
 import SetupWizard from './SetupWizard'
 
 export default async function SetupPage() {
+  // First, try to initialize the database (for LibSQL databases)
+  let initResult = { success: true, error: null as string | null };
+  try {
+    initResult = await initializeDatabase();
+    if (!initResult.success) {
+      console.error('[Setup] Database initialization failed:', initResult.error);
+    }
+  } catch (error) {
+    console.error('[Setup] Database initialization error:', error);
+    initResult = { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    };
+  }
+
   // Check if an owner already exists
   let owner = null
   let dbError = null
@@ -109,7 +125,7 @@ export default async function SetupPage() {
         maxWidth: '480px', 
         width: '100%'
       }}>
-        <SetupWizard />
+        <SetupWizard initError={initResult.error} />
       </div>
     </div>
   )
