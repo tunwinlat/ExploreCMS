@@ -64,7 +64,7 @@ export function getPrismaClient() {
 export async function isDatabaseConfigured(): Promise<boolean> {
   const url = process.env.DATABASE_URL
   if (!url) return false
-  
+
   try {
     // Try a simple query to verify connection
     await prisma.$queryRaw`SELECT 1`
@@ -73,3 +73,4 @@ export async function isDatabaseConfigured(): Promise<boolean> {
     return false
   }
 }
+
