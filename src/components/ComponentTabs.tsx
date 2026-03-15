@@ -83,7 +83,7 @@ export function ComponentTabs({ enabledComponents, defaultComponent }: Component
           <Link
             key={comp.id}
             href={comp.id === defaultComponent ? '/' : comp.path}
-            prefetch={false}
+            prefetch={true}
             style={{
               display: 'flex',
               alignItems: 'center',
