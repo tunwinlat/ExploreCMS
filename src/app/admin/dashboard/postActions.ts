@@ -55,6 +55,12 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
   let slug = slugInput ? generateSlug(slugInput) : generateSlug(title)
 
   if (id) {
+    // Guard: prevent editing Craft-linked posts
+    const craftCheck = await postDb.post.findUnique({ where: { id }, select: { craftDocumentId: true, craftUnlinked: true } })
+    if (craftCheck?.craftDocumentId && !craftCheck?.craftUnlinked) {
+      return { error: 'This post is synced from Craft.do and cannot be edited. Unlink it first.' }
+    }
+
     // If slug changed, verify uniqueness
     const existing = await postDb.post.findFirst({ where: { slug, id: { not: id } } })
     if (existing) slug = `${slug}-${Date.now()}`
