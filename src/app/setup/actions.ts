@@ -9,7 +9,6 @@
 import { prisma } from '@/lib/db'
 import { hash } from 'bcryptjs'
 import { createSession } from '@/lib/auth'
-import { redirect } from 'next/navigation'
 
 export async function setupAdmin(formData: FormData) {
   const username = formData.get('username') as string
@@ -38,6 +37,6 @@ export async function setupAdmin(formData: FormData) {
   })
 
   await createSession({ userId: user.id, username: user.username, role: user.role })
-  
-  redirect('/admin/dashboard')
+
+  return { success: true }
 }

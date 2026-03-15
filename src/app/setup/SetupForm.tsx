@@ -7,11 +7,13 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { setupAdmin } from './actions'
 
 export default function SetupForm() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -20,13 +22,14 @@ export default function SetupForm() {
     const formData = new FormData(e.currentTarget)
     try {
       const res = await setupAdmin(formData)
-      if (res?.error) setError(res.error)
-    } catch (err: unknown) {
-      if (err instanceof Error && err.message !== 'NEXT_REDIRECT') {
-        setError('An unexpected error occurred.')
-      } else if (!(err instanceof Error)) {
-        setError('An unexpected error occurred.')
+      if (res?.error) {
+        setError(res.error)
+      } else if (res?.success) {
+        router.push('/admin/dashboard')
+        return
       }
+    } catch {
+      setError('An unexpected error occurred.')
     } finally {
       setLoading(false)
     }
