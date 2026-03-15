@@ -11,18 +11,16 @@ import SetupWizard from './SetupWizard'
 
 export default async function SetupPage() {
   // First, try to initialize the database (for LibSQL databases)
-  let initResult = { success: true, error: null as string | null };
+  let initError: string | null = null;
   try {
-    initResult = await initializeDatabase();
+    const initResult = await initializeDatabase();
     if (!initResult.success) {
       console.error('[Setup] Database initialization failed:', initResult.error);
+      initError = initResult.error || null;
     }
   } catch (error) {
     console.error('[Setup] Database initialization error:', error);
-    initResult = { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
-    };
+    initError = error instanceof Error ? error.message : 'Unknown error';
   }
 
   // Check if an owner already exists
@@ -125,7 +123,7 @@ export default async function SetupPage() {
         maxWidth: '480px', 
         width: '100%'
       }}>
-        <SetupWizard initError={initResult.error} />
+        <SetupWizard initError={initError} />
       </div>
     </div>
   )
