@@ -143,6 +143,22 @@ export default function TipTapEditor({ initialContent = '', onChange }: TipTapEd
       editor.chain().focus().extendMarkRange('link').unsetLink().run()
       return
     }
+
+    // Validate URL protocol to prevent javascript: XSS
+    try {
+      const urlObj = new URL(url, window.location.origin)
+      if (!['http:', 'https:', 'mailto:'].includes(urlObj.protocol)) {
+        alert('Only http, https, and mailto links are allowed.')
+        return
+      }
+    } catch {
+      // Allow relative URLs starting with /
+      if (!url.startsWith('/')) {
+        alert('Please enter a valid URL.')
+        return
+      }
+    }
+
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
   }, [editor])
 

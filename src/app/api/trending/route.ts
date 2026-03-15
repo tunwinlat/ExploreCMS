@@ -9,8 +9,10 @@ import { getPostDb } from '@/lib/bunnyDb'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const limit = Math.min(parseInt(searchParams.get('limit') || '6'), 10)
-  const period = searchParams.get('period') || '7d' // 7d, 30d, all
+  const parsedLimit = parseInt(searchParams.get('limit') || '6')
+  const limit = Math.min(Number.isNaN(parsedLimit) ? 6 : parsedLimit, 10)
+  const rawPeriod = searchParams.get('period') || '7d'
+  const period = ['7d', '30d', 'all'].includes(rawPeriod) ? rawPeriod : '7d'
 
   try {
     const postDb = await getPostDb()

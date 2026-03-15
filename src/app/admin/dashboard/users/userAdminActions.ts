@@ -41,6 +41,19 @@ export async function deleteUser(userId: string) {
     throw new Error('Unauthorized')
   }
 
+  // Prevent self-deletion
+  if (userId === payload.userId) {
+    throw new Error('Cannot delete your own account')
+  }
+
+  // Prevent deleting the last owner
+  const userToDelete = await prisma.user.findUnique({ where: { id: userId } })
+  if (!userToDelete) throw new Error('User not found')
+  if (userToDelete.role === 'OWNER') {
+    const ownerCount = await prisma.user.count({ where: { role: 'OWNER' } })
+    if (ownerCount <= 1) throw new Error('Cannot delete the last owner')
+  }
+
   try {
     await prisma.user.delete({
       where: { id: userId }

@@ -15,9 +15,14 @@ export async function updateTag(id: string, newName: string) {
   const session = await verifySession()
   if (!session) return { error: 'Unauthorized' }
 
+  const trimmed = newName?.trim()
+  if (!trimmed || trimmed.length === 0 || trimmed.length > 100) {
+    return { error: 'Tag name must be between 1 and 100 characters' }
+  }
+
   try {
     const postDb = await getPostDb() as any;
-    const slug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
+    const slug = trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
     
     // Check if new slug already exists
     const existing = await postDb.tag.findFirst({
@@ -30,7 +35,7 @@ export async function updateTag(id: string, newName: string) {
 
     await postDb.tag.update({
       where: { id },
-      data: { name: newName, slug }
+      data: { name: trimmed, slug }
     })
 
     revalidatePath('/admin/dashboard/tags')

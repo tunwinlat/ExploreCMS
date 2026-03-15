@@ -26,7 +26,12 @@ export async function POST(req: Request) {
     let viewedPages: string[] = [];
     if (viewedCookie) {
       try {
-        viewedPages = JSON.parse(viewedCookie);
+        const parsed = JSON.parse(viewedCookie);
+        viewedPages = Array.isArray(parsed) ? parsed : [];
+        // Cap cookie size to prevent unbounded growth
+        if (viewedPages.length > 500) {
+          viewedPages = viewedPages.slice(-500);
+        }
       } catch (_e) {
         // invalid cookie
       }

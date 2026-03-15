@@ -15,8 +15,10 @@ function createPrismaClient() {
   const url = process.env.DATABASE_URL
   const authToken = process.env.DATABASE_AUTH_TOKEN
   
-  console.log('[Prisma] DATABASE_URL:', url ? 'Set' : 'Not set')
-  console.log('[Prisma] DATABASE_AUTH_TOKEN:', authToken ? 'Set' : 'Not set')
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[Prisma] DATABASE_URL:', url ? 'Set' : 'Not set')
+    console.log('[Prisma] DATABASE_AUTH_TOKEN:', authToken ? 'Set' : 'Not set')
+  }
   
   if (!url) {
     throw new Error(
@@ -32,7 +34,9 @@ function createPrismaClient() {
     adapterConfig.authToken = authToken
   }
   
-  console.log('[Prisma] Creating client with URL:', url.substring(0, 20) + '...')
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[Prisma] Creating client with URL:', url.substring(0, 20) + '...')
+  }
   
   const adapter = new PrismaLibSql(adapterConfig)
   return new PrismaClient({ adapter })

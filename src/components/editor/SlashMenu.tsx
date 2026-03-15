@@ -173,6 +173,12 @@ export const getSuggestionItems = ({ query }: { query: string }): SlashMenuItem[
         editor.chain().focus().deleteRange(range).run();
         const url = prompt('Enter YouTube URL:');
         if (url) {
+          // Validate that the URL is a legitimate YouTube URL
+          const ytPattern = /^https?:\/\/(www\.)?(youtube\.com\/(watch|embed|shorts)|youtu\.be\/)/i;
+          if (!ytPattern.test(url)) {
+            alert('Please enter a valid YouTube URL.');
+            return;
+          }
           editor.commands.setYoutubeVideo({ src: url });
         }
       },

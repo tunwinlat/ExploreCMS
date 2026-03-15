@@ -16,6 +16,16 @@ export async function updateNavigationConfig(navigationConfig: string) {
     throw new Error('Unauthorized')
   }
 
+  // Validate JSON format and enforce size limit
+  try {
+    JSON.parse(navigationConfig)
+  } catch {
+    throw new Error('Invalid navigation configuration: must be valid JSON')
+  }
+  if (navigationConfig.length > 50000) {
+    throw new Error('Navigation configuration is too large')
+  }
+
   try {
     await prisma.siteSettings.upsert({
       where: { id: 'singleton' },

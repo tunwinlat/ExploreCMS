@@ -9,7 +9,8 @@ import { getPostDb } from '@/lib/bunnyDb'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const limit = Math.min(parseInt(searchParams.get('limit') || '5'), 10)
+  const parsedLimit = parseInt(searchParams.get('limit') || '5')
+  const limit = Math.min(Number.isNaN(parsedLimit) ? 5 : parsedLimit, 10)
 
   try {
     const postDb = await getPostDb()
