@@ -4,57 +4,24 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { PrismaClient } from '@prisma/client'
-// adapter-libsql exports PrismaLibSql (note the lowercase "ql")
-import { PrismaLibSql } from '@prisma/adapter-libsql'
-import { prisma as localPrisma } from './db'
+import { prisma } from './db'
 
 /**
- * Cached remote PrismaClient to avoid creating a new connection on every request.
- * Invalidated when the configured URL changes (e.g., user switches Bunny DBs).
- */
-let cachedRemotePrisma: PrismaClient | null = null
-let cachedRemoteUrl: string | null = null
-
-/**
- * Dynamically resolves the correct Prisma instance based on the SiteSettings configuration.
- * Always retrieves the most up-to-date configuration, so toggles in the Admin panel apply instantly.
+ * Returns the Prisma client for database operations.
  * 
- * Returns a cached client when the remote URL hasn't changed to improve performance.
+ * NOTE: This function previously handled switching between local SQLite and 
+ * remote Bunny.net LibSQL databases. Now that DATABASE_URL is required via
+ * environment variables, this simply returns the main prisma client.
+ * 
+ * Kept for backward compatibility - all database operations use the same
+ * configured database (local file for development, LibSQL for production).
  */
-export async function getPostDb(): Promise<PrismaClient> {
-  // Always query the local sqlite database for the single source-of-truth configuration
-  let settings = null
-  try {
-    settings = await (localPrisma as any).siteSettings.findUnique({
-      where: { id: 'singleton' }
-    })
-  } catch {
-    // Database tables may not exist yet (e.g. during build)
-    return localPrisma
-  }
-
-  // If Bunny DB is disabled, or missing creds, safely fallback to local sqlite
-  if (!settings?.bunnyEnabled || !settings?.bunnyUrl || !settings?.bunnyToken) {
-    // Clear cache when disconnected
-    cachedRemotePrisma = null
-    cachedRemoteUrl = null
-    return localPrisma
-  }
-
-  // Return cached client if the URL hasn't changed
-  if (cachedRemotePrisma && cachedRemoteUrl === settings.bunnyUrl) {
-    return cachedRemotePrisma
-  }
-
-  // Bridge the LibSQL Socket over to Prisma's Native Query Engine
-  const adapter = new PrismaLibSql({ url: settings.bunnyUrl, authToken: settings.bunnyToken })
-  
-  const remotePrisma = new PrismaClient({ adapter })
-
-  // Cache the new client
-  cachedRemotePrisma = remotePrisma
-  cachedRemoteUrl = settings.bunnyUrl
-
-  return remotePrisma
+export async function getPostDb() {
+  return prisma
 }
+
+/**
+ * @deprecated Use the main prisma export from '@/lib/db' directly instead.
+ * This function is kept for backward compatibility.
+ */
+export { prisma }

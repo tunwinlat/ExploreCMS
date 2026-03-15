@@ -12,7 +12,16 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 function createPrismaClient() {
-  const url = process.env.DATABASE_URL ?? 'file:./app.db'
+  const url = process.env.DATABASE_URL
+  
+  if (!url) {
+    throw new Error(
+      'DATABASE_URL environment variable is not set. ' +
+      'Please set it to your LibSQL database URL (e.g., from Turso or Bunny.net). ' +
+      'For local development, use: DATABASE_URL="file:./dev.db"'
+    )
+  }
+  
   const adapter = new PrismaLibSql({ url })
   return new PrismaClient({ adapter })
 }
@@ -20,3 +29,20 @@ function createPrismaClient() {
 export const prisma = globalForPrisma.prisma ?? createPrismaClient()
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+
+/**
+ * Check if the database is properly configured and accessible.
+ * Returns true if DATABASE_URL is set and database is reachable.
+ */
+export async function isDatabaseConfigured(): Promise<boolean> {
+  const url = process.env.DATABASE_URL
+  if (!url) return false
+  
+  try {
+    // Try a simple query to verify connection
+    await prisma.$queryRaw`SELECT 1`
+    return true
+  } catch {
+    return false
+  }
+}
