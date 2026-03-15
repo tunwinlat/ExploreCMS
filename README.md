@@ -246,8 +246,8 @@ DATABASE_AUTH_TOKEN="your-jwt-token"
 
 This project is developed with assistance from advanced AI systems:
 
-- **Code Generation**: Google Gemini 2.5 Pro, Moonshot Kimi K2.5, Anthropic Claude Opus 4.6, and Claude Sonnet 4.6
-- **Quality Assurance**: Google Jules using Gemini 2.5 Pro for proactive performance, UX, and security reviews
+- **Code Generation**: Google Gemini 3.1 Pro, Moonshot Kimi K2.5, Anthropic Claude Opus 4.6, and Claude Sonnet 4.6
+- **Quality Assurance**: Google Jules using Gemini 3.1 Pro for proactive performance, UX, and security reviews
 - **Security Assessment**: Weekly vulnerability scans conducted by Kimi K2.5 Agent Swarm and Claude Opus 4.6
 - **Penetration Testing**: Simulated attacks performed in AgentZero by MiniMax Agent K2.5
 
