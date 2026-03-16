@@ -16,11 +16,26 @@ export async function renderPostContent(
   content: string,
   contentFormat?: string | null
 ): Promise<string> {
-  if (contentFormat === 'markdown') {
+  const isMarkdown = contentFormat === 'markdown' || looksLikeMarkdown(content)
+  if (isMarkdown) {
     const html = await marked(content)
     return sanitizeContent(html)
   }
   return sanitizeContent(content)
+}
+
+/**
+ * Heuristic: detect if content looks like markdown rather than HTML.
+ * Used as fallback when contentFormat field is missing/null.
+ */
+function looksLikeMarkdown(content: string): boolean {
+  // If it has HTML block tags, it's probably HTML
+  if (/<(div|p|h[1-6]|ul|ol|table|article)\b/i.test(content)) return false
+  // If it has markdown-specific patterns, it's probably markdown
+  if (/^#{1,6}\s/m.test(content)) return true // headers
+  if (/!\[[^\]]*\]\([^)]+\)/.test(content)) return true // images
+  if (/\[([^\]]+)\]\([^)]+\)/.test(content)) return true // links
+  return false
 }
 
 /**

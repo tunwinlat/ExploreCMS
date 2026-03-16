@@ -54,12 +54,14 @@ export function FeaturedPostsCarousel({ posts }: FeaturedPostsCarouselProps) {
   if (posts.length === 0) return null
 
   const currentPost = posts[currentIndex]
-  const excerpt = currentPost.content
-    .replace(/<[^>]*>?/gm, '')
-    .trim()
-    .substring(0, 200) + '...'
-  
-  const imgMatch = currentPost.content.match(/<img[^>]+src="([^">]+)"/)
+  const isMarkdown = (currentPost as any).contentFormat === 'markdown'
+  const excerpt = isMarkdown
+    ? currentPost.content.replace(/!\[[^\]]*\]\([^)]+\)/g, '').replace(/<[^>]*>?/gm, '').replace(/#{1,6}\s*/g, '').replace(/[*_~`]+/g, '').replace(/\n+/g, ' ').trim().substring(0, 200) + '...'
+    : currentPost.content.replace(/<[^>]*>?/gm, '').trim().substring(0, 200) + '...'
+
+  const imgMatch = isMarkdown
+    ? currentPost.content.match(/!\[[^\]]*\]\(([^)]+)\)/)
+    : currentPost.content.match(/<img[^>]+src="([^">]+)"/)
   const coverImage = imgMatch ? imgMatch[1] : null
 
   return (
