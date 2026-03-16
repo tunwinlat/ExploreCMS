@@ -7,7 +7,7 @@
 'use client'
 
 import { useState } from 'react'
-import { saveCraftSettings } from './craftActions'
+import { saveCraftSettings, updateCraftWriteAccess } from './craftActions'
 import { testTargetConnection, migrateToTarget } from '../settings/migrationActions'
 import { testStorageConnection, migrateStorage, type StorageType } from '../settings/storageActions'
 import { useToast } from '@/components/admin/Toast'
@@ -151,9 +151,12 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
       })
       const data = await res.json()
       if (data.success) {
-        setCraftWriteAccess(data.writeAccess || false)
+        const hasWrite = data.writeAccess || false
+        setCraftWriteAccess(hasWrite)
         setCraftError('')
-        const accessLevel = data.writeAccess ? 'Read & Write' : 'Read Only'
+        // Persist write access to DB so it survives page reloads
+        await updateCraftWriteAccess(hasWrite)
+        const accessLevel = hasWrite ? 'Read & Write' : 'Read Only'
         toast(`Connected to Craft space: ${data.spaceId} (${accessLevel})`, 'success')
         // If mode requires write but we don't have it, downgrade to read-only
         if (!data.writeAccess && (craftSyncMode === 'backup' || craftSyncMode === 'full-sync')) {

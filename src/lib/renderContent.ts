@@ -18,7 +18,9 @@ export async function renderPostContent(
 ): Promise<string> {
   // Explicit format takes priority
   if (contentFormat === 'markdown') {
-    const html = await marked(content)
+    // Dedent: Craft indents blocks which makes marked treat them as code blocks
+    const dedented = content.replace(/^[ \t]+/gm, '')
+    const html = await marked(dedented)
     return sanitizeContent(html)
   }
   if (contentFormat === 'html') {
@@ -27,7 +29,8 @@ export async function renderPostContent(
   // No format specified — detect. If it has markdown image/link syntax, render as markdown.
   // This handles posts synced before the contentFormat field existed.
   if (looksLikeMarkdown(content)) {
-    const html = await marked(content)
+    const dedented = content.replace(/^[ \t]+/gm, '')
+    const html = await marked(dedented)
     return sanitizeContent(html)
   }
   return sanitizeContent(content)
