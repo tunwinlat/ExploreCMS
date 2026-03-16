@@ -88,7 +88,9 @@ export class GitHubClient {
       )
       
       if (readme.encoding === 'base64') {
-        return atob(readme.content.replace(/\s/g, ''))
+        // Use Buffer for proper UTF-8 decoding (atob doesn't handle emojis well)
+        const base64Content = readme.content.replace(/\s/g, '')
+        return Buffer.from(base64Content, 'base64').toString('utf-8')
       }
       return readme.content
     } catch {
