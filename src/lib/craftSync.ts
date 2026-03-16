@@ -574,17 +574,28 @@ export async function pushPostToCraft(postId: string): Promise<void> {
  * Only works in full-sync mode.
  */
 export async function deletePostFromCraft(craftDocumentId: string): Promise<void> {
+  console.log(`[CraftSync] Attempting to delete document ${craftDocumentId} from Craft`)
   try {
     const settings = await getCraftSettings()
-    if (!settings) return
+    if (!settings) {
+      console.log('[CraftSync] No Craft settings found, skipping delete')
+      return
+    }
 
     const mode = settings.craftSyncMode || 'read-only'
-    if (mode !== 'full-sync') return
+    console.log(`[CraftSync] Craft sync mode: ${mode}`)
+    if (mode !== 'full-sync') {
+      console.log('[CraftSync] Not in full-sync mode, skipping delete')
+      return
+    }
 
     const client = new CraftClient(settings.craftServerUrl, settings.craftApiToken)
+    console.log(`[CraftSync] Deleting document ${craftDocumentId} from Craft...`)
     await client.deleteDocument(craftDocumentId)
+    console.log(`[CraftSync] Successfully deleted document ${craftDocumentId} from Craft`)
   } catch (err: any) {
     console.error(`[CraftSync] Failed to delete document ${craftDocumentId} from Craft:`, err.message)
+    throw err
   }
 }
 

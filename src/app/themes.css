@@ -9,7 +9,7 @@
 ========================================================================= */
 
 [data-theme="default"] {
-  --font-primary: 'Inter', sans-serif;
+  --font-primary: 'Inter', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 /* 2. Ocean Depth - Water Ripples (CSS Gradients) */
@@ -21,7 +21,7 @@
   --accent-color: #0284c7;
   --accent-hover: #0369a1;
   --border-color: rgba(2, 132, 199, 0.15);
-  --font-primary: 'Outfit', sans-serif;
+  --font-primary: 'Outfit', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --radius-md: 16px;
   --radius-lg: 32px;
   --btn-text: #ffffff;
@@ -50,7 +50,7 @@
   --accent-color: #ea580c;
   --accent-hover: #c2410c;
   --border-color: rgba(234, 88, 12, 0.15);
-  --font-primary: 'Lato', sans-serif;
+  --font-primary: 'Lato', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --btn-text: #ffffff;
   --bg-pattern-base: none;
   --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='100' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 10 Q 25 20, 50 10 T 100 10' fill='none' stroke='%23ea580c' stroke-width='1' stroke-opacity='0.15'/%3E%3C/svg%3E");
@@ -76,7 +76,7 @@
   --accent-color: #d946ef;
   --accent-hover: #c026d3;
   --border-color: rgba(217, 70, 239, 0.3);
-  --font-primary: 'Space Grotesk', sans-serif;
+  --font-primary: 'Space Grotesk', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --radius-md: 0px;
   --radius-lg: 0px;
   --btn-text: #ffffff;
@@ -106,7 +106,7 @@
   --accent-color: #15803d;
   --accent-hover: #16a34a;
   --border-color: rgba(21, 128, 61, 0.15);
-  --font-primary: 'Open Sans', sans-serif;
+  --font-primary: 'Open Sans', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --btn-text: #ffffff;
   --bg-pattern-base: none;
   --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40' fill='none' stroke='%2315803d' stroke-opacity='0.1' stroke-width='1'/%3E%3C/svg%3E");
@@ -159,7 +159,7 @@
   --accent-color: #171717;
   --accent-hover: #404040;
   --border-color: rgba(0, 0, 0, 0.1);
-  --font-primary: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-primary: 'Helvetica Neue', Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --radius-md: 0px;
   --radius-lg: 0px;
   --btn-text: #ffffff;
@@ -187,7 +187,7 @@
   --accent-color: #db2777;
   --accent-hover: #e11d48;
   --border-color: rgba(219, 39, 119, 0.15);
-  --font-primary: 'Quicksand', sans-serif;
+  --font-primary: 'Quicksand', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --radius-md: 20px;
   --radius-lg: 40px;
   --btn-text: #ffffff;
@@ -243,7 +243,7 @@
   --accent-color: #3b82f6;
   --accent-hover: #2563eb;
   --border-color: rgba(15, 23, 42, 0.1);
-  --font-primary: 'Montserrat', sans-serif;
+  --font-primary: 'Montserrat', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --btn-text: #ffffff;
   --bg-pattern-base: none;
   --bg-pattern-overlay: radial-gradient(var(--border-color) 1px, transparent 1px);
@@ -281,7 +281,7 @@
   --accent-color: #404040;
   --accent-hover: #262626;
   --border-color: rgba(23, 23, 23, 0.1);
-  --font-primary: 'DM Sans', sans-serif;
+  --font-primary: 'DM Sans', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --btn-text: #ffffff;
   --bg-pattern-base: none;
   --bg-pattern-overlay: repeating-linear-gradient(45deg, transparent, transparent 10px, var(--border-color) 10px, var(--border-color) 11px);
@@ -307,7 +307,7 @@
   --accent-color: #ec4899;
   --accent-hover: #db2777;
   --border-color: rgba(236, 72, 153, 0.3);
-  --font-primary: 'Nunito', sans-serif;
+  --font-primary: 'Nunito', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --btn-text: #ffffff;
   --bg-pattern-base: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
   --bg-pattern-overlay: linear-gradient(0deg, transparent 40%, var(--border-color) 40%, var(--border-color) 42%, transparent 42%), linear-gradient(90deg, transparent 40%, var(--border-color) 40%, var(--border-color) 42%, transparent 42%);
@@ -338,7 +338,7 @@
   --accent-color: #10b981;
   --accent-hover: #059669;
   --border-color: rgba(16, 185, 129, 0.15);
-  --font-primary: 'Work Sans', sans-serif;
+  --font-primary: 'Work Sans', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --btn-text: #ffffff;
   --bg-pattern-base: none;
   --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='24' height='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 0L24 12L12 24L0 12Z' fill='none' stroke='%2310b981' stroke-width='1' stroke-opacity='0.15'/%3E%3C/svg%3E");
@@ -364,7 +364,7 @@
   --accent-color: #8b5a2b;
   --accent-hover: #6b4226;
   --border-color: rgba(139, 90, 43, 0.15);
-  --font-primary: 'Source Sans Pro', sans-serif;
+  --font-primary: 'Source Sans Pro', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --btn-text: #ffffff;
   --bg-pattern-base: none;
   --bg-pattern-overlay: radial-gradient(circle at 100% 0%, var(--border-color) 20px, transparent 21px);
@@ -389,7 +389,7 @@
   --accent-color: #14b8a6;
   --accent-hover: #0d9488;
   --border-color: rgba(20, 184, 166, 0.15);
-  --font-primary: 'Jost', sans-serif;
+  --font-primary: 'Jost', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --radius-md: 4px;
   --btn-text: #ffffff;
   --bg-pattern-base: none;
@@ -417,7 +417,7 @@
   --accent-color: #8b5cf6;
   --accent-hover: #7c3aed;
   --border-color: rgba(139, 92, 246, 0.15);
-  --font-primary: 'Poppins', sans-serif;
+  --font-primary: 'Poppins', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --radius-md: 24px;
   --btn-text: #ffffff;
   --bg-pattern-base: none;
@@ -444,7 +444,7 @@
   --accent-color: #ef4444;
   --accent-hover: #dc2626;
   --border-color: rgba(239, 68, 68, 0.15);
-  --font-primary: 'Roboto Condensed', sans-serif;
+  --font-primary: 'Roboto Condensed', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --radius-md: 0px;
   --btn-text: #ffffff;
   --bg-pattern-base: none;
@@ -472,7 +472,7 @@
   --accent-color: #f43f5e;
   --accent-hover: #e11d48;
   --border-color: rgba(244, 63, 94, 0.15);
-  --font-primary: 'Noto Sans JP', sans-serif;
+  --font-primary: 'Noto Sans JP', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --btn-text: #ffffff;
   --bg-pattern-base: none;
   --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0 C30 15 35 25 20 40 C5 25 10 15 20 0 Z' fill='%23f43f5e' fill-opacity='0.05'/%3E%3C/svg%3E");
@@ -498,7 +498,7 @@
   --accent-color: #ff79c6;
   --accent-hover: #bd93f9;
   --border-color: rgba(255, 121, 198, 0.2);
-  --font-primary: 'Ubuntu', sans-serif;
+  --font-primary: 'Ubuntu', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --btn-text: #282a36;
   --bg-pattern-base: none;
   --bg-pattern-overlay: url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 0v20M0 10h20' stroke='%23ff79c6' stroke-width='1' stroke-opacity='0.15'/%3E%3C/svg%3E");
@@ -551,7 +551,7 @@
   --accent-color: #d79921;
   --accent-hover: #b57614;
   --border-color: rgba(215, 153, 33, 0.15);
-  --font-primary: 'Fira Sans', sans-serif;
+  --font-primary: 'Fira Sans', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --btn-text: #fbf1c7;
   --bg-pattern-base: none;
   --bg-pattern-overlay: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(215, 153, 33, 0.1) 2px, rgba(215, 153, 33, 0.1) 4px);
@@ -578,7 +578,7 @@
   --accent-color: #00c9a7;
   --accent-hover: #00a889;
   --border-color: rgba(0, 201, 167, 0.15);
-  --font-primary: 'Raleway', sans-serif;
+  --font-primary: 'Raleway', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --radius-md: 12px;
   --radius-lg: 24px;
   --btn-text: #ffffff;
@@ -666,7 +666,7 @@
   --accent-color: #ff9500;
   --accent-hover: #e08500;
   --border-color: rgba(255, 149, 0, 0.2);
-  --font-primary: 'Barlow Condensed', sans-serif;
+  --font-primary: 'Barlow Condensed', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --radius-md: 2px;
   --radius-lg: 4px;
   --btn-text: #1a1a1f;
@@ -784,7 +784,7 @@
   --accent-color: #7c3aed;
   --accent-hover: #6d28d9;
   --border-color: rgba(124, 58, 237, 0.15);
-  --font-primary: 'Orbitron', sans-serif;
+  --font-primary: 'Orbitron', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --radius-md: 4px;
   --radius-lg: 8px;
   --btn-text: #ffffff;
@@ -829,7 +829,7 @@
   --accent-color: #e17b21;
   --accent-hover: #c46814;
   --border-color: rgba(225, 123, 33, 0.15);
-  --font-primary: 'Fredoka', sans-serif;
+  --font-primary: 'Fredoka', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --radius-md: 8px;
   --radius-lg: 20px;
   --btn-text: #ffffff;
@@ -917,7 +917,7 @@
   --accent-color: #0ea5e9;
   --accent-hover: #0284c7;
   --border-color: rgba(14, 165, 233, 0.15);
-  --font-primary: 'Exo 2', sans-serif;
+  --font-primary: 'Exo 2', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --radius-md: 4px;
   --radius-lg: 8px;
   --btn-text: #ffffff;
@@ -1035,7 +1035,7 @@
   --accent-color: #4b5563;
   --accent-hover: #374151;
   --border-color: rgba(75, 85, 99, 0.15);
-  --font-primary: 'Zen Kaku Gothic New', sans-serif;
+  --font-primary: 'Zen Kaku Gothic New', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --radius-md: 4px;
   --radius-lg: 8px;
   --btn-text: #f0ece4;
@@ -1065,7 +1065,7 @@
   --accent-color: #06b6d4;
   --accent-hover: #0891b2;
   --border-color: rgba(6, 182, 212, 0.15);
-  --font-primary: 'Varela Round', sans-serif;
+  --font-primary: 'Varela Round', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --radius-md: 16px;
   --radius-lg: 32px;
   --btn-text: #ffffff;
@@ -1095,7 +1095,7 @@
   --accent-color: #6b6b8e;
   --accent-hover: #565678;
   --border-color: rgba(107, 107, 142, 0.15);
-  --font-primary: 'Titillium Web', sans-serif;
+  --font-primary: 'Titillium Web', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --radius-md: 4px;
   --radius-lg: 8px;
   --btn-text: #ffffff;
@@ -1125,7 +1125,7 @@
   --accent-color: #f59e0b;
   --accent-hover: #d97706;
   --border-color: rgba(245, 158, 11, 0.2);
-  --font-primary: 'Rubik', sans-serif;
+  --font-primary: 'Rubik', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --radius-md: 8px;
   --radius-lg: 16px;
   --btn-text: #ffffff;
