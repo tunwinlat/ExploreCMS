@@ -331,10 +331,10 @@ export function SearchBox() {
                     {results.length} result{results.length !== 1 ? 's' : ''} found
                   </div>
                   {results.map((post) => {
-                    const excerpt = post.content
-                      .replace(/<[^>]*>?/gm, '')
-                      .trim()
-                      .substring(0, 150)
+                    const isMarkdown = (post as any).contentFormat === 'markdown'
+                    const excerpt = isMarkdown
+                      ? post.content.replace(/!\[[^\]]*\]\([^)]+\)/g, '').replace(/#{1,6}\s*/g, '').replace(/[*_~`]+/g, '').replace(/\n+/g, ' ').trim().substring(0, 150)
+                      : post.content.replace(/<[^>]*>?/gm, '').trim().substring(0, 150)
 
                     return (
                       <Link

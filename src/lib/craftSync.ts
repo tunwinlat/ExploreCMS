@@ -7,7 +7,6 @@
 import { prisma } from '@/lib/db'
 import { getPostDb } from '@/lib/bunnyDb'
 import { CraftClient } from '@/lib/craft'
-import { marked } from 'marked'
 import { createWriteStream, mkdirSync, existsSync } from 'fs'
 import { join } from 'path'
 import { v4 as uuidv4 } from 'uuid'
@@ -154,7 +153,7 @@ async function processImages(markdown: string, storageConfig: StorageConfig): Pr
   return result
 }
 
-function stripPageTags(markdown: string): string {
+function cleanCraftMarkdown(markdown: string): string {
   // Remove <page>Title</page> lines (Craft wraps document titles in these)
   // Also handle self-closing and nested page tags
   return markdown
@@ -164,11 +163,11 @@ function stripPageTags(markdown: string): string {
     .trim()
 }
 
-async function convertCraftMarkdownToHtml(craftMarkdown: string, storageConfig: StorageConfig): Promise<string> {
-  let cleaned = stripPageTags(craftMarkdown)
-  // Download and re-host images before converting to HTML
+async function prepareCraftContent(craftMarkdown: string, storageConfig: StorageConfig): Promise<string> {
+  let cleaned = cleanCraftMarkdown(craftMarkdown)
+  // Download and re-host images
   cleaned = await processImages(cleaned, storageConfig)
-  return await marked(cleaned)
+  return cleaned
 }
 
 function convertHtmlToMarkdown(html: string): string {
@@ -286,22 +285,23 @@ export async function craftImportSync(
         }
 
         // Update the post
-        const markdown = await client.getDocumentMarkdown(doc.id)
-        const html = await convertCraftMarkdownToHtml(markdown, storageConfig)
+        const rawMarkdown = await client.getDocumentMarkdown(doc.id)
+        const content = await prepareCraftContent(rawMarkdown, storageConfig)
 
         await postDb.post.update({
           where: { id: existingPost.id },
           data: {
             title: doc.title,
-            content: html,
+            content,
+            contentFormat: 'markdown',
             craftLastModifiedAt: doc.lastModifiedAt || null,
           },
         })
         result.updated++
       } else {
         // Import new post
-        const markdown = await client.getDocumentMarkdown(doc.id)
-        const html = await convertCraftMarkdownToHtml(markdown, storageConfig)
+        const rawMarkdown = await client.getDocumentMarkdown(doc.id)
+        const content = await prepareCraftContent(rawMarkdown, storageConfig)
 
         let slug = generateSlug(doc.title)
         const existingSlug = await postDb.post.findUnique({ where: { slug } })
@@ -311,7 +311,8 @@ export async function craftImportSync(
           data: {
             title: doc.title,
             slug,
-            content: html,
+            content,
+            contentFormat: 'markdown',
             published: true,
             authorId: owner.id,
             craftDocumentId: doc.id,

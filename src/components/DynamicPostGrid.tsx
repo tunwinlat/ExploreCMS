@@ -181,9 +181,14 @@ export default function DynamicPostGrid({
           <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-secondary)' }}>No posts found for this view.</p>
         ) : (
           filteredPosts.map(post => {
-            const imgMatch = post.content.match(/<img[^>]+src="([^">]+)"/)
+            const isMarkdown = (post as any).contentFormat === 'markdown'
+            const imgMatch = isMarkdown
+              ? post.content.match(/!\[[^\]]*\]\(([^)]+)\)/)
+              : post.content.match(/<img[^>]+src="([^">]+)"/)
             const coverImage = imgMatch ? imgMatch[1] : null
-            const textContent = post.content.replace(/<[^>]*>?/gm, '').trim()
+            const textContent = isMarkdown
+              ? post.content.replace(/!\[[^\]]*\]\([^)]+\)/g, '').replace(/#{1,6}\s*/g, '').replace(/[*_~`]+/g, '').replace(/\n+/g, ' ').trim()
+              : post.content.replace(/<[^>]*>?/gm, '').trim()
             const excerpt = textContent.length > 120 ? textContent.substring(0, 120) + '...' : textContent
 
             return (

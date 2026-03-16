@@ -26,6 +26,7 @@ export async function runSchemaMigrations(): Promise<void> {
       `ALTER TABLE "SiteSettings" ADD COLUMN "enabledComponents" TEXT NOT NULL DEFAULT '["blog"]'`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "defaultComponent" TEXT NOT NULL DEFAULT 'blog'`,
       // v3 → Craft.do integration columns
+      `ALTER TABLE "Post" ADD COLUMN "contentFormat" TEXT NOT NULL DEFAULT 'html'`,
       `ALTER TABLE "Post" ADD COLUMN "craftDocumentId" TEXT`,
       `ALTER TABLE "Post" ADD COLUMN "craftLastModifiedAt" TEXT`,
       `ALTER TABLE "Post" ADD COLUMN "craftUnlinked" BOOLEAN NOT NULL DEFAULT false`,
@@ -341,6 +342,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
       `ALTER TABLE "SiteSettings" ADD COLUMN "enabledComponents" TEXT NOT NULL DEFAULT '["blog"]'`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "defaultComponent" TEXT NOT NULL DEFAULT 'blog'`,
       // Craft.do integration
+      `ALTER TABLE "Post" ADD COLUMN "contentFormat" TEXT NOT NULL DEFAULT 'html'`,
       `ALTER TABLE "Post" ADD COLUMN "craftDocumentId" TEXT`,
       `ALTER TABLE "Post" ADD COLUMN "craftLastModifiedAt" TEXT`,
       `ALTER TABLE "Post" ADD COLUMN "craftUnlinked" BOOLEAN NOT NULL DEFAULT false`,
