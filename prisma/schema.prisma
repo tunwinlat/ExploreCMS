@@ -82,6 +82,13 @@ model SiteSettings {
   craftServerUrl    String?   // https://connect.craft.do/links/{serverID}/api/v1
   craftApiToken     String?   // Bearer token
   craftFolderId     String?   // Selected folder ID
+  
+  // GitHub Integration
+  githubEnabled     Boolean   @default(false)
+  githubAccessToken String?   // OAuth access token
+  githubUsername    String?   // Connected GitHub username
+  githubSyncMode    String?   @default("manual") // "all" or "manual"
+  githubLastSyncAt  String?   // ISO timestamp
   craftFolderName   String?   // Folder name for display
   craftSyncMode     String?   // "read-only" | "backup" | "full-sync"
   craftEnabled      Boolean   @default(false)
@@ -98,6 +105,7 @@ model Project {
   slug        String         @unique
   tagline     String         @default("")
   content     String         @default("") // rich HTML content
+  contentFormat String       @default("html") // "html" or "markdown"
   coverImage  String?
   status      String         @default("completed") // completed, in_progress, archived
   featured    Boolean        @default(false)
@@ -109,6 +117,13 @@ model Project {
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   images      ProjectImage[]
+  
+  // GitHub integration fields
+  githubRepoId      String?   // GitHub's numeric repo ID
+  githubRepoFullName String?  // owner/repo format
+  githubSyncEnabled Boolean    @default(false) // Auto-sync enabled
+  githubLastSyncAt  String?   // ISO timestamp of last sync
+  githubDefaultBranch String? @default("main") // Branch to fetch README from
 }
 
 model ProjectImage {

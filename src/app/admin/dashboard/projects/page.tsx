@@ -8,14 +8,17 @@ import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { deleteProject } from './projectActions'
+import { getPostDb } from '@/lib/bunnyDb'
+import { syncGitHubProject } from './github/githubActions'
 
 export default async function ProjectsAdminPage() {
   const session = await verifySession()
   if (!session) return null
 
+  const db = await getPostDb()
   let projects: any[] = []
   try {
-    projects = await (prisma as any).project.findMany({
+    projects = await db.project.findMany({
       orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
       include: { _count: { select: { images: true } } },
     })
@@ -34,27 +37,51 @@ export default async function ProjectsAdminPage() {
           <h1 className="admin-page-title">Projects</h1>
           <p className="admin-page-subtitle">Manage your project showcase.</p>
         </div>
-        <Link
-          href="/admin/dashboard/projects/new"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.6rem 1.25rem',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, var(--accent-color), var(--accent-hover))',
-            color: '#fff',
-            fontSize: '0.875rem',
-            fontWeight: 600,
-            textDecoration: 'none',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          New Project
-        </Link>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <Link
+            href="/admin/dashboard/projects/github"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.6rem 1.25rem',
+              borderRadius: '10px',
+              background: 'var(--bg-color-secondary)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-primary)',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+            </svg>
+            GitHub
+          </Link>
+          <Link
+            href="/admin/dashboard/projects/new"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.6rem 1.25rem',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, var(--accent-color), var(--accent-hover))',
+              color: '#fff',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            New Project
+          </Link>
+        </div>
       </header>
 
       {projects.length === 0 ? (
@@ -117,6 +144,25 @@ export default async function ProjectsAdminPage() {
                     <span style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
                       {project.title}
                     </span>
+                    {project.githubRepoId && (
+                      <span style={{
+                        padding: '0.1rem 0.5rem',
+                        borderRadius: '20px',
+                        fontSize: '0.65rem',
+                        fontWeight: 700,
+                        background: '#333',
+                        color: '#fff',
+                        letterSpacing: '0.04em',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                      }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                        GitHub
+                      </span>
+                    )}
                     {project.featured && (
                       <span style={{
                         padding: '0.1rem 0.5rem',
@@ -146,6 +192,36 @@ export default async function ProjectsAdminPage() {
 
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                  {project.githubRepoId && (
+                    <form action={async () => { 
+                      const result = await syncGitHubProject(project.id)
+                      if (result.error) alert('Sync failed: ' + result.error)
+                      else window.location.reload()
+                    }}>
+                      <button
+                        type="submit"
+                        title="Sync from GitHub"
+                        style={{
+                          padding: '0.4rem 0.6rem',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-color)',
+                          fontSize: '0.8rem',
+                          fontWeight: 500,
+                          color: 'var(--text-secondary)',
+                          background: 'transparent',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/>
+                        </svg>
+                        Sync
+                      </button>
+                    </form>
+                  )}
                   <Link
                     href={`/admin/dashboard/projects/edit/${project.id}`}
                     style={{

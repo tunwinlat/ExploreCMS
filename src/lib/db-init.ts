@@ -39,6 +39,18 @@ export async function runSchemaMigrations(): Promise<void> {
       `ALTER TABLE "SiteSettings" ADD COLUMN "craftWriteAccess" BOOLEAN NOT NULL DEFAULT false`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "craftError" TEXT`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "craftLastSyncAt" TEXT`,
+      // v4 → GitHub integration columns
+      `ALTER TABLE "SiteSettings" ADD COLUMN "githubEnabled" BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "githubAccessToken" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "githubUsername" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "githubSyncMode" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "githubLastSyncAt" TEXT`,
+      `ALTER TABLE "Project" ADD COLUMN "contentFormat" TEXT NOT NULL DEFAULT 'html'`,
+      `ALTER TABLE "Project" ADD COLUMN "githubRepoId" TEXT`,
+      `ALTER TABLE "Project" ADD COLUMN "githubRepoFullName" TEXT`,
+      `ALTER TABLE "Project" ADD COLUMN "githubSyncEnabled" BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE "Project" ADD COLUMN "githubLastSyncAt" TEXT`,
+      `ALTER TABLE "Project" ADD COLUMN "githubDefaultBranch" TEXT`,
       // New tables — CREATE IF NOT EXISTS is not supported by LibSQL, so we use CREATE TABLE and ignore "already exists"
       `CREATE TABLE "Project" (
         "id" TEXT NOT NULL PRIMARY KEY,
@@ -46,6 +58,7 @@ export async function runSchemaMigrations(): Promise<void> {
         "slug" TEXT NOT NULL,
         "tagline" TEXT NOT NULL DEFAULT '',
         "content" TEXT NOT NULL DEFAULT '',
+        "contentFormat" TEXT NOT NULL DEFAULT 'html',
         "coverImage" TEXT,
         "status" TEXT NOT NULL DEFAULT 'completed',
         "featured" BOOLEAN NOT NULL DEFAULT false,
@@ -54,6 +67,11 @@ export async function runSchemaMigrations(): Promise<void> {
         "liveUrl" TEXT,
         "techTags" TEXT NOT NULL DEFAULT '[]',
         "order" INTEGER NOT NULL DEFAULT 0,
+        "githubRepoId" TEXT,
+        "githubRepoFullName" TEXT,
+        "githubSyncEnabled" BOOLEAN NOT NULL DEFAULT false,
+        "githubLastSyncAt" TEXT,
+        "githubDefaultBranch" TEXT,
         "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" DATETIME NOT NULL
       )`,
@@ -265,6 +283,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
           "slug" TEXT NOT NULL,
           "tagline" TEXT NOT NULL DEFAULT '',
           "content" TEXT NOT NULL DEFAULT '',
+          "contentFormat" TEXT NOT NULL DEFAULT 'html',
           "coverImage" TEXT,
           "status" TEXT NOT NULL DEFAULT 'completed',
           "featured" BOOLEAN NOT NULL DEFAULT false,
@@ -273,6 +292,11 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
           "liveUrl" TEXT,
           "techTags" TEXT NOT NULL DEFAULT '[]',
           "order" INTEGER NOT NULL DEFAULT 0,
+          "githubRepoId" TEXT,
+          "githubRepoFullName" TEXT,
+          "githubSyncEnabled" BOOLEAN NOT NULL DEFAULT false,
+          "githubLastSyncAt" TEXT,
+          "githubDefaultBranch" TEXT,
           "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
           "updatedAt" DATETIME NOT NULL
       );
