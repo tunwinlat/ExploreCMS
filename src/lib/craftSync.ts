@@ -154,14 +154,15 @@ async function processImages(markdown: string, storageConfig: StorageConfig): Pr
 }
 
 function cleanCraftMarkdown(markdown: string): string {
-  // Remove all Craft-specific XML/HTML tags:
-  // <page id="...">, </page>, <pageTitle>...</pageTitle>, <content>, </content>, etc.
   return markdown
+    // Remove all Craft-specific XML/HTML tags
     .replace(/<pageTitle>[^<]*<\/pageTitle>\s*/g, '')
     .replace(/<\/?page[^>]*>\s*/g, '')
     .replace(/<\/?content[^>]*>\s*/g, '')
     .replace(/<\/?card[^>]*>\s*/g, '')
     .replace(/<\/?collection[^>]*>\s*/g, '')
+    // Dedent lines: Craft indents blocks which makes marked treat them as code
+    .replace(/^[ \t]+/gm, '')
     .trim()
 }
 

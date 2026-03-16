@@ -62,6 +62,23 @@ export async function saveCraftSettings(
   }
 }
 
+export async function updateCraftWriteAccess(writeAccess: boolean) {
+  const session = await verifySession()
+  if (!session || session.role !== 'OWNER') {
+    return { error: 'Unauthorized' }
+  }
+
+  try {
+    await (prisma as any).siteSettings.update({
+      where: { id: 'singleton' },
+      data: { craftWriteAccess: writeAccess },
+    })
+    return { success: true }
+  } catch {
+    return { error: 'Failed to update' }
+  }
+}
+
 export async function unlinkCraftPost(postId: string) {
   const session = await verifySession()
   if (!session) {
