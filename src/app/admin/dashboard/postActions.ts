@@ -90,6 +90,7 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
         title,
         slug,
         content,
+        contentFormat: 'markdown',
         published,
         isFeatured,
         authorId: session.userId as string,

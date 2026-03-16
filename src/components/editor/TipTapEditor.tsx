@@ -71,7 +71,9 @@ export default function TipTapEditor({ initialContent = '', onChange, editable =
     editable,
     content: initialContent,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML())
+      // Output Markdown instead of HTML for native Markdown storage
+      const markdown = (editor.storage as any).markdown?.getMarkdown?.() || editor.getHTML()
+      onChange(markdown)
     },
     editorProps: {
       handleDrop: (view, event, slice, moved) => {

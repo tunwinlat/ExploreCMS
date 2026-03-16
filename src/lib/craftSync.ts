@@ -174,54 +174,136 @@ async function prepareCraftContent(craftMarkdown: string, storageConfig: Storage
 }
 
 function convertHtmlToMarkdown(html: string): string {
-  let md = html
-    // Images FIRST (before stripping other tags, since img is inside p tags)
-    .replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, '\n\n![$2]($1)\n\n')
-    .replace(/<img[^>]*alt="([^"]*)"[^>]*src="([^"]*)"[^>]*\/?>/gi, '\n\n![$1]($2)\n\n')
-    .replace(/<img[^>]*src="([^"]*)"[^>]*\/?>/gi, '\n\n![]($1)\n\n')
-    // Headers
-    .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n')
-    .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n')
-    .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n')
-    .replace(/<h4[^>]*>(.*?)<\/h4>/gi, '#### $1\n\n')
-    .replace(/<h5[^>]*>(.*?)<\/h5>/gi, '##### $1\n\n')
-    .replace(/<h6[^>]*>(.*?)<\/h6>/gi, '###### $1\n\n')
-    // Inline formatting
-    .replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**')
-    .replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**')
-    .replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*')
-    .replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
-    // Links
-    .replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)')
-    // Lists
-    .replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n')
-    .replace(/<\/?[ou]l[^>]*>/gi, '\n')
-    // Code
-    .replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`')
-    .replace(/<pre[^>]*>([\s\S]*?)<\/pre>/gi, '```\n$1\n```\n\n')
-    // Blockquotes
-    .replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, (_, content) =>
-      content.replace(/<[^>]+>/g, '').split('\n').map((line: string) => `> ${line}`).join('\n') + '\n\n'
-    )
-    // Paragraphs — convert to double newline
-    .replace(/<p[^>]*><\/p>/gi, '\n') // empty paragraphs = line break
-    .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')
-    // Line breaks
-    .replace(/<br\s*\/?>/gi, '\n')
-    // Horizontal rules
-    .replace(/<hr[^>]*\/?>/gi, '\n---\n\n')
-    // Strip any remaining HTML tags
-    .replace(/<[^>]+>/g, '')
-    // Decode common HTML entities
+  // Extract code blocks FIRST before any processing to preserve their content
+  // This ensures HTML entities inside code blocks are not stripped
+  const codeBlocks: { placeholder: string; content: string; isInline: boolean }[] = []
+  let blockIndex = 0
+
+  // Extract <pre> blocks (code blocks) - process these first to avoid nested <code> conflicts
+  let text = html.replace(/<pre[^>]*>([\s\S]*?)<\/pre>/gi, (match, content) => {
+    const placeholder = `\n\n__CODE_BLOCK_${blockIndex}__\n\n`
+    // Get the raw text content, preserving HTML entities
+    const rawContent = extractRawText(content)
+    codeBlocks.push({ placeholder, content: rawContent, isInline: false })
+    blockIndex++
+    return placeholder
+  })
+
+  // Extract inline <code> blocks (but not inside pre blocks which are already extracted)
+  text = text.replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, (match, content) => {
+    const placeholder = `__INLINE_CODE_${blockIndex}__`
+    const rawContent = extractRawText(content)
+    codeBlocks.push({ placeholder, content: rawContent, isInline: true })
+    blockIndex++
+    return placeholder
+  })
+
+  // Now decode entities and process the rest of the HTML
+  text = text
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
-    // Clean up whitespace
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, '/')
+    .replace(/&nbsp;/g, ' ')
+
+  let md = text
+    // Images
+    .replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, '\n\n![$2]($1)\n\n')
+    .replace(/<img[^>]*alt="([^"]*)"[^>]*src="([^"]*)"[^>]*\/?>/gi, '\n\n![$1]($2)\n\n')
+    .replace(/<img[^>]*src="([^"]*)"[^>]*\/?>/gi, '\n\n![]($1)\n\n')
+    // Headers
+    .replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, (_, content) => `# ${stripHtml(content)}\n\n`)
+    .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, (_, content) => `## ${stripHtml(content)}\n\n`)
+    .replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, (_, content) => `### ${stripHtml(content)}\n\n`)
+    .replace(/<h4[^>]*>([\s\S]*?)<\/h4>/gi, (_, content) => `#### ${stripHtml(content)}\n\n`)
+    .replace(/<h5[^>]*>([\s\S]*?)<\/h5>/gi, (_, content) => `##### ${stripHtml(content)}\n\n`)
+    .replace(/<h6[^>]*>([\s\S]*?)<\/h6>/gi, (_, content) => `###### ${stripHtml(content)}\n\n`)
+    // Inline formatting
+    .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, (_, content) => `**${stripHtml(content)}**`)
+    .replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, (_, content) => `**${stripHtml(content)}**`)
+    .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, (_, content) => `*${stripHtml(content)}*`)
+    .replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, (_, content) => `*${stripHtml(content)}*`)
+    // Links
+    .replace(/<a[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, (_, href, content) => `[${stripHtml(content)}](${href})`)
+    // Lists - handle nested content
+    .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, (_, content) => `- ${stripHtml(content)}\n`)
+    .replace(/<\/?[ou]l[^>]*>/gi, '\n')
+    // Blockquotes
+    .replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, (_, content) =>
+      stripHtml(content).split('\n').map((line: string) => `> ${line}`).join('\n') + '\n\n'
+    )
+    // Paragraphs - handle multiline content and nested tags
+    .replace(/<p[^>]*><\/p>/gi, '\n') // empty paragraphs = line break
+    .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, (_, content) => `${stripHtml(content)}\n\n`)
+    // Line breaks
+    .replace(/<br\s*\/?>/gi, '\n')
+    // Horizontal rules
+    .replace(/<hr[^>]*\/?>/gi, '\n---\n\n')
+    // Divs - treat as paragraphs
+    .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, (_, content) => `${stripHtml(content)}\n\n`)
+    // Span tags - just remove them but keep content
+    .replace(/<span[^>]*>([\s\S]*?)<\/span>/gi, '$1')
+    // Tables - simplified conversion
+    .replace(/<tr[^>]*>([\s\S]*?)<\/tr>/gi, (_, row) => {
+      const cells = row.match(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi) || []
+      return '| ' + cells.map((c: string) => stripHtml(c)).join(' | ') + ' |\n'
+    })
+    .replace(/<\/table>/gi, '\n')
+    .replace(/<table[^>]*>/gi, '\n')
+    // Strip any remaining HTML tags that weren't handled
+    .replace(/<[^>]+>/g, '')
+
+  // Restore code blocks
+  for (const block of codeBlocks) {
+    if (block.isInline) {
+      // Inline code: wrap in backticks, escape any backticks in content
+      const escaped = block.content.replace(/`/g, '\\`')
+      md = md.replace(block.placeholder, `\`${escaped}\``)
+    } else {
+      // Code block: wrap in triple backticks, remove any surrounding backticks
+      let code = block.content.replace(/^```\n?|\n?```$/g, '')
+      md = md.replace(block.placeholder, `\n\`\`\`\n${code}\n\`\`\`\n`)
+    }
+  }
+
+  // Final cleanup
+  md = md
     .replace(/\n{3,}/g, '\n\n')
     .trim()
+
   return md
+}
+
+/**
+ * Extract raw text content from HTML, preserving HTML entities as-is
+ * This is used for code blocks where we want to keep the original code
+ */
+function extractRawText(html: string): string {
+  return html
+    // Remove HTML tags but keep their content
+    .replace(/<[^>]+>/g, '')
+    // Don't decode entities - keep them as-is for code
+    .trim()
+}
+
+/**
+ * Strip HTML tags from content, handling nested elements
+ */
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, '/')
+    .replace(/&nbsp;/g, ' ')
+    .trim()
 }
 
 async function delay(ms: number): Promise<void> {
@@ -379,7 +461,10 @@ export async function craftBackupSync(
     const post = posts[i]
 
     try {
-      const markdown = convertHtmlToMarkdown(post.content)
+      // Convert to markdown only if content is HTML (legacy posts)
+      const markdown = (post as any).contentFormat === 'html'
+        ? convertHtmlToMarkdown(post.content)
+        : post.content
 
       if (post.craftDocumentId && post.craftUnlinked) {
         await client.updateDocumentContent(post.craftDocumentId, markdown)
@@ -435,10 +520,8 @@ export async function pushPostToCraft(postId: string): Promise<void> {
 
     const client = new CraftClient(settings.craftServerUrl, settings.craftApiToken)
 
-    // Convert content to markdown for Craft
-    const markdown = post.contentFormat === 'markdown'
-      ? post.content
-      : convertHtmlToMarkdown(post.content)
+    // Content is already in Markdown format, use directly
+    const markdown = post.content
 
     if (post.craftDocumentId) {
       // Update existing Craft document
