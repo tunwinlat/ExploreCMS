@@ -314,6 +314,7 @@ interface SyncResult {
   imported: number
   updated: number
   backedUp: number
+  deleted: number
   errors: string[]
 }
 
@@ -346,9 +347,10 @@ async function getOwnerUser() {
 export async function craftImportSync(
   client: CraftClient,
   folderId: string,
-  force = false
-): Promise<SyncResult> {
-  const result: SyncResult = { imported: 0, updated: 0, backedUp: 0, errors: [] }
+  force = false,
+  fullSync = false
+): Promise<SyncResult & { deleted: number }> {
+  const result: SyncResult & { deleted: number } = { imported: 0, updated: 0, backedUp: 0, deleted: 0, errors: [] }
   const postDb = await getPostDb()
 
   const owner = await getOwnerUser()
@@ -365,6 +367,31 @@ export async function craftImportSync(
   } catch (err: any) {
     result.errors.push(`Failed to list documents: ${err.message}`)
     return result
+  }
+
+  // Create a set of document IDs from Craft
+  const craftDocIds = new Set(documents.map(d => d.id))
+
+  // In full-sync mode, find posts that were deleted from Craft
+  if (fullSync) {
+    const linkedPosts = await postDb.post.findMany({
+      where: {
+        craftDocumentId: { not: null },
+        craftUnlinked: false,
+      },
+      select: { id: true, craftDocumentId: true, title: true },
+    })
+
+    for (const post of linkedPosts) {
+      if (post.craftDocumentId && !craftDocIds.has(post.craftDocumentId)) {
+        try {
+          await postDb.post.delete({ where: { id: post.id } })
+          result.deleted++
+        } catch (err: any) {
+          result.errors.push(`Error deleting post "${post.title}": ${err.message}`)
+        }
+      }
+    }
   }
 
   for (let i = 0; i < documents.length; i++) {
@@ -444,7 +471,7 @@ export async function craftBackupSync(
   client: CraftClient,
   folderId: string
 ): Promise<SyncResult> {
-  const result: SyncResult = { imported: 0, updated: 0, backedUp: 0, errors: [] }
+  const result: SyncResult = { imported: 0, updated: 0, backedUp: 0, deleted: 0, errors: [] }
   const postDb = await getPostDb()
 
   const posts = await postDb.post.findMany({
@@ -542,6 +569,25 @@ export async function pushPostToCraft(postId: string): Promise<void> {
   }
 }
 
+/**
+ * Delete a post from Craft when it's deleted from the site.
+ * Only works in full-sync mode.
+ */
+export async function deletePostFromCraft(craftDocumentId: string): Promise<void> {
+  try {
+    const settings = await getCraftSettings()
+    if (!settings) return
+
+    const mode = settings.craftSyncMode || 'read-only'
+    if (mode !== 'full-sync') return
+
+    const client = new CraftClient(settings.craftServerUrl, settings.craftApiToken)
+    await client.deleteDocument(craftDocumentId)
+  } catch (err: any) {
+    console.error(`[CraftSync] Failed to delete document ${craftDocumentId} from Craft:`, err.message)
+  }
+}
+
 async function setCraftError(error: string | null, disable = false) {
   try {
     const data: any = { craftError: error }
@@ -558,7 +604,7 @@ async function setCraftError(error: string | null, disable = false) {
 export async function runCraftSync(
   options: { manual?: boolean; force?: boolean } = {}
 ): Promise<SyncResult> {
-  const result: SyncResult = { imported: 0, updated: 0, backedUp: 0, errors: [] }
+  const result: SyncResult = { imported: 0, updated: 0, backedUp: 0, deleted: 0, errors: [] }
 
   if (syncInProgress) {
     return { ...result, errors: ['Sync already in progress'] }
@@ -595,9 +641,10 @@ export async function runCraftSync(
     }
 
     if (mode === 'read-only' || mode === 'full-sync') {
-      const importResult = await craftImportSync(client, settings.craftFolderId, !!options.force)
+      const importResult = await craftImportSync(client, settings.craftFolderId, !!options.force, mode === 'full-sync')
       result.imported = importResult.imported
       result.updated = importResult.updated
+      result.deleted = importResult.deleted
       result.errors.push(...importResult.errors)
     }
 

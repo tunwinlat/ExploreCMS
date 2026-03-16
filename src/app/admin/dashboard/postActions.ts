@@ -12,7 +12,7 @@ import { verifySession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { after } from 'next/server'
-import { pushPostToCraft, getCraftSyncMode } from '@/lib/craftSync'
+import { pushPostToCraft, getCraftSyncMode, deletePostFromCraft } from '@/lib/craftSync'
 
 function generateSlug(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
@@ -139,7 +139,22 @@ export async function deletePost(id: string) {
     throw new Error('Permission denied')
   }
 
+  // Store craft document ID before deleting
+  const craftDocumentId = post.craftDocumentId
+
   await postDb.post.delete({ where: { id } })
+
+  // In full-sync mode, also delete from Craft
+  if (craftDocumentId) {
+    after(async () => {
+      try {
+        await deletePostFromCraft(craftDocumentId)
+      } catch {
+        // Non-critical - post is already deleted locally
+      }
+    })
+  }
+
   revalidatePath('/')
   revalidatePath('/admin/dashboard')
   redirect('/admin/dashboard')

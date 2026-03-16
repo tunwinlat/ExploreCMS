@@ -211,4 +211,11 @@ export class CraftClient {
       })
     }
   }
+
+  async deleteDocument(documentId: string): Promise<void> {
+    await this.request('/documents', {
+      method: 'DELETE',
+      body: JSON.stringify({ documentIds: [documentId] }),
+    })
+  }
 }
