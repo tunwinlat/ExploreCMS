@@ -11,6 +11,7 @@ import { getPostDb } from '@/lib/bunnyDb'
 import { verifySession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { after } from 'next/server'
 import { pushPostToCraft, getCraftSyncMode } from '@/lib/craftSync'
 
 function generateSlug(title: string) {
@@ -103,16 +104,17 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
   revalidatePath('/')
   revalidatePath('/admin/dashboard')
 
-  // Push to Craft in backup/full-sync mode (fire and forget, don't block publish)
+  // Push to Craft in backup/full-sync mode (runs after response via after())
   if (published) {
-    // Get the post ID for new posts
-    if (!id) {
-      const newPost = await postDb.post.findUnique({ where: { slug } })
-      if (newPost) {
-        pushPostToCraft(newPost.id).catch(() => {})
-      }
-    } else {
-      pushPostToCraft(id).catch(() => {})
+    const postIdForCraft = id || (await postDb.post.findUnique({ where: { slug } }))?.id
+    if (postIdForCraft) {
+      after(async () => {
+        try {
+          await pushPostToCraft(postIdForCraft)
+        } catch {
+          // Non-critical
+        }
+      })
     }
   }
 
