@@ -21,6 +21,12 @@ async function getSettings() {
   } catch { return null; }
 }
 
+async function getPopupConfig() {
+  try {
+    return await prisma.popupConfig.findUnique({ where: { id: 'singleton' } });
+  } catch { return null; }
+}
+
 async function getProjects() {
   try {
     const projects = await (prisma as any).project.findMany({
@@ -35,7 +41,11 @@ async function getProjects() {
 }
 
 export default async function ProjectsPage() {
-  const [settings, projects] = await Promise.all([getSettings(), getProjects()]);
+  const [settings, projects, popupConfig] = await Promise.all([
+    getSettings(),
+    getProjects(),
+    getPopupConfig()
+  ]);
 
   const componentConfig = parseComponentConfig(settings);
   const { enabledComponents, defaultComponent } = componentConfig;
@@ -43,10 +53,6 @@ export default async function ProjectsPage() {
   if (!enabledComponents.includes('projects')) notFound();
 
   const enabledMeta = COMPONENTS.filter(c => enabledComponents.includes(c.id));
-  const popupConfig = await (async () => {
-    try { return await prisma.popupConfig.findUnique({ where: { id: 'singleton' } }); }
-    catch { return null; }
-  })();
 
   const featured = projects.filter((p: any) => p.featured);
   const rest = projects.filter((p: any) => !p.featured);
