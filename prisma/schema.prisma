@@ -27,8 +27,9 @@ model Post {
   id         String   @id @default(cuid())
   title      String
   slug       String   @unique
-  content    String   // HTML content
-  published  Boolean  @default(false)
+  content       String   // Post content (HTML or Markdown based on contentFormat)
+  contentFormat String   @default("html") // "html" or "markdown"
+  published     Boolean  @default(false)
   isFeatured Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

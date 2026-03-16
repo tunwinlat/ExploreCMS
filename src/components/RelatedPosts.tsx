@@ -96,12 +96,14 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
         }}
       >
         {posts.map((post) => {
-          const excerpt = post.content
-            .replace(/<[^>]*>?/gm, '')
-            .trim()
-            .substring(0, 100) + '...'
-          
-          const imgMatch = post.content.match(/<img[^>]+src="([^">]+)"/)
+          const isMarkdown = (post as any).contentFormat === 'markdown'
+          const excerpt = isMarkdown
+            ? post.content.replace(/!\[[^\]]*\]\([^)]+\)/g, '').replace(/#{1,6}\s*/g, '').replace(/[*_~`]+/g, '').replace(/\n+/g, ' ').trim().substring(0, 100) + '...'
+            : post.content.replace(/<[^>]*>?/gm, '').trim().substring(0, 100) + '...'
+
+          const imgMatch = isMarkdown
+            ? post.content.match(/!\[[^\]]*\]\(([^)]+)\)/)
+            : post.content.match(/<img[^>]+src="([^">]+)"/)
           const coverImage = imgMatch ? imgMatch[1] : null
 
           return (

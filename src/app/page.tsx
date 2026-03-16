@@ -83,6 +83,7 @@ function normalizePosts(posts: any[]) {
     title: p.title,
     slug: p.slug,
     content: p.content,
+    contentFormat: p.contentFormat || 'html',
     isFeatured: p.isFeatured,
     createdAt: typeof p.createdAt === 'string' ? p.createdAt : p.createdAt?.toISOString() || new Date().toISOString(),
     author: { username: p.author?.username || 'admin', firstName: p.author?.firstName || null },
