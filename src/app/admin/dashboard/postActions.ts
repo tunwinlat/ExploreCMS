@@ -11,6 +11,7 @@ import { getPostDb } from '@/lib/bunnyDb'
 import { verifySession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { pushPostToCraft, getCraftSyncMode } from '@/lib/craftSync'
 
 function generateSlug(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
@@ -55,10 +56,13 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
   let slug = slugInput ? generateSlug(slugInput) : generateSlug(title)
 
   if (id) {
-    // Guard: prevent editing Craft-linked posts
+    // Guard: prevent editing Craft-linked posts in read-only mode only
     const craftCheck = await postDb.post.findUnique({ where: { id }, select: { craftDocumentId: true, craftUnlinked: true } })
     if (craftCheck?.craftDocumentId && !craftCheck?.craftUnlinked) {
-      return { error: 'This post is synced from Craft.do and cannot be edited. Unlink it first.' }
+      const syncMode = await getCraftSyncMode()
+      if (syncMode === 'read-only') {
+        return { error: 'This post is synced from Craft.do and cannot be edited. Unlink it first.' }
+      }
     }
 
     // If slug changed, verify uniqueness
@@ -98,6 +102,19 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
   // Bust the homepage cache so the new/updated post appears on the site
   revalidatePath('/')
   revalidatePath('/admin/dashboard')
+
+  // Push to Craft in backup/full-sync mode (fire and forget, don't block publish)
+  if (published) {
+    // Get the post ID for new posts
+    if (!id) {
+      const newPost = await postDb.post.findUnique({ where: { slug } })
+      if (newPost) {
+        pushPostToCraft(newPost.id).catch(() => {})
+      }
+    } else {
+      pushPostToCraft(id).catch(() => {})
+    }
+  }
 
   if (options.redirect) {
     redirect('/admin/dashboard')

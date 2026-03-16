@@ -5,6 +5,7 @@
  */
 
 import { getPostDb } from '@/lib/bunnyDb'
+import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { DeletePostButton } from '../DeletePostButton'
 import { UnlinkCraftButton } from './UnlinkCraftButton'
@@ -13,11 +14,17 @@ export const metadata = { title: "Published Posts | ExploreCMS" }
 
 export default async function PublishedPostsPage() {
   const postDb = await getPostDb() as any;
-  const posts = await postDb.post.findMany({
-    where: { published: true },
-    orderBy: { createdAt: 'desc' },
-    include: { author: true }
-  })
+  const [posts, settings] = await Promise.all([
+    postDb.post.findMany({
+      where: { published: true },
+      orderBy: { createdAt: 'desc' },
+      include: { author: true }
+    }),
+    (prisma as any).siteSettings.findUnique({ where: { id: 'singleton' } }).catch(() => null)
+  ])
+
+  const craftEnabled = settings?.craftEnabled || false
+  const craftMode = settings?.craftSyncMode || 'read-only'
 
   return (
     <div className="fade-in-up">
@@ -51,6 +58,24 @@ export default async function PublishedPostsPage() {
               <tbody>
                 {posts.map((post: any) => {
                   const isCraftLinked = post.craftDocumentId && !post.craftUnlinked
+                  const isReadOnlyMode = craftMode === 'read-only'
+                  const isWriteMode = craftMode === 'backup' || craftMode === 'full-sync'
+
+                  // Determine Craft badge
+                  let craftBadge = null
+                  if (craftEnabled) {
+                    if (isCraftLinked && isReadOnlyMode) {
+                      craftBadge = <span style={{ fontSize: '0.65rem', background: '#6366f1', color: 'white', padding: '0.1rem 0.4rem', borderRadius: '9999px', whiteSpace: 'nowrap', flexShrink: 0 }}>Craft</span>
+                    } else if (isCraftLinked && isWriteMode) {
+                      craftBadge = <span style={{ fontSize: '0.65rem', background: '#22c55e', color: 'white', padding: '0.1rem 0.4rem', borderRadius: '9999px', whiteSpace: 'nowrap', flexShrink: 0 }}>Synced</span>
+                    } else if (!post.craftDocumentId && isWriteMode) {
+                      craftBadge = <span style={{ fontSize: '0.65rem', background: 'var(--border-color)', color: 'var(--text-secondary)', padding: '0.1rem 0.4rem', borderRadius: '9999px', whiteSpace: 'nowrap', flexShrink: 0 }}>Not synced</span>
+                    }
+                  }
+
+                  // In read-only mode, Craft posts are locked. In backup/full-sync, always editable.
+                  const isLocked = isCraftLinked && isReadOnlyMode
+
                   return (
                     <tr key={post.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                       <td style={{ padding: '1rem', maxWidth: '300px' }}>
@@ -58,11 +83,7 @@ export default async function PublishedPostsPage() {
                           <Link href={`/admin/dashboard/edit/${post.id}`} prefetch={false} style={{ fontWeight: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {post.title}
                           </Link>
-                          {isCraftLinked && (
-                            <span style={{ fontSize: '0.65rem', background: '#6366f1', color: 'white', padding: '0.1rem 0.4rem', borderRadius: '9999px', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                              Craft
-                            </span>
-                          )}
+                          {craftBadge}
                         </div>
                       </td>
                       <td style={{ padding: '1rem' }}>
@@ -75,7 +96,7 @@ export default async function PublishedPostsPage() {
                       <td style={{ padding: '1rem', textAlign: 'right' }}>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', alignItems: 'center' }}>
                           <a href={`/post/${post.slug}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>View</a>
-                          {isCraftLinked ? (
+                          {isLocked ? (
                             <UnlinkCraftButton id={post.id} title={post.title} />
                           ) : (
                             <Link href={`/admin/dashboard/edit/${post.id}`} prefetch={false} style={{ color: 'var(--accent-hover)', fontSize: '0.9rem', fontWeight: 500 }}>Edit</Link>
