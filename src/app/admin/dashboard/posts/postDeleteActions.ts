@@ -9,6 +9,7 @@
 import { getPostDb } from '@/lib/bunnyDb'
 import { verifySession } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
+import { deletePostFromCraft } from '@/lib/craftSync'
 
 export async function deletePostById(id: string) {
   const session = await verifySession()
@@ -24,7 +25,20 @@ export async function deletePostById(id: string) {
       return { success: false, error: 'Permission denied' }
     }
 
+    // Store craft document ID before deleting
+    const craftDocumentId = post.craftDocumentId
+
     await postDb.post.delete({ where: { id } })
+
+    // In full-sync mode, also delete from Craft
+    if (craftDocumentId) {
+      try {
+        await deletePostFromCraft(craftDocumentId)
+      } catch (err) {
+        console.error('[CraftSync] Failed to delete from Craft:', err)
+        // Non-critical - post is already deleted locally
+      }
+    }
     
     revalidatePath('/admin/dashboard')
     revalidatePath('/')
