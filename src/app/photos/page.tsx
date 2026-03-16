@@ -21,6 +21,11 @@ async function getSettings() {
   catch { return null; }
 }
 
+async function getPopupConfig() {
+  try { return await prisma.popupConfig.findUnique({ where: { id: 'singleton' } }); }
+  catch { return null; }
+}
+
 async function getAlbums() {
   try {
     return await (prisma as any).photoAlbum.findMany({
@@ -32,7 +37,11 @@ async function getAlbums() {
 }
 
 export default async function PhotosPage() {
-  const [settings, albums] = await Promise.all([getSettings(), getAlbums()]);
+  const [settings, albums, popupConfig] = await Promise.all([
+    getSettings(),
+    getAlbums(),
+    getPopupConfig()
+  ]);
 
   const componentConfig = parseComponentConfig(settings);
   const { enabledComponents, defaultComponent } = componentConfig;
@@ -40,10 +49,6 @@ export default async function PhotosPage() {
   if (!enabledComponents.includes('photos')) notFound();
 
   const enabledMeta = COMPONENTS.filter(c => enabledComponents.includes(c.id));
-  const popupConfig = await (async () => {
-    try { return await prisma.popupConfig.findUnique({ where: { id: 'singleton' } }); }
-    catch { return null; }
-  })();
 
   return (
     <div className="main-content fade-in-up">
