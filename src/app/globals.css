@@ -425,10 +425,24 @@ h1, h2, h3, h4 {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  max-width: 100%;
 }
 
 .component-tabs-scroll::-webkit-scrollbar {
   display: none;
+}
+
+@media (max-width: 768px) {
+  .component-tabs {
+    gap: 0.125rem !important;
+    padding: 0.2rem !important;
+  }
+
+  .component-tabs a {
+    padding: 0.4rem 0.65rem !important;
+    font-size: 0.8rem !important;
+    gap: 0.3rem !important;
+  }
 }
 
 /* ===== Scrollbar Styling ===== */
