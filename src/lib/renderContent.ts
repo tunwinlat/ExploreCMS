@@ -16,8 +16,17 @@ export async function renderPostContent(
   content: string,
   contentFormat?: string | null
 ): Promise<string> {
-  const isMarkdown = contentFormat === 'markdown' || looksLikeMarkdown(content)
-  if (isMarkdown) {
+  // Explicit format takes priority
+  if (contentFormat === 'markdown') {
+    const html = await marked(content)
+    return sanitizeContent(html)
+  }
+  if (contentFormat === 'html') {
+    return sanitizeContent(content)
+  }
+  // No format specified — detect. If it has markdown image/link syntax, render as markdown.
+  // This handles posts synced before the contentFormat field existed.
+  if (looksLikeMarkdown(content)) {
     const html = await marked(content)
     return sanitizeContent(html)
   }
@@ -26,15 +35,16 @@ export async function renderPostContent(
 
 /**
  * Heuristic: detect if content looks like markdown rather than HTML.
- * Used as fallback when contentFormat field is missing/null.
  */
 function looksLikeMarkdown(content: string): boolean {
-  // If it has HTML block tags, it's probably HTML
-  if (/<(div|p|h[1-6]|ul|ol|table|article)\b/i.test(content)) return false
-  // If it has markdown-specific patterns, it's probably markdown
-  if (/^#{1,6}\s/m.test(content)) return true // headers
-  if (/!\[[^\]]*\]\([^)]+\)/.test(content)) return true // images
-  if (/\[([^\]]+)\]\([^)]+\)/.test(content)) return true // links
+  // If it has markdown image syntax, it's markdown
+  if (/!\[[^\]]*\]\([^)]+\)/.test(content)) return true
+  // If it has markdown headers
+  if (/^#{1,6}\s/m.test(content)) return true
+  // If it has markdown link syntax (but not already inside an HTML tag)
+  if (/(?<!")\[([^\]]+)\]\([^)]+\)/.test(content)) return true
+  // If it has NO HTML block tags at all, treat as markdown
+  if (!/<(div|p|h[1-6]|ul|ol|table|article|img)\b/i.test(content)) return true
   return false
 }
 

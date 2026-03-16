@@ -20,6 +20,6 @@ export async function POST(req: NextRequest) {
   }
 
   const client = new CraftClient(serverUrl, apiToken)
-  const result = await client.testConnection()
+  const result = await client.testConnection(true) // Check write access on explicit test
   return NextResponse.json(result)
 }
