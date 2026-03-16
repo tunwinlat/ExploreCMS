@@ -49,6 +49,9 @@ export function Lightbox({ photos, currentIndex, onClose, onNavigate }: Lightbox
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Image lightbox"
       style={{
         position: 'fixed',
         inset: 0,
