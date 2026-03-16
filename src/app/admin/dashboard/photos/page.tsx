@@ -8,7 +8,7 @@ import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import Image from 'next/image'
-import { deleteAlbum } from './photoActions'
+import DeleteAlbumButton from './DeleteAlbumButton'
 
 export default async function PhotosAdminPage() {
   const session = await verifySession()
@@ -171,26 +171,7 @@ export default async function PhotosAdminPage() {
                   >
                     Manage
                   </Link>
-                  <form action={async () => { await deleteAlbum(album.id) }}>
-                    <button
-                      type="submit"
-                      style={{
-                        padding: '0.4rem 0.75rem',
-                        borderRadius: '8px',
-                        border: '1px solid color-mix(in srgb, #ef4444 30%, transparent)',
-                        fontSize: '0.78rem',
-                        fontWeight: 500,
-                        color: '#ef4444',
-                        background: 'transparent',
-                        cursor: 'pointer',
-                      }}
-                      onClick={e => {
-                        if (!confirm(`Delete album "${album.title}" and all its photos?`)) e.preventDefault()
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </form>
+                  <DeleteAlbumButton albumId={album.id} albumTitle={album.title} />
                 </div>
               </div>
             </div>
