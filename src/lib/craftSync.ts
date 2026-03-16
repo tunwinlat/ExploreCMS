@@ -420,17 +420,18 @@ export async function runCraftSync(
     const client = new CraftClient(settings.craftServerUrl, settings.craftApiToken)
     const mode = settings.craftSyncMode || 'read-only'
 
-    // Health check: verify connection is still working
-    const connectionTest = await client.testConnection()
+    // Health check: verify connection is still working (lightweight, no write test)
+    const connectionTest = await client.testConnection(false)
     if (!connectionTest.success) {
       const errMsg = `Craft connection failed: ${connectionTest.error || 'Unknown error'}. Please check your API key and permissions.`
       await setCraftError(errMsg, true)
       return { ...result, errors: [errMsg] }
     }
 
-    // If backup/full-sync, verify write access still works
-    if (mode === 'backup' || mode === 'full-sync') {
-      if (!connectionTest.writeAccess) {
+    // If backup/full-sync, verify write access on manual sync only
+    if ((mode === 'backup' || mode === 'full-sync') && options.manual) {
+      const writeOk = await client.testWriteAccess()
+      if (!writeOk) {
         const errMsg = 'Craft API no longer has write access. Backup/Full Sync requires write permissions. Integration has been disabled.'
         await setCraftError(errMsg, true)
         return { ...result, errors: [errMsg] }

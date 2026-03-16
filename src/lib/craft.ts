@@ -81,10 +81,13 @@ export class CraftClient {
     return this.request<CraftConnectionInfo>('/connection')
   }
 
-  async testConnection(): Promise<{ success: boolean; spaceId?: string; writeAccess?: boolean; error?: string }> {
+  async testConnection(checkWriteAccess = false): Promise<{ success: boolean; spaceId?: string; writeAccess?: boolean; error?: string }> {
     try {
       const info = await this.getConnectionInfo()
-      const writeAccess = await this.testWriteAccess()
+      let writeAccess: boolean | undefined
+      if (checkWriteAccess) {
+        writeAccess = await this.testWriteAccess()
+      }
       return { success: true, spaceId: info.space.id, writeAccess }
     } catch (err: any) {
       return { success: false, error: err.message }
