@@ -81,12 +81,41 @@ export class CraftClient {
     return this.request<CraftConnectionInfo>('/connection')
   }
 
-  async testConnection(): Promise<{ success: boolean; spaceId?: string; error?: string }> {
+  async testConnection(): Promise<{ success: boolean; spaceId?: string; writeAccess?: boolean; error?: string }> {
     try {
       const info = await this.getConnectionInfo()
-      return { success: true, spaceId: info.space.id }
+      const writeAccess = await this.testWriteAccess()
+      return { success: true, spaceId: info.space.id, writeAccess }
     } catch (err: any) {
       return { success: false, error: err.message }
+    }
+  }
+
+  async testWriteAccess(): Promise<boolean> {
+    try {
+      // Try creating a temporary folder to test write permissions
+      const testName = `_explorecms_write_test_${Date.now()}`
+      const res = await this.request<{ items: { id: string }[] }>(
+        '/folders',
+        {
+          method: 'POST',
+          body: JSON.stringify({ folders: [{ name: testName }] }),
+        }
+      )
+      // Clean up: delete the test folder immediately
+      if (res.items?.[0]?.id) {
+        try {
+          await this.request('/folders', {
+            method: 'DELETE',
+            body: JSON.stringify({ folderIds: [res.items[0].id] }),
+          })
+        } catch {
+          // Cleanup failure is non-critical
+        }
+      }
+      return true
+    } catch {
+      return false
     }
   }
 

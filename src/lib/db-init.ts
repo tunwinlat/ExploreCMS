@@ -35,6 +35,8 @@ export async function runSchemaMigrations(): Promise<void> {
       `ALTER TABLE "SiteSettings" ADD COLUMN "craftFolderName" TEXT`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "craftSyncMode" TEXT`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "craftEnabled" BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "craftWriteAccess" BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "craftError" TEXT`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "craftLastSyncAt" TEXT`,
       // New tables — CREATE IF NOT EXISTS is not supported by LibSQL, so we use CREATE TABLE and ignore "already exists"
       `CREATE TABLE "Project" (
@@ -348,6 +350,8 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
       `ALTER TABLE "SiteSettings" ADD COLUMN "craftFolderName" TEXT`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "craftSyncMode" TEXT`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "craftEnabled" BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "craftWriteAccess" BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "craftError" TEXT`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "craftLastSyncAt" TEXT`,
     ];
     for (const stmt of alterStatements) {

@@ -383,8 +383,21 @@ export async function craftBackupSync(
   return result
 }
 
+async function setCraftError(error: string | null, disable = false) {
+  try {
+    const data: any = { craftError: error }
+    if (disable) data.craftEnabled = false
+    await (prisma as any).siteSettings.update({
+      where: { id: 'singleton' },
+      data,
+    })
+  } catch {
+    // Non-critical
+  }
+}
+
 export async function runCraftSync(
-  options: { manual?: boolean } = {}
+  options: { manual?: boolean; force?: boolean } = {}
 ): Promise<SyncResult> {
   const result: SyncResult = { imported: 0, updated: 0, backedUp: 0, errors: [] }
 
@@ -404,8 +417,25 @@ export async function runCraftSync(
     const client = new CraftClient(settings.craftServerUrl, settings.craftApiToken)
     const mode = settings.craftSyncMode || 'read-only'
 
+    // Health check: verify connection is still working
+    const connectionTest = await client.testConnection()
+    if (!connectionTest.success) {
+      const errMsg = `Craft connection failed: ${connectionTest.error || 'Unknown error'}. Please check your API key and permissions.`
+      await setCraftError(errMsg, true)
+      return { ...result, errors: [errMsg] }
+    }
+
+    // If backup/full-sync, verify write access still works
+    if (mode === 'backup' || mode === 'full-sync') {
+      if (!connectionTest.writeAccess) {
+        const errMsg = 'Craft API no longer has write access. Backup/Full Sync requires write permissions. Integration has been disabled.'
+        await setCraftError(errMsg, true)
+        return { ...result, errors: [errMsg] }
+      }
+    }
+
     if (mode === 'read-only' || mode === 'full-sync') {
-      const importResult = await craftImportSync(client, settings.craftFolderId, !!options.manual)
+      const importResult = await craftImportSync(client, settings.craftFolderId, !!options.force)
       result.imported = importResult.imported
       result.updated = importResult.updated
       result.errors.push(...importResult.errors)
@@ -417,10 +447,14 @@ export async function runCraftSync(
       result.errors.push(...backupResult.errors)
     }
 
+    // Sync succeeded — clear any previous error and update timestamp
     try {
       await (prisma as any).siteSettings.update({
         where: { id: 'singleton' },
-        data: { craftLastSyncAt: new Date().toISOString() },
+        data: {
+          craftLastSyncAt: new Date().toISOString(),
+          craftError: null,
+        },
       })
     } catch {
       // Non-critical

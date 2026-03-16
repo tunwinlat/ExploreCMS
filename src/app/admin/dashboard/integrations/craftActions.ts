@@ -17,11 +17,17 @@ export async function saveCraftSettings(
   folderId: string,
   folderName: string,
   syncMode: string,
-  enabled: boolean
+  enabled: boolean,
+  writeAccess: boolean
 ) {
   const session = await verifySession()
   if (!session || session.role !== 'OWNER') {
     return { error: 'Unauthorized' }
+  }
+
+  // Validate: backup/full-sync requires write access
+  if ((syncMode === 'backup' || syncMode === 'full-sync') && !writeAccess) {
+    return { error: 'Backup and Full Sync modes require write access to Craft. Please test connection first.' }
   }
 
   try {
@@ -34,6 +40,8 @@ export async function saveCraftSettings(
         craftFolderName: folderName || null,
         craftSyncMode: syncMode || 'read-only',
         craftEnabled: enabled,
+        craftWriteAccess: writeAccess,
+        craftError: null, // Clear error on save
       },
       create: {
         id: 'singleton',
@@ -43,6 +51,7 @@ export async function saveCraftSettings(
         craftFolderName: folderName || null,
         craftSyncMode: syncMode || 'read-only',
         craftEnabled: enabled,
+        craftWriteAccess: writeAccess,
       },
     })
 

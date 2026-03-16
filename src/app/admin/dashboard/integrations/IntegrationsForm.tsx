@@ -106,6 +106,8 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
   const [craftFolderName, setCraftFolderName] = useState(initialSettings?.craftFolderName || '')
   const [craftSyncMode, setCraftSyncMode] = useState(initialSettings?.craftSyncMode || 'read-only')
   const [craftEnabled, setCraftEnabled] = useState(initialSettings?.craftEnabled || false)
+  const [craftWriteAccess, setCraftWriteAccess] = useState(initialSettings?.craftWriteAccess || false)
+  const [craftError, setCraftError] = useState(initialSettings?.craftError || '')
   const [craftLoading, setCraftLoading] = useState(false)
   const [craftFolders, setCraftFolders] = useState<{ id: string; label: string }[]>([])
   const [craftSyncResult, setCraftSyncResult] = useState<any>(null)
@@ -149,8 +151,17 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
       })
       const data = await res.json()
       if (data.success) {
-        toast(`Connected to Craft space: ${data.spaceId}`, 'success')
+        setCraftWriteAccess(data.writeAccess || false)
+        setCraftError('')
+        const accessLevel = data.writeAccess ? 'Read & Write' : 'Read Only'
+        toast(`Connected to Craft space: ${data.spaceId} (${accessLevel})`, 'success')
+        // If mode requires write but we don't have it, downgrade to read-only
+        if (!data.writeAccess && (craftSyncMode === 'backup' || craftSyncMode === 'full-sync')) {
+          setCraftSyncMode('read-only')
+          toast('Sync mode changed to Read Only (API does not have write access).', 'warning')
+        }
       } else {
+        setCraftWriteAccess(false)
         toast(data.error || 'Connection failed.', 'error')
       }
     } catch (err: any) {
@@ -201,7 +212,8 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
       craftFolderId,
       craftFolderName,
       craftSyncMode,
-      craftEnabled
+      craftEnabled,
+      craftWriteAccess
     )
     if (res.success) {
       toast('Craft settings saved!', 'success')
@@ -211,18 +223,30 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
     setCraftLoading(false)
   }
 
-  const handleCraftSync = async () => {
+  const handleCraftSync = async (force: boolean) => {
     setCraftLoading(true)
     setCraftSyncResult(null)
-    toast('Starting Craft sync... This may take a while due to rate limiting.', 'info')
+    toast(force ? 'Re-syncing all posts... This may take a while.' : 'Syncing changes...', 'info')
     try {
-      const res = await fetch('/api/craft/sync', { method: 'POST' })
+      const res = await fetch('/api/craft/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ force }),
+      })
       const data = await res.json()
-      if (data.error) {
-        toast(data.error, 'error')
+      if (data.error || (data.errors && data.errors.length > 0 && data.imported === 0 && data.updated === 0 && data.backedUp === 0)) {
+        const errMsg = data.error || data.errors?.[0] || 'Sync failed.'
+        toast(errMsg, 'error')
+        // If integration was auto-disabled, reflect it in the UI
+        if (errMsg.includes('disabled') || errMsg.includes('connection failed')) {
+          setCraftEnabled(false)
+          setCraftError(errMsg)
+        }
+        setCraftSyncResult(data)
       } else {
         setCraftSyncResult(data)
         setCraftLastSync(new Date().toISOString())
+        setCraftError('')
         const parts = []
         if (data.imported) parts.push(`${data.imported} imported`)
         if (data.updated) parts.push(`${data.updated} updated`)
@@ -308,9 +332,29 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
           title="Craft.do Integration"
           icon="C"
           defaultExpanded={true}
-          badge={craftEnabled ? <span style={{ fontSize: '0.7rem', background: '#22c55e', color: 'white', padding: '0.125rem 0.5rem', borderRadius: '9999px' }}>active</span> : undefined}
+          badge={
+            craftError
+              ? <span style={{ fontSize: '0.7rem', background: '#ef4444', color: 'white', padding: '0.125rem 0.5rem', borderRadius: '9999px' }}>error</span>
+              : craftEnabled
+                ? <span style={{ fontSize: '0.7rem', background: '#22c55e', color: 'white', padding: '0.125rem 0.5rem', borderRadius: '9999px' }}>active</span>
+                : undefined
+          }
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {craftError && (
+              <div style={{
+                padding: '1rem',
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid #ef4444',
+                borderRadius: 'var(--radius-md)',
+              }}>
+                <strong style={{ color: '#ef4444', fontSize: '0.9rem' }}>Integration Error</strong>
+                <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  {craftError}
+                </p>
+              </div>
+            )}
+
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
               Sync blog posts with Craft.do. Import notes from a Craft folder as blog posts, back up posts to Craft, or enable full two-way sync.
             </p>
@@ -400,39 +444,52 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
 
             <div>
               <label style={{ fontWeight: 400, display: 'block', marginBottom: '0.75rem' }}>Sync Mode</label>
+              {craftWriteAccess ? (
+                <p style={{ color: '#22c55e', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>API has read &amp; write access.</p>
+              ) : (
+                <p style={{ color: '#eab308', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>API has read-only access. Test connection to check write permissions.</p>
+              )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {[
-                  { value: 'read-only', label: 'Read Only', desc: 'Import posts from Craft and sync updates. No writing to Craft.' },
-                  { value: 'backup', label: 'Backup', desc: 'Write all blog posts to Craft as backup. No importing from Craft.' },
-                  { value: 'full-sync', label: 'Full Sync', desc: 'Both import from Craft and backup to Craft.' },
-                ].map(mode => (
-                  <label
-                    key={mode.value}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: '0.75rem',
-                      padding: '0.75rem',
-                      borderRadius: 'var(--radius-md)',
-                      border: `1px solid ${craftSyncMode === mode.value ? 'var(--accent-color)' : 'var(--border-color)'}`,
-                      background: craftSyncMode === mode.value ? 'rgba(var(--accent-color-rgb, 99, 102, 241), 0.05)' : 'transparent',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="craftSyncMode"
-                      value={mode.value}
-                      checked={craftSyncMode === mode.value}
-                      onChange={() => setCraftSyncMode(mode.value)}
-                      style={{ marginTop: '0.2rem' }}
-                    />
-                    <div>
-                      <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{mode.label}</div>
-                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{mode.desc}</div>
-                    </div>
-                  </label>
-                ))}
+                  { value: 'read-only', label: 'Read Only', desc: 'Import posts from Craft and sync updates. No writing to Craft.', requiresWrite: false },
+                  { value: 'backup', label: 'Backup', desc: 'Write all blog posts to Craft as backup. No importing from Craft.', requiresWrite: true },
+                  { value: 'full-sync', label: 'Full Sync', desc: 'Both import from Craft and backup to Craft.', requiresWrite: true },
+                ].map(mode => {
+                  const disabled = mode.requiresWrite && !craftWriteAccess
+                  return (
+                    <label
+                      key={mode.value}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '0.75rem',
+                        padding: '0.75rem',
+                        borderRadius: 'var(--radius-md)',
+                        border: `1px solid ${craftSyncMode === mode.value ? 'var(--accent-color)' : 'var(--border-color)'}`,
+                        background: craftSyncMode === mode.value ? 'rgba(var(--accent-color-rgb, 99, 102, 241), 0.05)' : 'transparent',
+                        cursor: disabled ? 'not-allowed' : 'pointer',
+                        opacity: disabled ? 0.5 : 1,
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="craftSyncMode"
+                        value={mode.value}
+                        checked={craftSyncMode === mode.value}
+                        onChange={() => setCraftSyncMode(mode.value)}
+                        disabled={disabled}
+                        style={{ marginTop: '0.2rem' }}
+                      />
+                      <div>
+                        <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>
+                          {mode.label}
+                          {disabled && <span style={{ fontSize: '0.75rem', color: '#eab308', marginLeft: '0.5rem' }}>(requires write access)</span>}
+                        </div>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{mode.desc}</div>
+                      </div>
+                    </label>
+                  )
+                })}
               </div>
             </div>
 
@@ -457,15 +514,26 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
                 {craftLoading ? 'Saving...' : 'Save Craft Settings'}
               </button>
               {craftEnabled && (
-                <button
-                  type="button"
-                  onClick={handleCraftSync}
-                  disabled={craftLoading}
-                  className="btn"
-                  style={{ background: '#22c55e', color: 'white', border: 'none' }}
-                >
-                  {craftLoading ? 'Syncing...' : 'Sync Now'}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleCraftSync(false)}
+                    disabled={craftLoading}
+                    className="btn"
+                    style={{ background: 'transparent', color: '#22c55e', border: '1px solid #22c55e' }}
+                  >
+                    {craftLoading ? 'Syncing...' : 'Sync Changes'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleCraftSync(true)}
+                    disabled={craftLoading}
+                    className="btn"
+                    style={{ background: '#22c55e', color: 'white', border: 'none' }}
+                  >
+                    {craftLoading ? 'Syncing...' : 'Sync Everything'}
+                  </button>
+                </>
               )}
             </div>
 
