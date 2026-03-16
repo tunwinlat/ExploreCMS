@@ -84,6 +84,8 @@ model SiteSettings {
   craftFolderName   String?   // Folder name for display
   craftSyncMode     String?   // "read-only" | "backup" | "full-sync"
   craftEnabled      Boolean   @default(false)
+  craftWriteAccess  Boolean   @default(false) // true if API has write permissions
+  craftError        String?   // error message if integration broke
   craftLastSyncAt   String?   // ISO timestamp
 
   updatedAt         DateTime @updatedAt
