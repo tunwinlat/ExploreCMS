@@ -240,7 +240,8 @@ async function getOwnerUser() {
 
 export async function craftImportSync(
   client: CraftClient,
-  folderId: string
+  folderId: string,
+  force = false
 ): Promise<SyncResult> {
   const result: SyncResult = { imported: 0, updated: 0, backedUp: 0, errors: [] }
   const postDb = await getPostDb()
@@ -274,8 +275,9 @@ export async function craftImportSync(
         // Skip if unlinked
         if (existingPost.craftUnlinked) continue
 
-        // Check if updated
+        // Check if updated (skip if timestamps match, unless force re-sync)
         if (
+          !force &&
           doc.lastModifiedAt &&
           existingPost.craftLastModifiedAt &&
           doc.lastModifiedAt === existingPost.craftLastModifiedAt
@@ -403,7 +405,7 @@ export async function runCraftSync(
     const mode = settings.craftSyncMode || 'read-only'
 
     if (mode === 'read-only' || mode === 'full-sync') {
-      const importResult = await craftImportSync(client, settings.craftFolderId)
+      const importResult = await craftImportSync(client, settings.craftFolderId, !!options.manual)
       result.imported = importResult.imported
       result.updated = importResult.updated
       result.errors.push(...importResult.errors)
