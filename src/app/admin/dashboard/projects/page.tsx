@@ -7,9 +7,9 @@
 import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
-import { deleteProject } from './projectActions'
 import { getPostDb } from '@/lib/bunnyDb'
-import { syncGitHubProject } from './github/githubActions'
+import SyncButton from './SyncButton'
+import DeleteButton from './DeleteButton'
 
 export default async function ProjectsAdminPage() {
   const session = await verifySession()
@@ -192,36 +192,7 @@ export default async function ProjectsAdminPage() {
 
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
-                  {project.githubRepoId && (
-                    <form action={async () => { 
-                      const result = await syncGitHubProject(project.id)
-                      if (result.error) alert('Sync failed: ' + result.error)
-                      else window.location.reload()
-                    }}>
-                      <button
-                        type="submit"
-                        title="Sync from GitHub"
-                        style={{
-                          padding: '0.4rem 0.6rem',
-                          borderRadius: '8px',
-                          border: '1px solid var(--border-color)',
-                          fontSize: '0.8rem',
-                          fontWeight: 500,
-                          color: 'var(--text-secondary)',
-                          background: 'transparent',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.25rem',
-                        }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/>
-                        </svg>
-                        Sync
-                      </button>
-                    </form>
-                  )}
+                  {project.githubRepoId && <SyncButton projectId={project.id} />}
                   <Link
                     href={`/admin/dashboard/projects/edit/${project.id}`}
                     style={{
@@ -236,26 +207,7 @@ export default async function ProjectsAdminPage() {
                   >
                     Edit
                   </Link>
-                  <form action={async () => { await deleteProject(project.id) }}>
-                    <button
-                      type="submit"
-                      style={{
-                        padding: '0.4rem 0.875rem',
-                        borderRadius: '8px',
-                        border: '1px solid color-mix(in srgb, #ef4444 30%, transparent)',
-                        fontSize: '0.8rem',
-                        fontWeight: 500,
-                        color: '#ef4444',
-                        background: 'transparent',
-                        cursor: 'pointer',
-                      }}
-                      onClick={e => {
-                        if (!confirm(`Delete "${project.title}"? This cannot be undone.`)) e.preventDefault()
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </form>
+                  <DeleteButton projectId={project.id} projectTitle={project.title} />
                 </div>
               </div>
             )
