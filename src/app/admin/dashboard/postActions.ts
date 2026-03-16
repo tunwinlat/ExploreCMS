@@ -105,7 +105,7 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
   revalidatePath('/')
   revalidatePath('/admin/dashboard')
 
-  // Push to Craft in backup/full-sync mode (runs after response via after())
+  // Push to Craft in backup/full-sync mode (runs after response)
   if (published) {
     const postIdForCraft = id || (await postDb.post.findUnique({ where: { slug } }))?.id
     if (postIdForCraft) {
@@ -144,15 +144,14 @@ export async function deletePost(id: string) {
 
   await postDb.post.delete({ where: { id } })
 
-  // In full-sync mode, also delete from Craft
+  // In full-sync mode, also delete from Craft (run before redirect)
   if (craftDocumentId) {
-    after(async () => {
-      try {
-        await deletePostFromCraft(craftDocumentId)
-      } catch {
-        // Non-critical - post is already deleted locally
-      }
-    })
+    try {
+      await deletePostFromCraft(craftDocumentId)
+    } catch (err) {
+      console.error('[CraftSync] Failed to delete from Craft:', err)
+      // Non-critical - post is already deleted locally
+    }
   }
 
   revalidatePath('/')

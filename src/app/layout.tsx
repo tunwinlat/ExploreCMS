@@ -80,6 +80,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning data-theme={activeTheme.id}>
       <head>
+        <meta charSet="utf-8" />
         <link rel="icon" href={faviconUrl} type={faviconType(faviconUrl)} sizes="any" />
         <link rel="shortcut icon" href={faviconUrl} type={faviconType(faviconUrl)} />
         <link rel="apple-touch-icon" href={faviconUrl} sizes="180x180" />
