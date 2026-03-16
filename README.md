@@ -23,6 +23,22 @@ ExploreCMS is a beautifully styled, self-hosted minimalistic blogging platform e
 
 **S3-Compatible Storage**: Supports AWS S3, Cloudflare R2, MinIO, and any S3-compatible storage provider.
 
+### 🔄 External Integrations
+
+**Craft.do Sync**: Import and sync your Craft.do documents as blog posts.
+- **Read-Only Mode**: Import Craft documents as read-only posts
+- **Backup Mode**: Push site posts to Craft for backup
+- **Full Sync Mode**: Two-way sync between Craft and site (create, update, delete)
+- Automatic Markdown conversion for seamless content transfer
+- Preserve images and formatting during sync
+
+**GitHub Integration**: Showcase your GitHub repositories as project portfolios.
+- Import public repositories with one click
+- Auto-generate project pages from README content
+- Auto-generate cover images with language-specific colors
+- Sync button to refresh project info from GitHub anytime
+- Supports manual selection or importing all public repos
+
 ### 🗄️ Migration Tools
 
 **Database Migration**: Migrate your entire database to any LibSQL-compatible provider.
@@ -154,6 +170,36 @@ Set these environment variables in your Vercel project settings:
 
 After deployment, visit your site URL. You'll be redirected to the setup wizard to create your admin account and configure storage.
 
+## 🔌 Configuring Integrations
+
+### Craft.do Setup
+
+1. Get your Craft.do API credentials:
+   - Open Craft.do → Settings → API Access
+   - Copy your Server URL and API Token
+
+2. Go to **Admin** → **Integrations** → **Craft.do**
+   - Paste your Server URL and API Token
+   - Click "Test Connection" to verify
+   - Select your sync folder from the dropdown
+   - Choose sync mode (Read-Only, Backup, or Full Sync)
+
+3. Click "Save Settings" to enable the integration
+
+### GitHub Setup
+
+1. Create a GitHub Personal Access Token:
+   - Go to GitHub → Settings → Developer Settings → Personal Access Tokens
+   - Generate a new token with `repo` and `read:user` scopes
+
+2. Go to **Admin** → **Projects** → **GitHub**
+   - Paste your access token
+   - Click "Connect" to link your account
+   - Choose sync mode (Manual Select or All Public Repos)
+   - Select repositories to import as projects
+
+3. Projects will be created with README content, tech tags, and auto-generated cover images
+
 ## 🎨 Changing Themes
 
 Themes can be easily previewed and activated live via the Admin Dashboard.
@@ -222,6 +268,15 @@ To switch storage providers:
 | `DATABASE_URL` | LibSQL connection string | All environments |
 | `DATABASE_AUTH_TOKEN` | Auth token for hosted LibSQL (Turso, Bunny.net) | When using hosted DB |
 | `JWT_SECRET` | Secret key for session signing | Production |
+| `ENCRYPTION_KEY` | Key for encrypting sensitive tokens (API keys) | Production (recommended) |
+
+### Optional Integration Variables
+
+| Variable | Description | Used For |
+|----------|-------------|----------|
+| `CRAFT_SERVER_URL` | Craft.do Connect API URL | Craft sync (or configure via UI) |
+| `CRAFT_API_TOKEN` | Craft.do Bearer token | Craft sync (or configure via UI) |
+| `GITHUB_ACCESS_TOKEN` | GitHub Personal Access Token | GitHub integration (or configure via UI) |
 
 ### Database URL Examples
 
