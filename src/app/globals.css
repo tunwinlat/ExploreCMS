@@ -314,6 +314,12 @@ h1, h2, h3, h4 {
   display: grid;
   grid-template-columns: 1fr 340px;
   gap: 2.5rem;
+  align-items: start;
+}
+
+.sidebar {
+  position: sticky;
+  top: 90px;
 }
 
 /* Trending Sidebar */
