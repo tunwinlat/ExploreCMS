@@ -189,22 +189,26 @@ export class CraftClient {
     documentId: string,
     markdown: string
   ): Promise<void> {
-    // Delete only direct children — Craft auto-removes nested blocks
+    // Insert new content first, then delete old blocks.
+    // This way if the insert fails, the old content is preserved.
     const doc = await this.getDocumentBlocks(documentId)
-    if (doc.content && doc.content.length > 0) {
-      const directChildIds = doc.content.map(b => b.id)
-      await this.request('/blocks', {
-        method: 'DELETE',
-        body: JSON.stringify({ blockIds: directChildIds }),
-      })
-    }
-    // Insert fresh content from the start of the document
+    const oldBlockIds = doc.content ? doc.content.map(b => b.id) : []
+
+    // Insert fresh content at the end
     await this.request('/blocks', {
       method: 'POST',
       body: JSON.stringify({
         markdown,
-        position: { position: 'start', pageId: documentId },
+        position: { position: 'end', pageId: documentId },
       }),
     })
+
+    // Now delete the old blocks (the ones that existed before our insert)
+    if (oldBlockIds.length > 0) {
+      await this.request('/blocks', {
+        method: 'DELETE',
+        body: JSON.stringify({ blockIds: oldBlockIds }),
+      })
+    }
   }
 }
