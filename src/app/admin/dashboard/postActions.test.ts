@@ -24,6 +24,14 @@ vi.mock('next/navigation', () => ({
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }))
+vi.mock('next/server', () => ({
+  after: vi.fn((cb) => cb()),
+}))
+vi.mock('@/lib/craftSync', () => ({
+  pushPostToCraft: vi.fn(),
+  getCraftSyncMode: vi.fn().mockResolvedValue('read-only'),
+  deletePostFromCraft: vi.fn()
+}))
 
 describe('savePost action', () => {
   let mockUpdate: ReturnType<typeof vi.fn>
@@ -38,7 +46,7 @@ describe('savePost action', () => {
         findUnique: vi.fn(),
         findFirst: vi.fn(),
         update: mockUpdate,
-        create: mockCreate,
+        create: mockCreate.mockResolvedValue({ id: 'new-id' }),
       },
     })
   })
@@ -62,6 +70,7 @@ describe('savePost action', () => {
       slug: 'test',
       content: 'hello',
       published: 'true',
+      language: 'en',
       // no isFeatured entry
       tags: ''
     })
@@ -83,6 +92,7 @@ describe('savePost action', () => {
       content: 'bye',
       published: 'false',
       isFeatured: 'false',
+      language: 'en',
       tags: ''
     })
 
@@ -99,6 +109,7 @@ describe('savePost action', () => {
       content: 'ok',
       published: 'true',
       isFeatured: 'true',
+      language: 'en',
       tags: ''
     })
     await savePost(data, { redirect: false })
