@@ -175,29 +175,50 @@ async function prepareCraftContent(craftMarkdown: string, storageConfig: Storage
 
 function convertHtmlToMarkdown(html: string): string {
   let md = html
+    // Images FIRST (before stripping other tags, since img is inside p tags)
+    .replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, '\n\n![$2]($1)\n\n')
+    .replace(/<img[^>]*alt="([^"]*)"[^>]*src="([^"]*)"[^>]*\/?>/gi, '\n\n![$1]($2)\n\n')
+    .replace(/<img[^>]*src="([^"]*)"[^>]*\/?>/gi, '\n\n![]($1)\n\n')
+    // Headers
     .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n')
     .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n')
     .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n')
     .replace(/<h4[^>]*>(.*?)<\/h4>/gi, '#### $1\n\n')
     .replace(/<h5[^>]*>(.*?)<\/h5>/gi, '##### $1\n\n')
     .replace(/<h6[^>]*>(.*?)<\/h6>/gi, '###### $1\n\n')
+    // Inline formatting
     .replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**')
     .replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**')
     .replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*')
     .replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
+    // Links
     .replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)')
-    .replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, '![$2]($1)')
-    .replace(/<img[^>]*src="([^"]*)"[^>]*\/?>/gi, '![]($1)')
+    // Lists
     .replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n')
     .replace(/<\/?[ou]l[^>]*>/gi, '\n')
-    .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')
-    .replace(/<br\s*\/?>/gi, '\n')
+    // Code
     .replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`')
     .replace(/<pre[^>]*>([\s\S]*?)<\/pre>/gi, '```\n$1\n```\n\n')
+    // Blockquotes
     .replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, (_, content) =>
-      content.split('\n').map((line: string) => `> ${line}`).join('\n') + '\n\n'
+      content.replace(/<[^>]+>/g, '').split('\n').map((line: string) => `> ${line}`).join('\n') + '\n\n'
     )
+    // Paragraphs — convert to double newline
+    .replace(/<p[^>]*><\/p>/gi, '\n') // empty paragraphs = line break
+    .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')
+    // Line breaks
+    .replace(/<br\s*\/?>/gi, '\n')
+    // Horizontal rules
+    .replace(/<hr[^>]*\/?>/gi, '\n---\n\n')
+    // Strip any remaining HTML tags
     .replace(/<[^>]+>/g, '')
+    // Decode common HTML entities
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    // Clean up whitespace
     .replace(/\n{3,}/g, '\n\n')
     .trim()
   return md
