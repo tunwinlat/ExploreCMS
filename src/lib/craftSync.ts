@@ -154,12 +154,14 @@ async function processImages(markdown: string, storageConfig: StorageConfig): Pr
 }
 
 function cleanCraftMarkdown(markdown: string): string {
-  // Remove <page>Title</page> lines (Craft wraps document titles in these)
-  // Also handle self-closing and nested page tags
+  // Remove all Craft-specific XML/HTML tags:
+  // <page id="...">, </page>, <pageTitle>...</pageTitle>, <content>, </content>, etc.
   return markdown
-    .replace(/<page>[^<]*<\/page>\s*/g, '')
-    .replace(/<page>\s*/g, '')
-    .replace(/<\/page>\s*/g, '')
+    .replace(/<pageTitle>[^<]*<\/pageTitle>\s*/g, '')
+    .replace(/<\/?page[^>]*>\s*/g, '')
+    .replace(/<\/?content[^>]*>\s*/g, '')
+    .replace(/<\/?card[^>]*>\s*/g, '')
+    .replace(/<\/?collection[^>]*>\s*/g, '')
     .trim()
 }
 
