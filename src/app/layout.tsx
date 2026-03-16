@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { cache } from "react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
@@ -25,6 +25,11 @@ const getSettings = cache(async () => {
     return null;
   }
 });
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   try {

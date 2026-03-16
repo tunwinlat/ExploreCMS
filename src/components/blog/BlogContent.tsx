@@ -38,12 +38,7 @@ export function BlogContent({
   sidebarAbout,
 }: BlogContentProps) {
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: '1fr 340px',
-      gap: '2.5rem',
-      alignItems: 'start',
-    }} className="home-layout">
+    <div className="home-layout">
       {/* Left Column */}
       <main>
         {featuredPosts.length > 0 && (
@@ -86,7 +81,7 @@ export function BlogContent({
       </main>
 
       {/* Right Column - Sidebar */}
-      <aside style={{ position: 'sticky', top: '90px' }} className="sidebar">
+      <aside className="sidebar">
         <div className="glass" style={{ padding: '1.25rem', marginBottom: '1.5rem' }}>
           <TrendingPosts initialPosts={trendingPosts} />
         </div>
