@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { NextResponse } from 'next/server'
 import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rateLimit'
 
 // Bunny Storage API Client
 class BunnyStorageClient {
@@ -53,6 +54,16 @@ class BunnyStorageClient {
 
 export async function POST(req: Request) {
   try {
+    // Rate limiting
+    const clientIP = getClientIP(req)
+    const rateLimit = checkRateLimit(clientIP, RATE_LIMITS.upload)
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.' },
+        { status: 429, headers: { 'X-RateLimit-Reset': String(rateLimit.resetTime) } }
+      )
+    }
+
     const session = await verifySession()
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

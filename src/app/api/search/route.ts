@@ -6,8 +6,19 @@
 
 import { NextResponse } from 'next/server'
 import { getPostDb } from '@/lib/bunnyDb'
+import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rateLimit'
 
 export async function GET(request: Request) {
+  // Rate limiting
+  const clientIP = getClientIP(request)
+  const rateLimit = checkRateLimit(clientIP, RATE_LIMITS.search)
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded. Please try again later.' },
+      { status: 429, headers: { 'X-RateLimit-Reset': String(rateLimit.resetTime) } }
+    )
+  }
+
   const { searchParams } = new URL(request.url)
   const query = searchParams.get('q')?.trim()
   const parsedLimit = parseInt(searchParams.get('limit') || '10')

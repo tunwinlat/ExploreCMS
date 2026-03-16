@@ -7,11 +7,22 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { cookies } from 'next/headers';
+import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rateLimit';
 
 import { getPostDb } from '@/lib/bunnyDb';
 
 export async function POST(req: Request) {
   try {
+    // Rate limiting
+    const clientIP = getClientIP(req)
+    const rateLimit = checkRateLimit(clientIP, RATE_LIMITS.tracking)
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        { status: 429, headers: { 'X-RateLimit-Reset': String(rateLimit.resetTime) } }
+      )
+    }
+
     const body = await req.json().catch(() => ({}));
     const { slug } = body;
 
