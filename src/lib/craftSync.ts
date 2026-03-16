@@ -387,6 +387,57 @@ export async function craftBackupSync(
   return result
 }
 
+/**
+ * Get the current Craft sync mode. Returns null if Craft is not enabled.
+ */
+export async function getCraftSyncMode(): Promise<string | null> {
+  const settings = await getCraftSettings()
+  if (!settings) return null
+  return settings.craftSyncMode || 'read-only'
+}
+
+/**
+ * Push a single post to Craft. Called after publishing/editing in backup/full-sync mode.
+ * Non-blocking — errors are logged but don't break the publish flow.
+ */
+export async function pushPostToCraft(postId: string): Promise<void> {
+  try {
+    const settings = await getCraftSettings()
+    if (!settings) return
+
+    const mode = settings.craftSyncMode || 'read-only'
+    if (mode !== 'backup' && mode !== 'full-sync') return
+
+    const postDb = await getPostDb()
+    const post = await postDb.post.findUnique({ where: { id: postId } })
+    if (!post || !post.published) return
+
+    const client = new CraftClient(settings.craftServerUrl, settings.craftApiToken)
+
+    // Convert content to markdown for Craft
+    const markdown = post.contentFormat === 'markdown'
+      ? post.content
+      : convertHtmlToMarkdown(post.content)
+
+    if (post.craftDocumentId) {
+      // Update existing Craft document
+      await client.updateDocumentContent(post.craftDocumentId, markdown)
+    } else {
+      // Create new document in Craft
+      const craftDoc = await client.createDocument(settings.craftFolderId, post.title)
+      await client.insertBlocks(craftDoc.id, markdown)
+
+      // Save the Craft document ID on the post
+      await postDb.post.update({
+        where: { id: postId },
+        data: { craftDocumentId: craftDoc.id },
+      })
+    }
+  } catch (err: any) {
+    console.error(`[CraftSync] Failed to push post ${postId} to Craft:`, err.message)
+  }
+}
+
 async function setCraftError(error: string | null, disable = false) {
   try {
     const data: any = { craftError: error }

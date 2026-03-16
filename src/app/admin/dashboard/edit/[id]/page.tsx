@@ -5,6 +5,7 @@
  */
 
 import { getPostDb } from '@/lib/bunnyDb'
+import { prisma } from '@/lib/db'
 import PostEditor from '../../PostEditor'
 import { notFound } from 'next/navigation'
 
@@ -13,9 +14,8 @@ export const metadata = { title: "Edit Post | ExploreCMS" }
 export default async function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const postDb = await getPostDb();
-  
-  // Parallelize independent queries to improve page load performance
-  const [post, availableTags] = await Promise.all([
+
+  const [post, availableTags, settings] = await Promise.all([
     postDb.post.findUnique({
       where: { id },
       include: { tags: { select: { name: true, slug: true } } }
@@ -23,12 +23,16 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
     postDb.tag.findMany({
       select: { name: true, slug: true },
       orderBy: { name: 'asc' }
-    })
+    }),
+    (prisma as any).siteSettings.findUnique({ where: { id: 'singleton' } }).catch(() => null)
   ])
 
   if (!post) notFound()
 
   const isCraftLinked = !!(post as any).craftDocumentId && !(post as any).craftUnlinked
+  const craftMode = settings?.craftSyncMode || 'read-only'
+  // Only lock editing in read-only mode. In backup/full-sync, posts are editable.
+  const isReadOnly = isCraftLinked && craftMode === 'read-only'
 
-  return <PostEditor post={post} availableTags={availableTags} readOnly={isCraftLinked} craftPostId={isCraftLinked ? post.id : undefined} />
+  return <PostEditor post={post} availableTags={availableTags} readOnly={isReadOnly} craftPostId={isReadOnly ? post.id : undefined} />
 }
