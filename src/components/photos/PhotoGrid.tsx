@@ -35,6 +35,9 @@ export function PhotoGrid({ photos }: PhotoGridProps) {
         {photos.map((photo, i) => (
           <div
             key={photo.id}
+            role="button"
+            tabIndex={0}
+            aria-label={`View photo ${photo.title || i + 1}`}
             style={{
               breakInside: 'avoid',
               marginBottom: '0.75rem',
@@ -46,6 +49,12 @@ export function PhotoGrid({ photos }: PhotoGridProps) {
               transition: 'transform 0.2s ease, box-shadow 0.2s ease',
             }}
             onClick={() => setLightboxIndex(i)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setLightboxIndex(i)
+              }
+            }}
             className="photo-grid-item"
           >
             <style>{`
