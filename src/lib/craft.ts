@@ -158,8 +158,8 @@ export class CraftClient {
   async createDocument(
     folderId: string,
     title: string
-  ): Promise<{ id: string; title: string }> {
-    const res = await this.request<{ items: { id: string; title: string }[] }>(
+  ): Promise<CraftDocument> {
+    const res = await this.request<{ items: CraftDocument[] }>(
       '/documents',
       {
         method: 'POST',

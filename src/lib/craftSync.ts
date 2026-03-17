@@ -551,11 +551,13 @@ export async function craftBackupSync(
           where: { id: post.id },
           data: {
             craftDocumentId: craftDoc.id,
+            craftLastModifiedAt: craftDoc.lastModifiedAt || null,
           },
         })
         result.backedUp++
       }
     } catch (err: any) {
+      console.error(`[CraftSync] Failed to back up "${post.title}":`, err.message)
       result.errors.push(`Error backing up "${post.title}": ${err.message}`)
     }
 
@@ -594,8 +596,10 @@ export async function pushPostToCraft(postId: string): Promise<void> {
 
     const client = new CraftClient(settings.craftServerUrl, settings.craftApiToken)
 
-    // Content is already in Markdown format, use directly
-    const markdown = post.content
+    // Convert HTML content to markdown if needed (matches craftBackupSync behaviour)
+    const markdown = (post as any).contentFormat === 'html'
+      ? convertHtmlToMarkdown(post.content)
+      : post.content
 
     if (post.craftDocumentId) {
       // Update existing Craft document
@@ -605,10 +609,13 @@ export async function pushPostToCraft(postId: string): Promise<void> {
       const craftDoc = await client.createDocument(settings.craftFolderId, post.title)
       await client.insertBlocks(craftDoc.id, markdown)
 
-      // Save the Craft document ID on the post
+      // Save the Craft document ID (and timestamp if the API returned it)
       await postDb.post.update({
         where: { id: postId },
-        data: { craftDocumentId: craftDoc.id },
+        data: {
+          craftDocumentId: craftDoc.id,
+          craftLastModifiedAt: craftDoc.lastModifiedAt || null,
+        },
       })
     }
   } catch (err: any) {
