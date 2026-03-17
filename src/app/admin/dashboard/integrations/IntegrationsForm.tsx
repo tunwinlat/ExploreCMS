@@ -371,6 +371,7 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
                 placeholder="https://connect.craft.do/links/your-server-id/api/v1"
                 disabled={craftLoading}
                 className="input-field"
+                autoComplete="off"
               />
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
                 The full API URL from your Craft integration settings.
@@ -386,6 +387,7 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
                 placeholder="Your Craft API bearer token"
                 disabled={craftLoading}
                 className="input-field"
+                autoComplete="new-password"
               />
             </div>
 
@@ -606,6 +608,7 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
                 placeholder="ey... (required for most hosted databases)"
                 disabled={migrationLoading}
                 className="input-field"
+                autoComplete="new-password"
               />
             </div>
 
@@ -731,11 +734,11 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
                 </div>
                 <div>
                   <label style={{ fontWeight: 400 }}>Zone Name *</label>
-                  <input type="text" value={bunnyZoneName} onChange={(e) => setBunnyZoneName(e.target.value)} placeholder="my-storage-zone" disabled={storageLoading} className="input-field" />
+                  <input type="text" value={bunnyZoneName} onChange={(e) => setBunnyZoneName(e.target.value)} placeholder="my-storage-zone" disabled={storageLoading} className="input-field" autoComplete="off" />
                 </div>
                 <div>
                   <label style={{ fontWeight: 400 }}>API Key *</label>
-                  <input type="password" value={bunnyApiKey} onChange={(e) => setBunnyApiKey(e.target.value)} placeholder="your-api-key" disabled={storageLoading} className="input-field" />
+                  <input type="password" value={bunnyApiKey} onChange={(e) => setBunnyApiKey(e.target.value)} placeholder="your-api-key" disabled={storageLoading} className="input-field" autoComplete="new-password" />
                 </div>
                 <div>
                   <label style={{ fontWeight: 400 }}>CDN URL *</label>
@@ -754,7 +757,7 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
                 </div>
                 <div>
                   <label style={{ fontWeight: 400 }}>Secret Access Key *</label>
-                  <input type="password" value={s3SecretAccessKey} onChange={(e) => setS3SecretAccessKey(e.target.value)} placeholder="..." disabled={storageLoading} className="input-field" />
+                  <input type="password" value={s3SecretAccessKey} onChange={(e) => setS3SecretAccessKey(e.target.value)} placeholder="..." disabled={storageLoading} className="input-field" autoComplete="new-password" />
                 </div>
                 <div>
                   <label style={{ fontWeight: 400 }}>Bucket Name *</label>
