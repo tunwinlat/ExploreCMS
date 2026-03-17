@@ -42,6 +42,9 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
     isFeatured = rawFeatured === 'true'
   }
   const tagsString = formData.get('tags') as string || ''
+  
+  const language = (formData.get('language') as string) || 'en'
+  const translationGroupId = formData.get('translationGroupId') as string | null
 
   if (!title || !content) return { error: 'Title and content are required' }
   if (title.length > 500) return { error: 'Title must be 500 characters or fewer' }
@@ -73,32 +76,46 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
     await postDb.post.update({
       where: { id },
       data: { 
-        title, slug, content, published, isFeatured,
+        title, slug, content, published, isFeatured, 
+        language, 
+        translationGroupId,
         tags: {
           set: [], // Clear old tags
           connectOrCreate: tagUpdates
         }
-      }
+      } as any
     })
   } else {
     // Generate unique slug
     let existing = await postDb.post.findUnique({ where: { slug } })
     if (existing) slug = `${slug}-${Date.now()}`
 
-    await postDb.post.create({
+    // Ensure we handle setting the translationGroupId correctly.
+    // If it's a new translation group, we'll set it to the new post's ID after creation.
+    const createdPost = await postDb.post.create({
       data: {
         title,
         slug,
         content,
         contentFormat: 'markdown',
+        language,
+        translationGroupId,
         published,
         isFeatured,
         authorId: session.userId as string,
         tags: {
           connectOrCreate: tagUpdates
         }
-      }
+      } as any
     })
+    
+    // Auto-generate translationGroupId for base posts that don't have one
+    if (!translationGroupId) {
+       await postDb.post.update({
+         where: { id: createdPost.id },
+         data: { translationGroupId: createdPost.id } as any
+       });
+    }
   }
 
   // Bust the homepage cache so the new/updated post appears on the site

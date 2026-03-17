@@ -71,6 +71,11 @@ export default function PostEditor({
       if (formData.get('isFeatured') === null && typeof post.isFeatured === 'boolean') {
         formData.set('isFeatured', post.isFeatured ? 'true' : 'false')
       }
+      
+      const currentLanguage = (post as any)?.language;
+      if (!formData.get('language') && currentLanguage) {
+        formData.set('language', currentLanguage)
+      }
 
       setAutosaveStatus('saving')
       try {
@@ -301,6 +306,20 @@ export default function PostEditor({
                   placeholder="Leave blank to auto-generate from title"
                   defaultValue={post?.slug}
                   className="input-field"
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <label htmlFor="language-input" style={{ fontWeight: 500, fontSize: '0.875rem' }}>Language</label>
+                <input
+                  id="language-input"
+                  type="text"
+                  name="language"
+                  placeholder="e.g., en, es, fr"
+                  defaultValue={(post as any)?.language || 'en'}
+                  className="input-field"
+                  pattern="[a-zA-Z]{2}(-[a-zA-Z]{2})?"
+                  title="ISO 639-1 Language Code (e.g., en, es, fr, zh-CN)"
                 />
               </div>
 

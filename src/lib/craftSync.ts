@@ -417,6 +417,16 @@ export async function craftImportSync(
           continue // No changes
         }
 
+        // Extract language from title if present: "My Post [es]"
+        const titleMatch = doc.title.match(/(.+?)\s*\[([a-z]{2}(?:-[A-Z]{2})?)\]$/i)
+        let cleanTitle = doc.title
+        let language = 'en'
+        
+        if (titleMatch) {
+          cleanTitle = titleMatch[1].trim()
+          language = titleMatch[2].toLowerCase()
+        }
+
         // Update the post
         const rawMarkdown = await client.getDocumentMarkdown(doc.id)
         const content = await prepareCraftContent(rawMarkdown, storageConfig)
@@ -424,7 +434,8 @@ export async function craftImportSync(
         await postDb.post.update({
           where: { id: existingPost.id },
           data: {
-            title: doc.title,
+            title: cleanTitle,
+            language,
             content,
             contentFormat: 'markdown',
             craftLastModifiedAt: doc.lastModifiedAt || null,
@@ -432,20 +443,56 @@ export async function craftImportSync(
         })
         result.updated++
       } else {
+        // Extract language from title if present: "My Post [es]"
+        const titleMatch = doc.title.match(/(.+?)\s*\[([a-z]{2}(?:-[A-Z]{2})?)\]$/i)
+        let cleanTitle = doc.title
+        let language = 'en'
+        
+        if (titleMatch) {
+          cleanTitle = titleMatch[1].trim()
+          language = titleMatch[2].toLowerCase()
+        }
+
         // Import new post
         const rawMarkdown = await client.getDocumentMarkdown(doc.id)
         const content = await prepareCraftContent(rawMarkdown, storageConfig)
 
-        let slug = generateSlug(doc.title)
+        let slug = generateSlug(cleanTitle)
         const existingSlug = await postDb.post.findUnique({ where: { slug } })
         if (existingSlug) slug = `${slug}-${Date.now()}`
 
+        // Check if there's already a base post we can group with
+        const basePost = await postDb.post.findFirst({
+          where: {
+            title: cleanTitle,
+            OR: [
+              { translationGroupId: { not: null } },
+              { language: { not: language } }
+            ]
+          }
+        })
+
+        let translationGroupId = null
+        if (basePost) {
+          translationGroupId = basePost.translationGroupId || basePost.id
+          
+          // If base doesn't have a group yet, update it
+          if (!basePost.translationGroupId) {
+            await postDb.post.update({
+              where: { id: basePost.id },
+              data: { translationGroupId: basePost.id }
+            })
+          }
+        }
+
         await postDb.post.create({
           data: {
-            title: doc.title,
+            title: cleanTitle,
             slug,
             content,
             contentFormat: 'markdown',
+            language,
+            translationGroupId,
             published: true,
             authorId: owner.id,
             craftDocumentId: doc.id,

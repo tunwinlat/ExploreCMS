@@ -13,6 +13,7 @@ import { RelatedPosts } from '@/components/RelatedPosts'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { SearchBox } from '@/components/SearchBox'
 import { renderPostContent } from '@/lib/renderContent'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import './post.css'
 
 // ⚡ Bolt: Memoize the post query to avoid duplicate database calls
@@ -20,7 +21,23 @@ import './post.css'
 const getPost = cache(async (slug: string) => {
   return await prisma.post.findUnique({
     where: { slug },
-    include: { author: true, tags: true }
+    include: { 
+      author: true, 
+      tags: true,
+    }
+  })
+})
+
+const getTranslations = cache(async (translationGroupId: string | null, currentSlug: string) => {
+  if (!translationGroupId) return [];
+  
+  return await prisma.post.findMany({
+    where: { 
+      translationGroupId,
+      published: true,
+      slug: { not: currentSlug }
+    },
+    select: { language: true, slug: true }
   })
 })
 
@@ -39,6 +56,8 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   if (!post || !post.published) notFound()
 
   const renderedContent = await renderPostContent(post.content, (post as any).contentFormat)
+  
+  const translations = await getTranslations((post as any).translationGroupId, post.slug)
 
   return (
     <>
@@ -118,6 +137,13 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                 month: 'long', 
                 day: 'numeric' 
               })}</span>
+              
+              {translations.length > 0 && (
+                <>
+                  <span>•</span>
+                  <LanguageSwitcher currentLanguage={(post as any).language} translations={translations} />
+                </>
+              )}
             </div>
             
             {post.tags.length > 0 && (

@@ -24,105 +24,109 @@ model User {
 }
 
 model Post {
-  id         String   @id @default(cuid())
-  title      String
-  slug       String   @unique
-  content       String   // Post content (HTML or Markdown based on contentFormat)
-  contentFormat String   @default("html") // "html" or "markdown"
-  published     Boolean  @default(false)
-  isFeatured Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  authorId   String
-  author     User     @relation(fields: [authorId], references: [id])
-  tags       Tag[]
-  views      PostView?
+  id            String    @id @default(cuid())
+  title         String
+  slug          String    @unique
+  content       String // Post content (HTML or Markdown based on contentFormat)
+  contentFormat String    @default("html") // "html" or "markdown"
+  published     Boolean   @default(false)
+  isFeatured    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  authorId      String
+  author        User      @relation(fields: [authorId], references: [id])
+  tags          Tag[]
+  views         PostView?
 
   // Craft.do integration
-  craftDocumentId      String?   // Craft document ID, null for local posts
-  craftLastModifiedAt  String?   // ISO timestamp of last Craft modification
-  craftUnlinked        Boolean   @default(false) // true = was from Craft but user unlinked it
+  craftDocumentId     String? // Craft document ID, null for local posts
+  craftLastModifiedAt String? // ISO timestamp of last Craft modification
+  craftUnlinked       Boolean @default(false) // true = was from Craft but user unlinked it
+
+  // Localization
+  language            String  @default("en") // ISO 639-1 language code
+  translationGroupId  String? // Links translated posts together (shares same ID)
 }
 
 model Tag {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  slug      String   @unique
-  posts     Post[]
+  id    String @id @default(cuid())
+  name  String @unique
+  slug  String @unique
+  posts Post[]
 }
 
 model SiteSettings {
-  id                String   @id @default("singleton")
-  title             String   @default("ExploreCMS")
+  id                String  @id @default("singleton")
+  title             String  @default("ExploreCMS")
   faviconUrl        String?
-  headerTitle       String   @default("Explore. Create. Inspire.")
-  headerDescription String   @default("Welcome to my personal corner of the internet. Here I share technical deep-dives and pieces of my life story.")
-  sidebarAbout      String   @default("Discover articles on technology, creativity, and personal growth. Use the search or browse by tags to find what interests you.")
-  navigationConfig  String   @default("[{\"id\":\"latest\",\"type\":\"latest\",\"label\":\"Latest\"},{\"id\":\"featured\",\"type\":\"featured\",\"label\":\"Featured\"}]")
-  theme             String   @default("default")
-  footerText        String   @default("")
+  headerTitle       String  @default("Explore. Create. Inspire.")
+  headerDescription String  @default("Welcome to my personal corner of the internet. Here I share technical deep-dives and pieces of my life story.")
+  sidebarAbout      String  @default("Discover articles on technology, creativity, and personal growth. Use the search or browse by tags to find what interests you.")
+  navigationConfig  String  @default("[{\"id\":\"latest\",\"type\":\"latest\",\"label\":\"Latest\"},{\"id\":\"featured\",\"type\":\"featured\",\"label\":\"Featured\"}]")
+  theme             String  @default("default")
+  footerText        String  @default("")
 
   // Component System
-  enabledComponents String   @default("[\"blog\"]") // JSON array of enabled component IDs
-  defaultComponent  String   @default("blog")       // which component is served at /
+  enabledComponents String @default("[\"blog\"]") // JSON array of enabled component IDs
+  defaultComponent  String @default("blog") // which component is served at /
 
   // Remote DB Config
-  bunnyEnabled      Boolean  @default(false)
-  bunnyUrl          String?
-  bunnyToken        String?
+  bunnyEnabled Boolean @default(false)
+  bunnyUrl     String?
+  bunnyToken   String?
 
   // Bunny Storage Config
-  bunnyStorageEnabled   Boolean  @default(false)
-  bunnyStorageRegion    String?  // e.g., "fsn1", "ny", "sg"
-  bunnyStorageZoneName  String?  // e.g., "my-zone"
-  bunnyStorageApiKey    String?
-  bunnyStorageUrl       String?  // CDN URL like https://my-zone.b-cdn.net
+  bunnyStorageEnabled  Boolean @default(false)
+  bunnyStorageRegion   String? // e.g., "fsn1", "ny", "sg"
+  bunnyStorageZoneName String? // e.g., "my-zone"
+  bunnyStorageApiKey   String?
+  bunnyStorageUrl      String? // CDN URL like https://my-zone.b-cdn.net
 
   // Craft.do Integration
-  craftServerUrl    String?   // https://connect.craft.do/links/{serverID}/api/v1
-  craftApiToken     String?   // Bearer token
-  craftFolderId     String?   // Selected folder ID
-  
-  // GitHub Integration
-  githubEnabled     Boolean   @default(false)
-  githubAccessToken String?   // OAuth access token
-  githubUsername    String?   // Connected GitHub username
-  githubSyncMode    String?   @default("manual") // "all" or "manual"
-  githubLastSyncAt  String?   // ISO timestamp
-  craftFolderName   String?   // Folder name for display
-  craftSyncMode     String?   // "read-only" | "backup" | "full-sync"
-  craftEnabled      Boolean   @default(false)
-  craftWriteAccess  Boolean   @default(false) // true if API has write permissions
-  craftError        String?   // error message if integration broke
-  craftLastSyncAt   String?   // ISO timestamp
+  craftServerUrl String? // https://connect.craft.do/links/{serverID}/api/v1
+  craftApiToken  String? // Bearer token
+  craftFolderId  String? // Selected folder ID
 
-  updatedAt         DateTime @updatedAt
+  // GitHub Integration
+  githubEnabled     Boolean @default(false)
+  githubAccessToken String? // OAuth access token
+  githubUsername    String? // Connected GitHub username
+  githubSyncMode    String? @default("manual") // "all" or "manual"
+  githubLastSyncAt  String? // ISO timestamp
+  craftFolderName   String? // Folder name for display
+  craftSyncMode     String? // "read-only" | "backup" | "full-sync"
+  craftEnabled      Boolean @default(false)
+  craftWriteAccess  Boolean @default(false) // true if API has write permissions
+  craftError        String? // error message if integration broke
+  craftLastSyncAt   String? // ISO timestamp
+
+  updatedAt DateTime @updatedAt
 }
 
 model Project {
-  id          String         @id @default(cuid())
-  title       String
-  slug        String         @unique
-  tagline     String         @default("")
-  content     String         @default("") // rich HTML content
-  contentFormat String       @default("html") // "html" or "markdown"
-  coverImage  String?
-  status      String         @default("completed") // completed, in_progress, archived
-  featured    Boolean        @default(false)
-  published   Boolean        @default(false)
-  githubUrl   String?
-  liveUrl     String?
-  techTags    String         @default("[]") // JSON array of tech strings
-  order       Int            @default(0)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  images      ProjectImage[]
-  
+  id            String         @id @default(cuid())
+  title         String
+  slug          String         @unique
+  tagline       String         @default("")
+  content       String         @default("") // rich HTML content
+  contentFormat String         @default("html") // "html" or "markdown"
+  coverImage    String?
+  status        String         @default("completed") // completed, in_progress, archived
+  featured      Boolean        @default(false)
+  published     Boolean        @default(false)
+  githubUrl     String?
+  liveUrl       String?
+  techTags      String         @default("[]") // JSON array of tech strings
+  order         Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  images        ProjectImage[]
+
   // GitHub integration fields
-  githubRepoId      String?   // GitHub's numeric repo ID
-  githubRepoFullName String?  // owner/repo format
-  githubSyncEnabled Boolean    @default(false) // Auto-sync enabled
-  githubLastSyncAt  String?   // ISO timestamp of last sync
+  githubRepoId        String? // GitHub's numeric repo ID
+  githubRepoFullName  String? // owner/repo format
+  githubSyncEnabled   Boolean @default(false) // Auto-sync enabled
+  githubLastSyncAt    String? // ISO timestamp of last sync
   githubDefaultBranch String? @default("main") // Branch to fetch README from
 }
 
@@ -150,18 +154,18 @@ model PhotoAlbum {
 }
 
 model Photo {
-  id           String     @id @default(cuid())
-  albumId      String
-  album        PhotoAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
-  title        String     @default("")
-  description  String     @default("")
-  url          String
-  location     String     @default("")
-  takenAt      DateTime?
-  order        Int        @default(0)
-  featured     Boolean    @default(false)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id          String     @id @default(cuid())
+  albumId     String
+  album       PhotoAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  title       String     @default("")
+  description String     @default("")
+  url         String
+  location    String     @default("")
+  takenAt     DateTime?
+  order       Int        @default(0)
+  featured    Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 model PopupConfig {
