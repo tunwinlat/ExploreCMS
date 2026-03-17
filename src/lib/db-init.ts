@@ -51,6 +51,9 @@ export async function runSchemaMigrations(): Promise<void> {
       `ALTER TABLE "Project" ADD COLUMN "githubSyncEnabled" BOOLEAN NOT NULL DEFAULT false`,
       `ALTER TABLE "Project" ADD COLUMN "githubLastSyncAt" TEXT`,
       `ALTER TABLE "Project" ADD COLUMN "githubDefaultBranch" TEXT`,
+      // v5 → Multilingual support columns
+      `ALTER TABLE "Post" ADD COLUMN "language" TEXT NOT NULL DEFAULT 'en'`,
+      `ALTER TABLE "Post" ADD COLUMN "translationGroupId" TEXT`,
       // New tables — CREATE IF NOT EXISTS is not supported by LibSQL, so we use CREATE TABLE and ignore "already exists"
       `CREATE TABLE "Project" (
         "id" TEXT NOT NULL PRIMARY KEY,
@@ -200,11 +203,17 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
           "title" TEXT NOT NULL,
           "slug" TEXT NOT NULL,
           "content" TEXT NOT NULL,
+          "contentFormat" TEXT NOT NULL DEFAULT 'html',
           "published" BOOLEAN NOT NULL DEFAULT false,
           "isFeatured" BOOLEAN NOT NULL DEFAULT false,
           "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
           "updatedAt" DATETIME NOT NULL,
           "authorId" TEXT NOT NULL,
+          "craftDocumentId" TEXT,
+          "craftLastModifiedAt" TEXT,
+          "craftUnlinked" BOOLEAN NOT NULL DEFAULT false,
+          "language" TEXT NOT NULL DEFAULT 'en',
+          "translationGroupId" TEXT,
           CONSTRAINT "Post_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
       );
 
@@ -379,6 +388,9 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
       `ALTER TABLE "SiteSettings" ADD COLUMN "craftWriteAccess" BOOLEAN NOT NULL DEFAULT false`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "craftError" TEXT`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "craftLastSyncAt" TEXT`,
+      // Multilingual support
+      `ALTER TABLE "Post" ADD COLUMN "language" TEXT NOT NULL DEFAULT 'en'`,
+      `ALTER TABLE "Post" ADD COLUMN "translationGroupId" TEXT`,
     ];
     for (const stmt of alterStatements) {
       try {
