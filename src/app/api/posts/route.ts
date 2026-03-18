@@ -15,9 +15,12 @@ export async function GET(request: Request) {
 
   try {
     const postDb = await getPostDb();
-    const posts = await postDb.post.findMany({
+    // Fetch a generous buffer so we have enough primary posts after filtering out translations.
+    // A post is "primary" if translationGroupId is null or equals its own id.
+    const fetchLimit = (limit + 1) * 5
+    const allPosts = await postDb.post.findMany({
       where: { published: true },
-      take: limit + 1, // Fetch one extra to check if there's a next page
+      take: fetchLimit,
       cursor: cursor ? { id: cursor } : undefined,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -29,9 +32,14 @@ export async function GET(request: Request) {
       }
     })
 
+    const primaryPosts = allPosts.filter(
+      (p: any) => !p.translationGroupId || p.translationGroupId === p.id
+    )
+
     let nextCursor: typeof cursor | undefined = undefined;
+    const posts = primaryPosts.slice(0, limit + 1)
     if (posts.length > limit) {
-      const nextItem = posts.pop() // Remove the extra item
+      const nextItem = posts.pop()
       nextCursor = nextItem!.id
     }
 

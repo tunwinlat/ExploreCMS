@@ -11,17 +11,30 @@ import PostEditor from '../PostEditor'
 
 export const metadata = { title: "New Post | ExploreCMS" }
 
-export default async function NewPostPage({ searchParams }: { searchParams: Promise<{ translationGroupId?: string }> }) {
+export default async function NewPostPage({ searchParams }: { searchParams: Promise<{ translationGroupId?: string; lang?: string }> }) {
   const session = await verifySession()
   if (!session) redirect('/admin/login')
 
-  const { translationGroupId } = await searchParams
+  const { translationGroupId, lang } = await searchParams
 
   const postDb = await getPostDb();
-  const availableTags = await postDb.tag.findMany({
-    select: { name: true, slug: true },
-    orderBy: { name: 'asc' }
-  })
+  const [availableTags, parentPost] = await Promise.all([
+    postDb.tag.findMany({
+      select: { name: true, slug: true },
+      orderBy: { name: 'asc' }
+    }),
+    // When adding a translation, the translationGroupId is the parent post's ID
+    translationGroupId
+      ? postDb.post.findUnique({ where: { id: translationGroupId }, select: { title: true } }).catch(() => null)
+      : Promise.resolve(null),
+  ])
 
-  return <PostEditor availableTags={availableTags} initialTranslationGroupId={translationGroupId} />
+  return (
+    <PostEditor
+      availableTags={availableTags}
+      initialTranslationGroupId={translationGroupId}
+      parentPostTitle={parentPost?.title ?? undefined}
+      initialLanguage={lang}
+    />
+  )
 }
