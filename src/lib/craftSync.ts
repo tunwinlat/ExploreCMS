@@ -714,7 +714,7 @@ export async function runCraftSync(
     const connectionTest = await client.testConnection(false)
     if (!connectionTest.success) {
       const errMsg = `Craft connection failed: ${connectionTest.error || 'Unknown error'}. Please check your API key and permissions.`
-      await setCraftError(errMsg, true)
+      await setCraftError(errMsg, false) // Don't disable on connection errors - may be temporary
       return { ...result, errors: [errMsg] }
     }
 
@@ -722,8 +722,8 @@ export async function runCraftSync(
     if ((mode === 'backup' || mode === 'full-sync') && options.manual) {
       const writeOk = await client.testWriteAccess()
       if (!writeOk) {
-        const errMsg = 'Craft API no longer has write access. Backup/Full Sync requires write permissions. Integration has been disabled.'
-        await setCraftError(errMsg, true)
+        const errMsg = 'Craft API does not have write access. Backup/Full Sync requires write permissions. Please test your connection to update permissions.'
+        await setCraftError(errMsg, false) // Don't disable - let user fix permissions
         return { ...result, errors: [errMsg] }
       }
     }

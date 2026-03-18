@@ -240,11 +240,8 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
       if (data.error || (data.errors && data.errors.length > 0 && data.imported === 0 && data.updated === 0 && data.backedUp === 0)) {
         const errMsg = data.error || data.errors?.[0] || 'Sync failed.'
         toast(errMsg, 'error')
-        // If integration was auto-disabled, reflect it in the UI
-        if (errMsg.includes('disabled') || errMsg.includes('connection failed')) {
-          setCraftEnabled(false)
-          setCraftError(errMsg)
-        }
+        // Show error in UI but don't disable integration - user should decide
+        setCraftError(errMsg)
         setCraftSyncResult(data)
       } else {
         setCraftSyncResult(data)
