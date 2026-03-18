@@ -1,7 +1,13 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import iso6391 from 'iso-639-1'
 
 type Translation = {
@@ -17,6 +23,9 @@ export function LanguageSwitcher({
   translations: Translation[] 
 }) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const [navigatingTo, setNavigatingTo] = useState<string | null>(null)
+  const router = useRouter()
 
   if (!translations || translations.length === 0) {
     return null
@@ -28,10 +37,30 @@ export function LanguageSwitcher({
     ...translations.map(t => ({ ...t, isCurrent: false }))
   ].sort((a, b) => a.language.localeCompare(b.language))
 
+  const handleLanguageClick = (slug: string, language: string) => {
+    if (slug === '#') return
+    
+    setNavigatingTo(language)
+    setIsOpen(false)
+    
+    // Use startTransition for smoother UI updates
+    startTransition(() => {
+      router.push(`/post/${slug}`)
+    })
+  }
+
+  // Prefetch on hover
+  const handleMouseEnter = (slug: string) => {
+    if (slug !== '#') {
+      router.prefetch(`/post/${slug}`)
+    }
+  }
+
   return (
     <div style={{ position: 'relative', display: 'inline-block' }}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
+        disabled={isPending}
         style={{
           background: 'var(--bg-color)',
           color: 'var(--text-secondary)',
@@ -40,22 +69,37 @@ export function LanguageSwitcher({
           fontSize: '0.85rem',
           transition: 'all 0.2s ease',
           border: '1px solid var(--border-color)',
-          cursor: 'pointer',
+          cursor: isPending ? 'wait' : 'pointer',
           display: 'flex',
           alignItems: 'center',
-          gap: '0.5rem'
+          gap: '0.5rem',
+          opacity: isPending ? 0.7 : 1
         }}
         aria-expanded={isOpen}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="m5 8 6 6" />
-          <path d="m4 14 6-6 2-3" />
-          <path d="M2 5h12" />
-          <path d="M7 2h1" />
-          <path d="m22 22-5-10-5 10" />
-          <path d="M14 18h6" />
-        </svg>
-        Available in multiple languages
+        {isPending ? (
+          <span 
+            className="spinner"
+            style={{
+              width: '16px',
+              height: '16px',
+              border: '2px solid var(--border-color)',
+              borderTopColor: 'var(--text-primary)',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite'
+            }}
+          />
+        ) : (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m5 8 6 6" />
+            <path d="m4 14 6-6 2-3" />
+            <path d="M2 5h12" />
+            <path d="M7 2h1" />
+            <path d="m22 22-5-10-5 10" />
+            <path d="M14 18h6" />
+          </svg>
+        )}
+        {isPending ? 'Switching...' : 'Available in multiple languages'}
       </button>
 
       {isOpen && (
@@ -83,6 +127,7 @@ export function LanguageSwitcher({
           }}>
             {allLanguages.map((lang) => {
               const langName = iso6391.getNativeName(lang.language) || lang.language.toUpperCase()
+              const isNavigating = navigatingTo === lang.language && isPending
               
               if (lang.isCurrent) {
                 return (
@@ -90,34 +135,62 @@ export function LanguageSwitcher({
                     key={lang.language}
                     style={{
                       padding: '0.75rem 1rem',
-                      display: 'block',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
                       color: 'var(--text-primary)',
                       fontWeight: 600,
                       background: 'rgba(99, 102, 241, 0.1)',
                       borderLeft: '2px solid #6366f1',
                     }}
                   >
-                    {langName}
+                    <span>{langName}</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
                   </div>
                 )
               }
               
               return (
-                <Link 
+                <button
                   key={lang.language}
-                  href={`/post/${lang.slug}`}
+                  onClick={() => handleLanguageClick(lang.slug, lang.language)}
+                  onMouseEnter={() => handleMouseEnter(lang.slug)}
+                  disabled={isPending}
                   style={{
+                    width: '100%',
                     padding: '0.75rem 1rem',
-                    display: 'block',
-                    color: 'var(--text-secondary)',
-                    textDecoration: 'none',
-                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    background: 'transparent',
+                    border: 'none',
                     borderLeft: '2px solid transparent',
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.9rem',
+                    textAlign: 'left',
+                    cursor: isPending ? 'wait' : 'pointer',
+                    transition: 'all 0.2s',
+                    opacity: isNavigating ? 0.6 : 1
                   }}
                   className="lang-select-item"
                 >
-                  {langName}
-                </Link>
+                  <span>{langName}</span>
+                  {isNavigating && (
+                    <span 
+                      className="spinner"
+                      style={{
+                        width: '14px',
+                        height: '14px',
+                        border: '2px solid var(--border-color)',
+                        borderTopColor: 'var(--text-primary)',
+                        borderRadius: '50%',
+                        animation: 'spin 0.8s linear infinite'
+                      }}
+                    />
+                  )}
+                </button>
               )
             })}
           </div>
@@ -127,6 +200,9 @@ export function LanguageSwitcher({
         .lang-select-item:hover {
           background: var(--bg-color);
           color: var(--text-primary) !important;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
       `}} />
     </div>
