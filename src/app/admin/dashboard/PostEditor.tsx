@@ -23,6 +23,8 @@ export default function PostEditor({
   availableTags = [],
   readOnly = false,
   craftPostId,
+  siblingTranslations = [],
+  initialTranslationGroupId,
 }: {
   post?: Post & {
     tags?: {name: string, slug: string}[]
@@ -31,6 +33,8 @@ export default function PostEditor({
   availableTags?: {name: string, slug: string}[]
   readOnly?: boolean
   craftPostId?: string
+  siblingTranslations?: { id: string, language: string, title: string, slug: string }[]
+  initialTranslationGroupId?: string
 }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -167,6 +171,22 @@ export default function PostEditor({
     <div style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
       <form ref={formRef} onSubmit={readOnly ? (e) => e.preventDefault() : handleSubmit} className="fade-in-up glass" style={{ display: 'flex', flexDirection: 'column', padding: '2rem' }}>
         {post && <input type="hidden" name="id" value={post.id} />}
+        <input type="hidden" name="translationGroupId" value={(post as any)?.translationGroupId || initialTranslationGroupId || ''} />
+
+        {!post && initialTranslationGroupId && (
+          <div style={{
+            padding: '0.875rem 1.25rem',
+            marginBottom: '1.5rem',
+            background: 'rgba(16, 185, 129, 0.08)',
+            border: '1px solid #10b981',
+            borderRadius: 'var(--radius-md)',
+          }}>
+            <strong style={{ color: '#10b981', fontSize: '0.9rem' }}>New Translation</strong>
+            <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              This post will be linked as a translation. Set the language code in Settings before saving.
+            </p>
+          </div>
+        )}
 
         {readOnly && (
           <div style={{
@@ -322,6 +342,35 @@ export default function PostEditor({
                   title="ISO 639-1 Language Code (e.g., en, es, fr, zh-CN)"
                 />
               </div>
+
+              {post && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <label style={{ fontWeight: 500, fontSize: '0.875rem' }}>Translations</label>
+                  {siblingTranslations.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      {siblingTranslations.map(t => (
+                        <Link
+                          key={t.id}
+                          href={`/admin/dashboard/edit/${t.id}`}
+                          style={{ fontSize: '0.875rem', color: 'var(--accent-color)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                        >
+                          <span style={{ fontWeight: 600, background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '4px', padding: '0 0.35rem', fontSize: '0.75rem' }}>{t.language}</span>
+                          {t.title}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>No other translations yet.</p>
+                  )}
+                  <Link
+                    href={`/admin/dashboard/new?translationGroupId=${(post as any)?.translationGroupId || post.id}`}
+                    className="btn"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.875rem', border: '1px solid var(--border-color)', background: 'transparent', width: 'fit-content' }}
+                  >
+                    + Add Translation
+                  </Link>
+                </div>
+              )}
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <label style={{ fontWeight: 500, fontSize: '0.875rem' }}>Post Tags</label>

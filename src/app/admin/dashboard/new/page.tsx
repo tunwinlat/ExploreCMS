@@ -11,9 +11,11 @@ import PostEditor from '../PostEditor'
 
 export const metadata = { title: "New Post | ExploreCMS" }
 
-export default async function NewPostPage() {
+export default async function NewPostPage({ searchParams }: { searchParams: Promise<{ translationGroupId?: string }> }) {
   const session = await verifySession()
   if (!session) redirect('/admin/login')
+
+  const { translationGroupId } = await searchParams
 
   const postDb = await getPostDb();
   const availableTags = await postDb.tag.findMany({
@@ -21,5 +23,5 @@ export default async function NewPostPage() {
     orderBy: { name: 'asc' }
   })
 
-  return <PostEditor availableTags={availableTags} />
+  return <PostEditor availableTags={availableTags} initialTranslationGroupId={translationGroupId} />
 }
