@@ -130,7 +130,7 @@ export default function AdminSidebarWrapper({ role, username }: AdminSidebarWrap
       <div className={`overlay ${isOpen ? 'open' : ''}`} onClick={() => setIsOpen(false)} aria-hidden="true" />
 
       {/* Sidebar Content */}
-      <aside className={`glass dashboard-sidebar ${isOpen ? 'open' : ''}`} style={{ padding: '2rem 1.25rem', display: 'flex', flexDirection: 'column', borderRadius: 0, borderTop: 0, borderBottom: 0, borderLeft: 0, borderRight: '1px solid var(--border-color)', zIndex: 10 }}>
+      <aside className={`glass dashboard-sidebar ${isOpen ? 'open' : ''}`} style={{ padding: '2rem 1.25rem', display: 'flex', flexDirection: 'column', borderRadius: 0, borderTop: 0, borderBottom: 0, borderLeft: 0, borderRight: '1px solid var(--border-color)', zIndex: 30 }}>
         {/* Only show on desktop since mobile has the top header */}
         <h2 className="desktop-title" style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '2rem', paddingLeft: '0.5rem', color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>ExploreCMS</h2>
 
