@@ -88,6 +88,7 @@ export default function PostEditor({
   const [unlinkLoading, setUnlinkLoading] = useState(false)
   const [showAddTranslation, setShowAddTranslation] = useState(false)
   const [selectedLang, setSelectedLang] = useState('')
+  const [langFilter, setLangFilter] = useState('')
   const initialTags = post?.tags?.map(t => t.name) || []
 
   const formRef = useRef<HTMLFormElement>(null)
@@ -562,30 +563,71 @@ export default function PostEditor({
                 flexDirection: 'column',
                 gap: '0.75rem',
               }}>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  Choose the language for the new translation. You'll be taken to a new editor pre-filled with this post's title.
-                </p>
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <select
-                    value={selectedLang}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedLang(e.target.value)}
-                    aria-label="Select translation language"
-                    style={{
-                      flex: 1,
-                      minWidth: '180px',
-                      padding: '0.5rem 0.75rem',
-                      background: 'var(--bg-color-secondary)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: 'var(--radius-md)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.875rem',
-                    }}
-                  >
-                    <option value="">— Select language —</option>
-                    {availableLanguages.map(l => (
-                      <option key={l.code} value={l.code}>{l.name} ({l.code.toUpperCase()})</option>
-                    ))}
-                  </select>
+                {/* Filter input */}
+                <input
+                  type="text"
+                  placeholder="Search language..."
+                  value={langFilter}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLangFilter(e.target.value)}
+                  autoFocus
+                  className="input-field"
+                  style={{ fontSize: '0.875rem' }}
+                  aria-label="Filter languages"
+                />
+
+                {/* Scrollable language list */}
+                <div style={{
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--bg-color-secondary)',
+                }}>
+                  {availableLanguages
+                    .filter(l =>
+                      !langFilter ||
+                      l.name.toLowerCase().includes(langFilter.toLowerCase()) ||
+                      l.code.toLowerCase().includes(langFilter.toLowerCase())
+                    )
+                    .map(l => (
+                      <button
+                        key={l.code}
+                        type="button"
+                        onClick={() => setSelectedLang(l.code)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          width: '100%',
+                          padding: '0.5rem 0.75rem',
+                          background: selectedLang === l.code ? 'rgba(16,185,129,0.12)' : 'transparent',
+                          border: 'none',
+                          borderBottom: '1px solid var(--border-color)',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          color: selectedLang === l.code ? '#10b981' : 'var(--text-primary)',
+                          fontWeight: selectedLang === l.code ? 600 : 400,
+                          fontSize: '0.875rem',
+                        }}
+                      >
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', minWidth: '2.5rem' }}>{l.code.toUpperCase()}</span>
+                        {l.name}
+                        {selectedLang === l.code && <span style={{ marginLeft: 'auto', fontSize: '0.85rem' }}>✓</span>}
+                      </button>
+                    ))
+                  }
+                  {availableLanguages.filter(l =>
+                    !langFilter ||
+                    l.name.toLowerCase().includes(langFilter.toLowerCase()) ||
+                    l.code.toLowerCase().includes(langFilter.toLowerCase())
+                  ).length === 0 && (
+                    <div style={{ padding: '0.75rem', fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+                      No languages match "{langFilter}"
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                   <button
                     type="button"
                     onClick={handleAddTranslation}
@@ -593,11 +635,13 @@ export default function PostEditor({
                     className="btn btn-primary"
                     style={{ background: '#10b981', color: 'white', opacity: selectedLang ? 1 : 0.5 }}
                   >
-                    Create Translation
+                    {selectedLang
+                      ? `Create ${COMMON_LANGUAGES.find(l => l.code === selectedLang)?.name ?? selectedLang.toUpperCase()} Translation`
+                      : 'Select a language above'}
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setShowAddTranslation(false); setSelectedLang('') }}
+                    onClick={() => { setShowAddTranslation(false); setSelectedLang(''); setLangFilter('') }}
                     className="btn"
                     style={{ background: 'transparent', border: '1px solid var(--border-color)' }}
                   >

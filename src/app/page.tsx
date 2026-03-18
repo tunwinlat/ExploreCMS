@@ -13,6 +13,7 @@ import { BlogContent } from "@/components/blog/BlogContent";
 import { parseComponentConfig, COMPONENTS } from "@/lib/components-config";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
+import { isPrimaryPost } from "@/lib/translationUtils";
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -36,36 +37,44 @@ async function getBlogData() {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const limit = 9;
 
-    const [featured, trending, latestRaw] = await Promise.all([
+    const [featuredRaw, trendingRaw, latestRaw] = await Promise.all([
       postDb.post.findMany({
         where: { published: true, isFeatured: true },
-        take: 5,
+        take: 30,
         orderBy: { createdAt: 'desc' },
         include: { author: { select: { username: true, firstName: true } }, tags: true, views: true },
       }),
       postDb.post.findMany({
         where: { published: true, createdAt: { gte: sevenDaysAgo } },
-        take: 8,
+        take: 40,
         orderBy: { views: { totalViews: 'desc' } },
         include: { author: { select: { username: true, firstName: true } }, tags: true, views: true },
       }),
       postDb.post.findMany({
         where: { published: true },
         orderBy: { createdAt: 'desc' },
-        take: limit + 1,
+        take: (limit + 1) * 5,
         include: { author: true, tags: true, views: true },
       }),
     ]);
 
-    const featuredFinal = featured.length > 0 ? featured : await postDb.post.findMany({
-      where: { published: true },
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      include: { author: { select: { username: true, firstName: true } }, tags: true, views: true },
-    });
+    const featured = featuredRaw.filter(isPrimaryPost).slice(0, 5);
+    const trending = trendingRaw.filter(isPrimaryPost).slice(0, 8);
 
+    let featuredFinal = featured;
+    if (featured.length === 0) {
+      const fallbackRaw = await postDb.post.findMany({
+        where: { published: true },
+        take: 30,
+        orderBy: { createdAt: 'desc' },
+        include: { author: { select: { username: true, firstName: true } }, tags: true, views: true },
+      });
+      featuredFinal = fallbackRaw.filter(isPrimaryPost).slice(0, 5);
+    }
+
+    const primaryLatest = latestRaw.filter(isPrimaryPost);
     let nextCursor: string | undefined;
-    const latestPosts = [...latestRaw];
+    const latestPosts = primaryLatest.slice(0, limit + 1);
     if (latestPosts.length > limit) {
       const nextItem = latestPosts.pop();
       nextCursor = nextItem!.id;

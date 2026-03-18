@@ -13,6 +13,7 @@ import { BlogContent } from "@/components/blog/BlogContent";
 import { parseComponentConfig, COMPONENTS } from "@/lib/components-config";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
+import { isPrimaryPost } from "@/lib/translationUtils";
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -29,12 +30,6 @@ async function getPopupConfig() {
   } catch { return null; }
 }
 
-// A post is "primary" if it has no translationGroupId (standalone) or if its
-// translationGroupId equals its own id (it's the base post of a group).
-// Translation variants (different id from translationGroupId) are excluded from feeds.
-function isPrimaryPost(post: any): boolean {
-  return !post.translationGroupId || post.translationGroupId === post.id
-}
 
 async function getBlogData() {
   try {
