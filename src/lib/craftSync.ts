@@ -396,14 +396,21 @@ export async function craftImportSync(
       select: { id: true, craftDocumentId: true, title: true },
     })
 
+    const idsToDelete: string[] = []
     for (const post of linkedPosts) {
       if (post.craftDocumentId && !craftDocIds.has(post.craftDocumentId)) {
-        try {
-          await postDb.post.delete({ where: { id: post.id } })
-          result.deleted++
-        } catch (err: any) {
-          result.errors.push(`Error deleting post "${post.title}": ${err.message}`)
-        }
+        idsToDelete.push(post.id)
+      }
+    }
+
+    if (idsToDelete.length > 0) {
+      try {
+        const deleteResult = await postDb.post.deleteMany({
+          where: { id: { in: idsToDelete } },
+        })
+        result.deleted += deleteResult.count
+      } catch (err: any) {
+        result.errors.push(`Error deleting posts: ${err.message}`)
       }
     }
   }
