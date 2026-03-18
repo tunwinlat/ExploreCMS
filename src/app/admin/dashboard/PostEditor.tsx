@@ -6,10 +6,11 @@
 
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { savePost, deletePost } from './postActions'
 import { unlinkCraftPost } from './integrations/craftActions'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import TipTapEditor from '@/components/editor/TipTapEditor'
 import TagSelector from '@/components/editor/TagSelector'
 import { Post } from '@prisma/client'
@@ -18,6 +19,43 @@ import ConfirmDialog from '@/components/admin/ConfirmDialog'
 
 type AutosaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
+// Common languages for the translation picker
+const COMMON_LANGUAGES: { code: string; name: string }[] = [
+  { code: 'af', name: 'Afrikaans' },
+  { code: 'ar', name: 'Arabic' },
+  { code: 'zh', name: 'Chinese (Simplified)' },
+  { code: 'zh-TW', name: 'Chinese (Traditional)' },
+  { code: 'cs', name: 'Czech' },
+  { code: 'da', name: 'Danish' },
+  { code: 'nl', name: 'Dutch' },
+  { code: 'en', name: 'English' },
+  { code: 'fi', name: 'Finnish' },
+  { code: 'fr', name: 'French' },
+  { code: 'de', name: 'German' },
+  { code: 'el', name: 'Greek' },
+  { code: 'he', name: 'Hebrew' },
+  { code: 'hi', name: 'Hindi' },
+  { code: 'hu', name: 'Hungarian' },
+  { code: 'id', name: 'Indonesian' },
+  { code: 'it', name: 'Italian' },
+  { code: 'ja', name: 'Japanese' },
+  { code: 'ko', name: 'Korean' },
+  { code: 'ms', name: 'Malay' },
+  { code: 'no', name: 'Norwegian' },
+  { code: 'fa', name: 'Persian' },
+  { code: 'pl', name: 'Polish' },
+  { code: 'pt', name: 'Portuguese' },
+  { code: 'ro', name: 'Romanian' },
+  { code: 'ru', name: 'Russian' },
+  { code: 'es', name: 'Spanish' },
+  { code: 'sv', name: 'Swedish' },
+  { code: 'th', name: 'Thai' },
+  { code: 'tr', name: 'Turkish' },
+  { code: 'uk', name: 'Ukrainian' },
+  { code: 'ur', name: 'Urdu' },
+  { code: 'vi', name: 'Vietnamese' },
+]
+
 export default function PostEditor({
   post,
   availableTags = [],
@@ -25,6 +63,8 @@ export default function PostEditor({
   craftPostId,
   siblingTranslations = [],
   initialTranslationGroupId,
+  parentPostTitle,
+  initialLanguage,
 }: {
   post?: Post & {
     tags?: {name: string, slug: string}[]
@@ -35,6 +75,8 @@ export default function PostEditor({
   craftPostId?: string
   siblingTranslations?: { id: string, language: string, title: string, slug: string }[]
   initialTranslationGroupId?: string
+  parentPostTitle?: string
+  initialLanguage?: string
 }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -44,10 +86,25 @@ export default function PostEditor({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [unlinkLoading, setUnlinkLoading] = useState(false)
+  const [showAddTranslation, setShowAddTranslation] = useState(false)
+  const [selectedLang, setSelectedLang] = useState('')
   const initialTags = post?.tags?.map(t => t.name) || []
 
   const formRef = useRef<HTMLFormElement>(null)
   const { toast } = useToast()
+  const router = useRouter()
+
+  const isTranslationPost = !!(post as any)?.translationGroupId && (post as any)?.translationGroupId !== post?.id
+  const currentLanguage: string = (post as any)?.language || initialLanguage || 'en'
+  const translationGroupId: string = (post as any)?.translationGroupId || initialTranslationGroupId || ''
+
+  // Languages already used in this translation group (can't add duplicates)
+  const usedLanguages = new Set([
+    currentLanguage,
+    ...siblingTranslations.map(t => t.language),
+  ])
+
+  const availableLanguages = COMMON_LANGUAGES.filter(l => !usedLanguages.has(l.code))
 
   const handleUnlink = useCallback(async () => {
     if (!craftPostId) return
@@ -75,8 +132,7 @@ export default function PostEditor({
       if (formData.get('isFeatured') === null && typeof post.isFeatured === 'boolean') {
         formData.set('isFeatured', post.isFeatured ? 'true' : 'false')
       }
-      
-      const currentLanguage = (post as any)?.language;
+
       if (!formData.get('language') && currentLanguage) {
         formData.set('language', currentLanguage)
       }
@@ -149,6 +205,15 @@ export default function PostEditor({
     }
   }, [post?.id, toast])
 
+  const handleAddTranslation = useCallback(() => {
+    if (!selectedLang) {
+      toast('Please select a language first.', 'error')
+      return
+    }
+    const groupId = translationGroupId || post?.id
+    router.push(`/admin/dashboard/new?translationGroupId=${groupId}&lang=${selectedLang}`)
+  }, [selectedLang, translationGroupId, post?.id, router, toast])
+
   const renderAutosaveIndicator = () => {
     if (autosaveStatus === 'idle') return null
     const statusMap = {
@@ -171,8 +236,9 @@ export default function PostEditor({
     <div style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
       <form ref={formRef} onSubmit={readOnly ? (e) => e.preventDefault() : handleSubmit} className="fade-in-up glass" style={{ display: 'flex', flexDirection: 'column', padding: '2rem' }}>
         {post && <input type="hidden" name="id" value={post.id} />}
-        <input type="hidden" name="translationGroupId" value={(post as any)?.translationGroupId || initialTranslationGroupId || ''} />
+        <input type="hidden" name="translationGroupId" value={translationGroupId} />
 
+        {/* New-translation context banner */}
         {!post && initialTranslationGroupId && (
           <div style={{
             padding: '0.875rem 1.25rem',
@@ -181,10 +247,40 @@ export default function PostEditor({
             border: '1px solid #10b981',
             borderRadius: 'var(--radius-md)',
           }}>
-            <strong style={{ color: '#10b981', fontSize: '0.9rem' }}>New Translation</strong>
+            <strong style={{ color: '#10b981', fontSize: '0.9rem' }}>Adding a Translation</strong>
+            {parentPostTitle && (
+              <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                For: <strong style={{ color: 'var(--text-primary)' }}>{parentPostTitle}</strong>
+              </p>
+            )}
             <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              This post will be linked as a translation. Set the language code in Settings before saving.
+              Set the language below, then write the translated title and content.
             </p>
+          </div>
+        )}
+
+        {/* Translation variant banner (when editing a non-primary post) */}
+        {post && isTranslationPost && (
+          <div style={{
+            padding: '0.75rem 1.25rem',
+            marginBottom: '1.5rem',
+            background: 'rgba(99, 102, 241, 0.07)',
+            border: '1px solid rgba(99,102,241,0.35)',
+            borderRadius: 'var(--radius-md)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            flexWrap: 'wrap',
+          }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              This is a <strong style={{ color: '#6366f1' }}>{currentLanguage.toUpperCase()}</strong> translation of a post.
+            </span>
+            {siblingTranslations.length > 0 && siblingTranslations.map(t => (
+              <Link key={t.id} href={`/admin/dashboard/edit/${t.id}`}
+                style={{ fontSize: '0.8rem', padding: '0.2rem 0.6rem', background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '4px', color: 'var(--text-secondary)' }}>
+                {t.language.toUpperCase()} version
+              </Link>
+            ))}
           </div>
         )}
 
@@ -284,26 +380,74 @@ export default function PostEditor({
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
-          <input
-            type="text"
-            name="title"
-            placeholder="Start with a brilliant title..."
-            required
-            defaultValue={post?.title}
-            readOnly={readOnly}
-            aria-label="Post title"
-            style={{
-              fontSize: '1.5rem',
-              fontWeight: 600,
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--text-primary)',
-              padding: '0.5rem 0',
-              outline: 'none',
-              letterSpacing: '-0.5px',
-              opacity: readOnly ? 0.7 : 1,
-            }}
-          />
+          {/* Title row with inline language badge */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+            <input
+              type="text"
+              name="title"
+              placeholder="Start with a brilliant title..."
+              required
+              defaultValue={post?.title ?? parentPostTitle ?? ''}
+              readOnly={readOnly}
+              aria-label="Post title"
+              style={{
+                flex: 1,
+                fontSize: '1.5rem',
+                fontWeight: 600,
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-primary)',
+                padding: '0.5rem 0',
+                outline: 'none',
+                letterSpacing: '-0.5px',
+                opacity: readOnly ? 0.7 : 1,
+              }}
+            />
+            {/* Inline language selector — always visible */}
+            {!readOnly && (
+              <div style={{ flexShrink: 0, paddingTop: '0.6rem' }}>
+                <select
+                  name="language"
+                  defaultValue={currentLanguage}
+                  title="Post language"
+                  aria-label="Post language"
+                  style={{
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    background: 'var(--bg-color-secondary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '6px',
+                    color: 'var(--text-secondary)',
+                    padding: '0.3rem 0.5rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {COMMON_LANGUAGES.map(l => (
+                    <option key={l.code} value={l.code}>{l.code.toUpperCase()} — {l.name}</option>
+                  ))}
+                  {/* Fallback option for codes not in our list */}
+                  {!COMMON_LANGUAGES.some(l => l.code === currentLanguage) && (
+                    <option value={currentLanguage}>{currentLanguage.toUpperCase()}</option>
+                  )}
+                </select>
+              </div>
+            )}
+            {readOnly && currentLanguage && (
+              <span style={{
+                flexShrink: 0,
+                paddingTop: '0.6rem',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                color: 'var(--text-secondary)',
+                background: 'var(--bg-color-secondary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '6px',
+                padding: '0.3rem 0.5rem',
+              }}>
+                {currentLanguage.toUpperCase()}
+              </span>
+            )}
+          </div>
 
           {showAdvanced && !readOnly && (
             <div id="advanced-settings" className="fade-in-up" style={{
@@ -313,10 +457,9 @@ export default function PostEditor({
               border: '1px solid var(--border-color)',
               display: 'flex',
               flexDirection: 'column',
-              gap: '1.5rem'
+              gap: '1rem'
             }}>
               <h3 style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', letterSpacing: '0.02em', fontWeight: 500 }}>Advanced Settings</h3>
-
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <label htmlFor="slug-input" style={{ fontWeight: 500, fontSize: '0.875rem' }}>Custom URL Slug</label>
                 <input
@@ -327,63 +470,10 @@ export default function PostEditor({
                   defaultValue={post?.slug}
                   className="input-field"
                 />
+                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                  Changing the slug will break existing links to this post.
+                </p>
               </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label htmlFor="language-input" style={{ fontWeight: 500, fontSize: '0.875rem' }}>Language</label>
-                <input
-                  id="language-input"
-                  type="text"
-                  name="language"
-                  placeholder="e.g., en, es, fr"
-                  defaultValue={(post as any)?.language || 'en'}
-                  className="input-field"
-                  pattern="[a-zA-Z]{2}(-[a-zA-Z]{2})?"
-                  title="ISO 639-1 Language Code (e.g., en, es, fr, zh-CN)"
-                />
-              </div>
-
-              {post && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <label style={{ fontWeight: 500, fontSize: '0.875rem' }}>Translations</label>
-                  {siblingTranslations.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      {siblingTranslations.map(t => (
-                        <Link
-                          key={t.id}
-                          href={`/admin/dashboard/edit/${t.id}`}
-                          style={{ fontSize: '0.875rem', color: 'var(--accent-color)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                        >
-                          <span style={{ fontWeight: 600, background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '4px', padding: '0 0.35rem', fontSize: '0.75rem' }}>{t.language}</span>
-                          {t.title}
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>No other translations yet.</p>
-                  )}
-                  <Link
-                    href={`/admin/dashboard/new?translationGroupId=${(post as any)?.translationGroupId || post.id}`}
-                    className="btn"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.875rem', border: '1px solid var(--border-color)', background: 'transparent', width: 'fit-content' }}
-                  >
-                    + Add Translation
-                  </Link>
-                </div>
-              )}
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontWeight: 500, fontSize: '0.875rem' }}>Post Tags</label>
-                <TagSelector availableTags={availableTags} initialTags={initialTags} />
-              </div>
-
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem', color: 'var(--text-primary)' }}>
-                <input type="checkbox" name="isFeatured" value="true" defaultChecked={post?.isFeatured} style={{ transform: 'scale(1.2)' }} />
-                Mark as Featured Post
-              </label>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
-                Featured posts appear prominently on the homepage. The post must be published to be visible.
-              </p>
             </div>
           )}
 
@@ -393,6 +483,154 @@ export default function PostEditor({
             editable={!readOnly}
           />
         </div>
+
+        {/* ── Translations panel — always visible when post exists ── */}
+        {post && !readOnly && (
+          <div style={{
+            marginTop: '2rem',
+            padding: '1.25rem 1.5rem',
+            background: 'var(--bg-color-secondary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: 'var(--radius-md)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-secondary)' }}>
+                  <path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/>
+                  <path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>
+                </svg>
+                <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>Translations</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '4px', padding: '0 0.4rem' }}>
+                  {currentLanguage.toUpperCase()} (this post)
+                </span>
+              </div>
+
+              {!showAddTranslation && (
+                <button
+                  type="button"
+                  onClick={() => setShowAddTranslation(true)}
+                  className="btn"
+                  style={{ fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', border: '1px solid var(--border-color)', background: 'transparent' }}
+                >
+                  <span style={{ fontSize: '1rem', lineHeight: 1 }}>+</span> Add Translation
+                </button>
+              )}
+            </div>
+
+            {/* Existing translations */}
+            {siblingTranslations.length > 0 ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: showAddTranslation ? '1rem' : 0 }}>
+                {siblingTranslations.map(t => (
+                  <Link
+                    key={t.id}
+                    href={`/admin/dashboard/edit/${t.id}`}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      padding: '0.35rem 0.75rem',
+                      background: 'var(--bg-color)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '20px',
+                      fontSize: '0.8rem',
+                      color: 'var(--text-secondary)',
+                      textDecoration: 'none',
+                    }}
+                    className="post-tag"
+                  >
+                    <span style={{ fontWeight: 700, color: 'var(--accent-color)' }}>{t.language.toUpperCase()}</span>
+                    {t.title}
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              !showAddTranslation && (
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  No translations yet. Readers will only see this post in <strong>{currentLanguage.toUpperCase()}</strong>.
+                </p>
+              )
+            )}
+
+            {/* Inline add-translation form */}
+            {showAddTranslation && (
+              <div className="fade-in-up" style={{
+                padding: '1rem',
+                background: 'var(--bg-color)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-md)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem',
+              }}>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  Choose the language for the new translation. You'll be taken to a new editor pre-filled with this post's title.
+                </p>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <select
+                    value={selectedLang}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedLang(e.target.value)}
+                    aria-label="Select translation language"
+                    style={{
+                      flex: 1,
+                      minWidth: '180px',
+                      padding: '0.5rem 0.75rem',
+                      background: 'var(--bg-color-secondary)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: 'var(--radius-md)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    <option value="">— Select language —</option>
+                    {availableLanguages.map(l => (
+                      <option key={l.code} value={l.code}>{l.name} ({l.code.toUpperCase()})</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={handleAddTranslation}
+                    disabled={!selectedLang}
+                    className="btn btn-primary"
+                    style={{ background: '#10b981', color: 'white', opacity: selectedLang ? 1 : 0.5 }}
+                  >
+                    Create Translation
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowAddTranslation(false); setSelectedLang('') }}
+                    className="btn"
+                    style={{ background: 'transparent', border: '1px solid var(--border-color)' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tags panel — always visible (moved out of Settings) */}
+        {!readOnly && (
+          <div style={{
+            marginTop: '1rem',
+            padding: '1.25rem 1.5rem',
+            background: 'var(--bg-color-secondary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: 'var(--radius-md)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>Tags &amp; Options</span>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                <input type="checkbox" name="isFeatured" value="true" defaultChecked={post?.isFeatured} style={{ transform: 'scale(1.1)' }} />
+                Featured post
+              </label>
+            </div>
+            <TagSelector availableTags={availableTags} initialTags={initialTags} />
+          </div>
+        )}
       </form>
 
       <ConfirmDialog

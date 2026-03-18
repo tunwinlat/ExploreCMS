@@ -310,6 +310,20 @@ async function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+/**
+ * Build the Craft document title for a post.
+ * Translations (posts whose id !== translationGroupId) get a [lang] suffix
+ * so they can be round-tripped back as translations on import.
+ * Primary / standalone posts use the bare title.
+ */
+function craftDocumentTitle(post: { title: string; id: string; [k: string]: any }): string {
+  const lang: string = (post as any).language || 'en'
+  const isTranslation =
+    (post as any).translationGroupId &&
+    (post as any).translationGroupId !== post.id
+  return isTranslation ? `${post.title} [${lang}]` : post.title
+}
+
 interface SyncResult {
   imported: number
   updated: number
@@ -544,7 +558,8 @@ export async function craftBackupSync(
         await client.updateDocumentContent(post.craftDocumentId, markdown)
         result.backedUp++
       } else {
-        const craftDoc = await client.createDocument(folderId, post.title)
+        const docTitle = craftDocumentTitle(post)
+        const craftDoc = await client.createDocument(folderId, docTitle)
         await client.insertBlocks(craftDoc.id, markdown)
 
         await postDb.post.update({
@@ -605,8 +620,9 @@ export async function pushPostToCraft(postId: string): Promise<void> {
       // Update existing Craft document
       await client.updateDocumentContent(post.craftDocumentId, markdown)
     } else {
-      // Create new document in Craft
-      const craftDoc = await client.createDocument(settings.craftFolderId, post.title)
+      // Create new document in Craft (translations get a [lang] suffix so they
+      // can be imported back as translations via the "Title [xx]" convention)
+      const craftDoc = await client.createDocument(settings.craftFolderId, craftDocumentTitle(post))
       await client.insertBlocks(craftDoc.id, markdown)
 
       // Save the Craft document ID (and timestamp if the API returned it)
