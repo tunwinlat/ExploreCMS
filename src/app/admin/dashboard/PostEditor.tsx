@@ -6,7 +6,7 @@
 
 'use client'
 
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { savePost, deletePost } from './postActions'
 import { unlinkCraftPost } from './integrations/craftActions'
 import Link from 'next/link'
@@ -16,45 +16,16 @@ import TagSelector from '@/components/editor/TagSelector'
 import { Post } from '@prisma/client'
 import { useToast } from '@/components/admin/Toast'
 import ConfirmDialog from '@/components/admin/ConfirmDialog'
+import iso6391 from 'iso-639-1'
 
 type AutosaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
-// Common languages for the translation picker
-const COMMON_LANGUAGES: { code: string; name: string }[] = [
-  { code: 'af', name: 'Afrikaans' },
-  { code: 'ar', name: 'Arabic' },
-  { code: 'zh', name: 'Chinese (Simplified)' },
-  { code: 'zh-TW', name: 'Chinese (Traditional)' },
-  { code: 'cs', name: 'Czech' },
-  { code: 'da', name: 'Danish' },
-  { code: 'nl', name: 'Dutch' },
-  { code: 'en', name: 'English' },
-  { code: 'fi', name: 'Finnish' },
-  { code: 'fr', name: 'French' },
-  { code: 'de', name: 'German' },
-  { code: 'el', name: 'Greek' },
-  { code: 'he', name: 'Hebrew' },
-  { code: 'hi', name: 'Hindi' },
-  { code: 'hu', name: 'Hungarian' },
-  { code: 'id', name: 'Indonesian' },
-  { code: 'it', name: 'Italian' },
-  { code: 'ja', name: 'Japanese' },
-  { code: 'ko', name: 'Korean' },
-  { code: 'ms', name: 'Malay' },
-  { code: 'no', name: 'Norwegian' },
-  { code: 'fa', name: 'Persian' },
-  { code: 'pl', name: 'Polish' },
-  { code: 'pt', name: 'Portuguese' },
-  { code: 'ro', name: 'Romanian' },
-  { code: 'ru', name: 'Russian' },
-  { code: 'es', name: 'Spanish' },
-  { code: 'sv', name: 'Swedish' },
-  { code: 'th', name: 'Thai' },
-  { code: 'tr', name: 'Turkish' },
-  { code: 'uk', name: 'Ukrainian' },
-  { code: 'ur', name: 'Urdu' },
-  { code: 'vi', name: 'Vietnamese' },
-]
+// All ISO 639-1 languages, sorted alphabetically by English name.
+// Derived at module load time from the iso-639-1 library so no manual list is needed.
+const ALL_LANGUAGES: { code: string; name: string }[] = iso6391
+  .getAllCodes()
+  .map(code => ({ code, name: iso6391.getName(code) }))
+  .sort((a, b) => a.name.localeCompare(b.name))
 
 export default function PostEditor({
   post,
@@ -100,12 +71,10 @@ export default function PostEditor({
   const translationGroupId: string = (post as any)?.translationGroupId || initialTranslationGroupId || ''
 
   // Languages already used in this translation group (can't add duplicates)
-  const usedLanguages = new Set([
-    currentLanguage,
-    ...siblingTranslations.map(t => t.language),
-  ])
-
-  const availableLanguages = COMMON_LANGUAGES.filter(l => !usedLanguages.has(l.code))
+  const availableLanguages = useMemo(() => {
+    const used = new Set([currentLanguage, ...siblingTranslations.map(t => t.language)])
+    return ALL_LANGUAGES.filter(l => !used.has(l.code))
+  }, [currentLanguage, siblingTranslations])
 
   const handleUnlink = useCallback(async () => {
     if (!craftPostId) return
@@ -423,11 +392,11 @@ export default function PostEditor({
                     cursor: 'pointer',
                   }}
                 >
-                  {COMMON_LANGUAGES.map(l => (
+                  {ALL_LANGUAGES.map(l => (
                     <option key={l.code} value={l.code}>{l.code.toUpperCase()} — {l.name}</option>
                   ))}
                   {/* Fallback option for codes not in our list */}
-                  {!COMMON_LANGUAGES.some(l => l.code === currentLanguage) && (
+                  {!ALL_LANGUAGES.some(l => l.code === currentLanguage) && (
                     <option value={currentLanguage}>{currentLanguage.toUpperCase()}</option>
                   )}
                 </select>
@@ -636,7 +605,7 @@ export default function PostEditor({
                     style={{ background: '#10b981', color: 'white', opacity: selectedLang ? 1 : 0.5 }}
                   >
                     {selectedLang
-                      ? `Create ${COMMON_LANGUAGES.find(l => l.code === selectedLang)?.name ?? selectedLang.toUpperCase()} Translation`
+                      ? `Create ${ALL_LANGUAGES.find(l => l.code === selectedLang)?.name ?? selectedLang.toUpperCase()} Translation`
                       : 'Select a language above'}
                   </button>
                   <button
