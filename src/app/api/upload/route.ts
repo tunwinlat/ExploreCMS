@@ -94,7 +94,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'File too large. Maximum size is 10 MB.' }, { status: 413 })
     }
 
-    // Validate file type against an explicit allowlist of safe image types
+    // SECURITY FIX: Validate file type against an explicit allowlist of safe image types
     const ALLOWED_MIME_TYPES: Record<string, string> = {
       'image/jpeg': 'jpg',
       'image/jpg': 'jpg',

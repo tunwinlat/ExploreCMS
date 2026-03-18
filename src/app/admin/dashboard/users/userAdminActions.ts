@@ -10,12 +10,31 @@ import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 
-const VALID_ROLES = ['OWNER', 'COLLABORATOR'] as const
+const VALID_ROLES = ['OWNER', 'ADMIN', 'CONTRIBUTOR'] as const
 
 export async function updateUserRole(userId: string, newRole: string) {
   const payload = await verifySession()
-  if (!payload || payload.role !== 'OWNER') {
+  if (!payload || (payload.role !== 'OWNER' && payload.role !== 'ADMIN')) {
     throw new Error('Unauthorized')
+  }
+
+  // Find the target user to perform authorization checks
+  const targetUser = await prisma.user.findUnique({ where: { id: userId } })
+  if (!targetUser) throw new Error('User not found')
+
+  // Prevent anyone from granting the OWNER role (since there's only one OWNER)
+  if (newRole === 'OWNER') {
+    throw new Error('Unauthorized: There can only be one OWNER.')
+  }
+
+  // Prevent modifying the existing OWNER's role
+  if (targetUser.role === 'OWNER') {
+    throw new Error('Unauthorized: Cannot modify the OWNER.')
+  }
+
+  // ADMINs cannot modify other ADMINs
+  if (payload.role === 'ADMIN' && targetUser.role === 'ADMIN') {
+    throw new Error('Unauthorized: Only an OWNER can modify an ADMIN.')
   }
 
   if (!VALID_ROLES.includes(newRole as (typeof VALID_ROLES)[number])) {
@@ -37,7 +56,7 @@ export async function updateUserRole(userId: string, newRole: string) {
 
 export async function deleteUser(userId: string) {
   const payload = await verifySession()
-  if (!payload || payload.role !== 'OWNER') {
+  if (!payload || (payload.role !== 'OWNER' && payload.role !== 'ADMIN')) {
     throw new Error('Unauthorized')
   }
 
@@ -46,12 +65,18 @@ export async function deleteUser(userId: string) {
     throw new Error('Cannot delete your own account')
   }
 
-  // Prevent deleting the last owner
-  const userToDelete = await prisma.user.findUnique({ where: { id: userId } })
-  if (!userToDelete) throw new Error('User not found')
-  if (userToDelete.role === 'OWNER') {
-    const ownerCount = await prisma.user.count({ where: { role: 'OWNER' } })
-    if (ownerCount <= 1) throw new Error('Cannot delete the last owner')
+  // Find the target user to perform authorization checks
+  const targetUser = await prisma.user.findUnique({ where: { id: userId } })
+  if (!targetUser) throw new Error('User not found')
+
+  // No one can delete the OWNER
+  if (targetUser.role === 'OWNER') {
+    throw new Error('Unauthorized: Cannot delete the OWNER.')
+  }
+
+  // ADMINs cannot delete other ADMINs
+  if (payload.role === 'ADMIN' && targetUser.role === 'ADMIN') {
+    throw new Error('Unauthorized: Only an OWNER can delete an ADMIN.')
   }
 
   try {
