@@ -13,3 +13,6 @@
 ## 2026-03-16 - Prevent Sequential Queries for Singleton Settings
 **Learning:** In page components (e.g. `src/app/projects/page.tsx` and `src/app/photos/page.tsx`), a common pattern is fetching main data (projects/albums) alongside `siteSettings` via `Promise.all()`. However, other singleton configurations like `popupConfig` were being awaited sequentially right after the primary data fetch. This introduces an unnecessary query waterfall and slows down SSR for every request.
 **Action:** When working on SSR routes, scan the entire component function body for any database queries (even those wrapped in anonymous async IIFE functions). If they don't depend on the results of earlier queries, extract them into separate fetch functions and merge them into the top-level `Promise.all()` array to maximize concurrency.
+## 2026-03-18 - Avoid N+1 Queries in Bulk Deletions
+**Learning:** Performing database deletions in a loop (O(N)) creates significant overhead due to multiple roundtrips and individual transaction handling for each record.
+**Action:** When deleting multiple records by ID (e.g., during full-sync operations), collect the IDs into an array and use Prisma's `deleteMany` with an `in` clause to execute the entire operation in a single query (O(1)).
