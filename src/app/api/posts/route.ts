@@ -7,6 +7,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getPostDb } from '@/lib/bunnyDb'
+import { isPrimaryPost } from '@/lib/translationUtils'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -32,9 +33,7 @@ export async function GET(request: Request) {
       }
     })
 
-    const primaryPosts = allPosts.filter(
-      (p: any) => !p.translationGroupId || p.translationGroupId === p.id
-    )
+    const primaryPosts = allPosts.filter(isPrimaryPost)
 
     let nextCursor: typeof cursor | undefined = undefined;
     const posts = primaryPosts.slice(0, limit + 1)
