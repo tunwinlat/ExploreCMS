@@ -18,17 +18,17 @@ export default async function DashboardPage() {
 
   try {
     const postDb = await getPostDb() as any;
-    [analytics, totalPosts, draftPosts] = await Promise.all([
+    // ⚡ Bolt: Fetch all dashboard data concurrently to prevent query waterfalls and reduce latency
+    [analytics, totalPosts, draftPosts, topPosts] = await Promise.all([
       prisma.siteAnalytics.findUnique({ where: { id: 'singleton' }}),
       postDb.post.count({ where: { published: true }}),
-      postDb.post.count({ where: { published: false }})
+      postDb.post.count({ where: { published: false }}),
+      postDb.postView.findMany({
+        orderBy: { totalViews: 'desc' },
+        take: 5,
+        include: { post: true }
+      })
     ]);
-
-    topPosts = await postDb.postView.findMany({
-      orderBy: { totalViews: 'desc' },
-      take: 5,
-      include: { post: true }
-    });
   } catch {
     // Database tables may not exist yet (e.g. during build)
   }
