@@ -17,7 +17,7 @@ model User {
   firstName String?
   lastName  String?
   password  String
-  role      String   @default("COLLABORATOR") // Roles: OWNER, COLLABORATOR
+  role      String   @default("CONTRIBUTOR") // Roles: OWNER, ADMIN, CONTRIBUTOR
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   posts     Post[]

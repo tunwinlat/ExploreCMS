@@ -18,7 +18,8 @@ vi.mock('@/lib/auth', () => ({
 vi.mock('@/lib/db', () => ({
   prisma: {
     user: {
-      delete: vi.fn()
+      delete: vi.fn(),
+      findUnique: vi.fn()
     }
   }
 }))
@@ -41,16 +42,17 @@ describe('deleteUser', () => {
     expect(prisma.user.delete).not.toHaveBeenCalled()
   })
 
-  it('should throw Unauthorized if session role is not ADMIN', async () => {
-    vi.mocked(verifySession).mockResolvedValue({ userId: 'user-1', role: 'USER' } as any)
+  it('should throw Unauthorized if session role is neither OWNER nor ADMIN', async () => {
+    vi.mocked(verifySession).mockResolvedValue({ userId: 'user-1', role: 'CONTRIBUTOR' } as any)
 
     await expect(deleteUser('user-1')).rejects.toThrow('Unauthorized')
 
     expect(prisma.user.delete).not.toHaveBeenCalled()
   })
 
-  it('should delete user and revalidate path on success', async () => {
-    vi.mocked(verifySession).mockResolvedValue({ userId: 'admin-1', role: 'ADMIN' } as any)
+  it('should delete user and revalidate path on success (OWNER deleting CONTRIBUTOR)', async () => {
+    vi.mocked(verifySession).mockResolvedValue({ userId: 'admin-1', role: 'OWNER' } as any)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ role: 'CONTRIBUTOR' } as any)
     vi.mocked(prisma.user.delete).mockResolvedValue({} as any)
 
     const result = await deleteUser('user-1')
@@ -62,8 +64,40 @@ describe('deleteUser', () => {
     expect(result).toEqual({ success: true })
   })
 
-  it('should throw error if database deletion fails', async () => {
+  it('should delete user on success (ADMIN deleting CONTRIBUTOR)', async () => {
     vi.mocked(verifySession).mockResolvedValue({ userId: 'admin-1', role: 'ADMIN' } as any)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ role: 'CONTRIBUTOR' } as any)
+    vi.mocked(prisma.user.delete).mockResolvedValue({} as any)
+
+    const result = await deleteUser('user-1')
+
+    expect(prisma.user.delete).toHaveBeenCalledWith({
+      where: { id: 'user-1' }
+    })
+    expect(result).toEqual({ success: true })
+  })
+
+  it('should throw error if ANYONE tries to delete OWNER', async () => {
+    vi.mocked(verifySession).mockResolvedValue({ userId: 'admin-1', role: 'OWNER' } as any)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ role: 'OWNER' } as any)
+
+    await expect(deleteUser('user-1')).rejects.toThrow('Unauthorized: Cannot delete the OWNER.')
+
+    expect(prisma.user.delete).not.toHaveBeenCalled()
+  })
+
+  it('should throw error if ADMIN tries to delete ADMIN', async () => {
+    vi.mocked(verifySession).mockResolvedValue({ userId: 'admin-1', role: 'ADMIN' } as any)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ role: 'ADMIN' } as any)
+
+    await expect(deleteUser('user-1')).rejects.toThrow('Unauthorized: Only an OWNER can delete an ADMIN.')
+
+    expect(prisma.user.delete).not.toHaveBeenCalled()
+  })
+
+  it('should throw error if database deletion fails', async () => {
+    vi.mocked(verifySession).mockResolvedValue({ userId: 'admin-1', role: 'OWNER' } as any)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ role: 'CONTRIBUTOR' } as any)
     vi.mocked(prisma.user.delete).mockRejectedValue(new Error('DB Error'))
 
     await expect(deleteUser('user-1')).rejects.toThrow('Failed to delete user')

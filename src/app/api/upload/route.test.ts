@@ -14,6 +14,22 @@ vi.mock('@/lib/auth', () => ({
   verifySession: vi.fn(),
 }))
 
+vi.mock('@/lib/db', () => ({
+  prisma: {
+    siteSettings: {
+      findUnique: vi.fn().mockResolvedValue({
+        bunnyStorageEnabled: false,
+      }),
+    },
+  },
+}))
+
+vi.mock('@/lib/rateLimit', () => ({
+  checkRateLimit: vi.fn().mockReturnValue({ success: true }),
+  getClientIP: vi.fn().mockReturnValue('127.0.0.1'),
+  RATE_LIMITS: { upload: { windowMs: 60000, maxRequests: 10 } },
+}))
+
 vi.mock('fs', () => ({
   createWriteStream: vi.fn(),
   mkdirSync: vi.fn(),
@@ -26,15 +42,19 @@ vi.mock('uuid', () => ({
 
 describe('POST /api/upload', () => {
   let originalConsoleError: typeof console.error;
+  let originalConsoleLog: typeof console.log;
 
   beforeEach(() => {
     vi.clearAllMocks()
     originalConsoleError = console.error
+    originalConsoleLog = console.log
     console.error = vi.fn() // Silence console.error for tests
+    console.log = vi.fn() // Silence console.log for tests
   })
 
   afterEach(() => {
     console.error = originalConsoleError
+    console.log = originalConsoleLog
   })
 
   it('returns 401 if unauthorized', async () => {
@@ -61,6 +81,24 @@ describe('POST /api/upload', () => {
 
     const json = await res.json()
     expect(json).toEqual({ error: 'No file uploaded' })
+  })
+
+  it('returns 415 if file type is invalid', async () => {
+    vi.mocked(verifySession).mockResolvedValue({ userId: 1 })
+
+    const formData = new FormData()
+    const file = new File(['test content'], 'test.txt', { type: 'text/plain' })
+    formData.append('file', file)
+
+    const req = {
+      formData: async () => formData
+    } as unknown as Request
+
+    const res = await POST(req)
+    expect(res.status).toBe(415)
+
+    const json = await res.json()
+    expect(json).toEqual({ error: 'Invalid file type. Only images are allowed.' })
   })
 
   it('uploads a file successfully', async () => {
