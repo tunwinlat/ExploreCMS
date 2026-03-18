@@ -29,10 +29,18 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
 
   if (!post) notFound()
 
+  const translationGroupId = (post as any).translationGroupId as string | null
+  const siblingTranslations = translationGroupId
+    ? await postDb.post.findMany({
+        where: { translationGroupId, id: { not: post.id } },
+        select: { id: true, language: true, title: true, slug: true }
+      })
+    : []
+
   const isCraftLinked = !!(post as any).craftDocumentId && !(post as any).craftUnlinked
   const craftMode = settings?.craftSyncMode || 'read-only'
   // Only lock editing in read-only mode. In backup/full-sync, posts are editable.
   const isReadOnly = isCraftLinked && craftMode === 'read-only'
 
-  return <PostEditor post={post} availableTags={availableTags} readOnly={isReadOnly} craftPostId={isReadOnly ? post.id : undefined} />
+  return <PostEditor post={post} availableTags={availableTags} readOnly={isReadOnly} craftPostId={isReadOnly ? post.id : undefined} siblingTranslations={siblingTranslations as any} />
 }
