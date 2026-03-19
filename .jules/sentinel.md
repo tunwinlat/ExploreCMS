@@ -12,3 +12,7 @@
 **Vulnerability:** The `PostFeed` and `PostModalIntercept` components used `dangerouslySetInnerHTML` directly with user-generated post content without any sanitization.
 **Learning:** This is a High priority XSS vulnerability, as it directly evaluates user-controlled HTML string as HTML in the browser. A malicious user who can create or modify posts could inject harmful scripts into the page.
 **Prevention:** Ensure that any HTML strings rendered using `dangerouslySetInnerHTML` are properly sanitized using the `sanitizeContent` utility from `@/lib/sanitize`. Be careful with truncating HTML strings; they must either be truncated carefully so that no tags are left open, or sanitized *after* truncation (if it doesn't leave broken script tags that are then stripped) or use another safer approach, but at least `sanitizeContent` must be applied.
+## 2025-03-05 - Rate Limiting on Login Action
+**Vulnerability:** Brute-force attacks on the admin login endpoint.
+**Learning:** Next.js server actions do not receive a standard `Request` object. To extract client IPs for rate-limiting inside server actions, we must retrieve headers (`x-forwarded-for`, `x-real-ip`, `cf-connecting-ip`) using `headers()` from `next/headers`.
+**Prevention:** Explicitly construct the client IP from the `headers()` payload in critical server actions and pass it to utility rate limiters like `checkRateLimit`.

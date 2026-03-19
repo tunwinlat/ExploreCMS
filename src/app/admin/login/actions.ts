@@ -10,9 +10,33 @@ import { prisma } from '@/lib/db'
 import { compare } from 'bcryptjs'
 import { createSession } from '@/lib/auth'
 
+import { headers } from 'next/headers'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rateLimit'
+
+
 export async function loginUser(formData: FormData) {
   const username = formData.get('username') as string
   const password = formData.get('password') as string
+
+  // Rate limiting
+  const headersList = await headers()
+  const forwardedFor = headersList.get('x-forwarded-for')
+  const realIP = headersList.get('x-real-ip')
+  const cfIP = headersList.get('cf-connecting-ip')
+
+  let clientIP = 'unknown'
+  if (forwardedFor) {
+    clientIP = forwardedFor.split(',')[0].trim()
+  } else if (realIP) {
+    clientIP = realIP
+  } else if (cfIP) {
+    clientIP = cfIP
+  }
+
+  const rateLimit = checkRateLimit(clientIP, RATE_LIMITS.auth)
+  if (!rateLimit.success) {
+    return { error: 'Too many login attempts. Please try again later.' }
+  }
 
   if (!username || !password) {
     return { error: 'Missing credentials.' }
