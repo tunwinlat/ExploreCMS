@@ -14,15 +14,10 @@ import { parseComponentConfig, COMPONENTS } from "@/lib/components-config";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
 import { isPrimaryPost } from "@/lib/translationUtils";
+import { getSettings } from "@/lib/settings-cache";
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
-
-async function getSettings() {
-  try {
-    return await (prisma as any).siteSettings.findUnique({ where: { id: 'singleton' } });
-  } catch { return null; }
-}
 
 async function getPopupConfig() {
   try {

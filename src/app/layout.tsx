@@ -5,26 +5,13 @@
  */
 
 import type { Metadata, Viewport } from "next";
-import { cache } from "react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 import "./themes.css";
 
-import { prisma } from "@/lib/db";
 import { getThemeConfig } from "@/lib/themes";
 import { ensureMigrations } from "@/lib/db-init";
-
-// ⚡ Bolt: Memoize the siteSettings query to avoid duplicate database calls
-// between generateMetadata and the RootLayout component during a single request.
-const getSettings = cache(async () => {
-  try {
-    return await prisma.siteSettings.findUnique({
-      where: { id: 'singleton' }
-    });
-  } catch {
-    return null;
-  }
-});
+import { getSettings } from "@/lib/settings-cache";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -74,10 +61,8 @@ export default async function RootLayout({
     const settings = await getSettings();
     if (settings?.theme) themeId = settings.theme;
     if (settings?.faviconUrl) faviconUrl = settings.faviconUrl;
-    console.log('[Layout] Favicon URL:', faviconUrl);
-  } catch (error) {
+  } catch {
     // Database might not be initialized yet
-    console.log('[Layout] Error loading settings:', error);
   }
 
   const activeTheme = getThemeConfig(themeId);
@@ -91,7 +76,11 @@ export default async function RootLayout({
         <link rel="apple-touch-icon" href={faviconUrl} sizes="180x180" />
         <meta name="msapplication-TileImage" content={faviconUrl} />
         {activeTheme.fontUrl && (
-          <link href={activeTheme.fontUrl} rel="stylesheet" />
+          <>
+            <link rel="preconnect" href="https://fonts.googleapis.com" />
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+            <link href={activeTheme.fontUrl} rel="stylesheet" />
+          </>
         )}
       </head>
       <body>

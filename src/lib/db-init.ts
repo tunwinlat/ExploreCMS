@@ -21,6 +21,17 @@ export async function runSchemaMigrations(): Promise<void> {
   try {
     const client = createClient({ url, authToken: authToken || undefined });
 
+    // Fast path: check if the latest migration column already exists.
+    // This avoids running 30+ sequential ALTER TABLE statements on every cold start
+    // for databases that are already fully up to date.
+    try {
+      await client.execute({ sql: "SELECT smtpPassword FROM \"SiteSettings\" WHERE 1=0", args: [] });
+      // Column exists → all migrations have been applied, nothing to do.
+      return;
+    } catch {
+      // Column missing → proceed with migrations below.
+    }
+
     // v2 → component system columns
     const migrations = [
       `ALTER TABLE "SiteSettings" ADD COLUMN "enabledComponents" TEXT NOT NULL DEFAULT '["blog"]'`,

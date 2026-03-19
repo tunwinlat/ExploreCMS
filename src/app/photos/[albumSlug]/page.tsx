@@ -11,13 +11,9 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PhotoGrid } from "@/components/photos/PhotoGrid";
 import { ViewTracker } from "@/components/ViewTracker";
+import { getSettings } from "@/lib/settings-cache";
 
 export const dynamic = 'force-dynamic'
-
-async function getSettings() {
-  try { return await (prisma as any).siteSettings.findUnique({ where: { id: 'singleton' } }); }
-  catch { return null; }
-}
 
 async function getAlbum(slug: string) {
   try {

@@ -12,13 +12,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { ViewTracker } from "@/components/ViewTracker";
 import { renderPostContent } from "@/lib/renderContent";
+import { getSettings } from "@/lib/settings-cache";
 
 export const dynamic = 'force-dynamic'
-
-async function getSettings() {
-  try { return await (prisma as any).siteSettings.findUnique({ where: { id: 'singleton' } }); }
-  catch { return null; }
-}
 
 async function getProject(slug: string) {
   try {
