@@ -8,6 +8,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { loginUser } from './actions'
 
 export default function LoginForm() {
@@ -51,7 +52,23 @@ export default function LoginForm() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        <label htmlFor="password" style={{ fontWeight: 500 }}>Password</label>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <label htmlFor="password" style={{ fontWeight: 500 }}>Password</label>
+          <Link
+            href="/admin/login/forgot-password"
+            style={{
+              fontSize: '0.8rem',
+              color: 'var(--accent-color)',
+              textDecoration: 'none',
+              opacity: 0.8,
+              transition: 'opacity 0.15s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '0.8')}
+          >
+            Forgot password?
+          </Link>
+        </div>
         <input 
           type="password" 
           id="password" 

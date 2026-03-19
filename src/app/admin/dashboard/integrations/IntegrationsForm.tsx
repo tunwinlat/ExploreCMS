@@ -10,6 +10,7 @@ import { useState } from 'react'
 import { saveCraftSettings, updateCraftWriteAccess } from './craftActions'
 import { testTargetConnection, migrateToTarget } from '../settings/migrationActions'
 import { testStorageConnection, migrateStorage, type StorageType } from '../settings/storageActions'
+import { saveEmailSettings, testEmailSettings, getEmailSettings } from './emailActions'
 import { useToast } from '@/components/admin/Toast'
 
 // Expandable Section Component
@@ -135,6 +136,21 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
   const [storageLoading, setStorageLoading] = useState(false)
   const [storageResult, setStorageResult] = useState<any>(null)
   const [storageWarning, setStorageWarning] = useState<string | null>(null)
+
+  // ── Email State ──
+  type EmailProvider = 'resend' | 'smtp' | null
+  const [emailProvider, setEmailProvider] = useState<EmailProvider>((initialSettings?.emailProvider as EmailProvider) || null)
+  const [emailFromName, setEmailFromName] = useState(initialSettings?.emailFromName || '')
+  const [emailFromAddress, setEmailFromAddress] = useState(initialSettings?.emailFromAddress || '')
+  const [resendApiKey, setResendApiKey] = useState('')
+  const [smtpHost, setSmtpHost] = useState(initialSettings?.smtpHost || '')
+  const [smtpPort, setSmtpPort] = useState(initialSettings?.smtpPort || 587)
+  const [smtpSecure, setSmtpSecure] = useState(initialSettings?.smtpSecure || false)
+  const [smtpUser, setSmtpUser] = useState(initialSettings?.smtpUser || '')
+  const [smtpPassword, setSmtpPassword] = useState('')
+  const [testEmailTo, setTestEmailTo] = useState('')
+  const [emailLoading, setEmailLoading] = useState(false)
+  const [emailSettingsLoaded, setEmailSettingsLoaded] = useState(false)
 
   // ── Craft Handlers ──
   const handleTestCraftConnection = async () => {
@@ -321,6 +337,57 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
       } else { toast(res.error || 'Migration failed.', 'error') }
     } catch (err: any) { toast(`Migration failed: ${err.message}`, 'error') }
     setStorageLoading(false)
+  }
+
+  // ── Email Handlers ──
+  const handleLoadEmailSettings = async () => {
+    setEmailLoading(true)
+    try {
+      const res = await getEmailSettings()
+      if (res.error) { toast(res.error, 'error'); return }
+      if (res.settings) {
+        setResendApiKey(res.settings.resendApiKey || '')
+        setSmtpPassword(res.settings.smtpPassword || '')
+        setEmailSettingsLoaded(true)
+        toast('Credentials loaded for editing.', 'info')
+      }
+    } catch (err: any) { toast(`Error: ${err.message}`, 'error') }
+    setEmailLoading(false)
+  }
+
+  const handleSaveEmailSettings = async () => {
+    if (emailProvider === 'resend' && !resendApiKey) { toast('Resend API key is required.', 'warning'); return }
+    if (emailProvider === 'smtp' && !smtpHost) { toast('SMTP host is required.', 'warning'); return }
+    if (emailProvider && !emailFromAddress) { toast('Sender email address is required.', 'warning'); return }
+    setEmailLoading(true)
+    try {
+      const res = await saveEmailSettings({
+        provider: emailProvider,
+        fromName: emailFromName,
+        fromAddress: emailFromAddress,
+        resendApiKey,
+        smtpHost,
+        smtpPort,
+        smtpSecure,
+        smtpUser,
+        smtpPassword,
+      })
+      if (res.success) { toast('Email settings saved!', 'success') }
+      else { toast(res.error || 'Failed to save.', 'error') }
+    } catch (err: any) { toast(`Error: ${err.message}`, 'error') }
+    setEmailLoading(false)
+  }
+
+  const handleTestEmail = async () => {
+    if (!testEmailTo) { toast('Enter a test recipient email.', 'warning'); return }
+    setEmailLoading(true)
+    toast('Sending test email...', 'info')
+    try {
+      const res = await testEmailSettings(testEmailTo)
+      if ('error' in res && res.error) { toast(res.error, 'error') }
+      else { toast('Test email sent successfully!', 'success') }
+    } catch (err: any) { toast(`Error: ${err.message}`, 'error') }
+    setEmailLoading(false)
   }
 
   return (
@@ -818,6 +885,231 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
           </div>
         </ExpandableSection>
       </div>
+
+      {/* ── Email / SMTP Integration ── */}
+      <div className="glass" style={{ padding: '2rem' }}>
+        <ExpandableSection
+          title="Email / SMTP"
+          icon="✉️"
+          badge={
+            emailProvider
+              ? <span style={{ fontSize: '0.7rem', background: '#22c55e', color: 'white', padding: '0.125rem 0.5rem', borderRadius: '9999px' }}>active</span>
+              : undefined
+          }
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
+              Configure an email provider to enable email verification and password reset for admin users.
+              Supports <strong>Resend.com</strong> (recommended) or any custom <strong>SMTP</strong> server.
+            </p>
+
+            {/* Provider Selection */}
+            <div>
+              <label style={{ fontWeight: 500, display: 'block', marginBottom: '0.75rem' }}>Email Provider</label>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {[{ value: null, label: '🚫 None' }, { value: 'resend', label: '⚡ Resend' }, { value: 'smtp', label: '📬 SMTP' }].map(opt => (
+                  <button
+                    key={String(opt.value)}
+                    type="button"
+                    onClick={() => setEmailProvider(opt.value as EmailProvider)}
+                    disabled={emailLoading}
+                    className="btn"
+                    style={{
+                      flex: 1,
+                      minWidth: '80px',
+                      background: emailProvider === opt.value ? 'var(--accent-color)' : 'var(--bg-color)',
+                      color: emailProvider === opt.value ? 'white' : 'var(--text-primary)',
+                      border: `1px solid ${emailProvider === opt.value ? 'var(--accent-color)' : 'var(--border-color)'}`,
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {emailProvider && (
+              <>
+                {/* From */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div>
+                    <label style={{ fontWeight: 400 }}>Sender Name</label>
+                    <input
+                      type="text"
+                      value={emailFromName}
+                      onChange={e => setEmailFromName(e.target.value)}
+                      placeholder="ExploreCMS"
+                      disabled={emailLoading}
+                      className="input-field"
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: 400 }}>From Email Address *</label>
+                    <input
+                      type="email"
+                      value={emailFromAddress}
+                      onChange={e => setEmailFromAddress(e.target.value)}
+                      placeholder="noreply@yourdomain.com"
+                      disabled={emailLoading}
+                      className="input-field"
+                    />
+                  </div>
+                </div>
+
+                {emailProvider === 'resend' && (
+                  <div>
+                    <label style={{ fontWeight: 400 }}>Resend API Key *</label>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input
+                        type="password"
+                        value={resendApiKey}
+                        onChange={e => setResendApiKey(e.target.value)}
+                        placeholder={emailSettingsLoaded ? 'Enter API key' : initialSettings?.resendApiKey ? '••••••••••••••••' : 're_...'}
+                        disabled={emailLoading}
+                        className="input-field"
+                        autoComplete="new-password"
+                        style={{ flex: 1 }}
+                      />
+                      {!emailSettingsLoaded && initialSettings?.resendApiKey && (
+                        <button
+                          type="button"
+                          onClick={handleLoadEmailSettings}
+                          disabled={emailLoading}
+                          className="btn"
+                          style={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)', whiteSpace: 'nowrap' }}
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </div>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                      Get your API key at <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-color)' }}>resend.com/api-keys</a>.
+                      The sending domain must be verified in your Resend account.
+                    </p>
+                  </div>
+                )}
+
+                {emailProvider === 'smtp' && (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: '1rem' }}>
+                      <div>
+                        <label style={{ fontWeight: 400 }}>SMTP Host *</label>
+                        <input
+                          type="text"
+                          value={smtpHost}
+                          onChange={e => setSmtpHost(e.target.value)}
+                          placeholder="smtp.example.com"
+                          disabled={emailLoading}
+                          className="input-field"
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontWeight: 400 }}>Port</label>
+                        <input
+                          type="number"
+                          value={smtpPort}
+                          onChange={e => setSmtpPort(Number(e.target.value))}
+                          placeholder="587"
+                          disabled={emailLoading}
+                          className="input-field"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={smtpSecure}
+                          onChange={e => setSmtpSecure(e.target.checked)}
+                        />
+                        <span style={{ fontWeight: 400 }}>Use TLS (SSL) — enable for port 465</span>
+                      </label>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                      <div>
+                        <label style={{ fontWeight: 400 }}>Username (Optional)</label>
+                        <input
+                          type="text"
+                          value={smtpUser}
+                          onChange={e => setSmtpUser(e.target.value)}
+                          placeholder="user@example.com"
+                          disabled={emailLoading}
+                          className="input-field"
+                          autoComplete="off"
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontWeight: 400 }}>Password (Optional)</label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <input
+                            type="password"
+                            value={smtpPassword}
+                            onChange={e => setSmtpPassword(e.target.value)}
+                            placeholder={emailSettingsLoaded ? 'Enter password' : initialSettings?.smtpPassword ? '••••••••' : 'SMTP password'}
+                            disabled={emailLoading}
+                            className="input-field"
+                            autoComplete="new-password"
+                            style={{ flex: 1 }}
+                          />
+                          {!emailSettingsLoaded && initialSettings?.smtpPassword && (
+                            <button
+                              type="button"
+                              onClick={handleLoadEmailSettings}
+                              disabled={emailLoading}
+                              className="btn"
+                              style={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)', whiteSpace: 'nowrap' }}
+                            >
+                              Edit
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Test Email */}
+                <div style={{ padding: '1rem', background: 'rgba(99, 102, 241, 0.05)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(99, 102, 241, 0.15)' }}>
+                  <label style={{ fontWeight: 500, display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Test Email</label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input
+                      type="email"
+                      value={testEmailTo}
+                      onChange={e => setTestEmailTo(e.target.value)}
+                      placeholder="test@example.com"
+                      disabled={emailLoading}
+                      className="input-field"
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleTestEmail}
+                      disabled={emailLoading || !testEmailTo}
+                      className="btn"
+                      style={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)', whiteSpace: 'nowrap' }}
+                    >
+                      {emailLoading ? 'Sending...' : 'Send Test'}
+                    </button>
+                  </div>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.5rem', margin: '0.5rem 0 0' }}>
+                    Save settings first, then send a test to verify your configuration.
+                  </p>
+                </div>
+              </>
+            )}
+
+            <button
+              type="button"
+              onClick={handleSaveEmailSettings}
+              disabled={emailLoading}
+              className="btn btn-primary"
+            >
+              {emailLoading ? 'Saving...' : 'Save Email Settings'}
+            </button>
+          </div>
+        </ExpandableSection>
+      </div>
+
     </div>
   )
 }

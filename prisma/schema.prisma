@@ -21,6 +21,14 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   posts     Post[]
+
+  // Email
+  email                    String?   @unique
+  emailVerified            Boolean   @default(false)
+  emailVerificationToken   String?
+  emailVerificationExpiry  DateTime?
+  passwordResetToken       String?
+  passwordResetExpiry      DateTime?
 }
 
 model Post {
@@ -99,6 +107,17 @@ model SiteSettings {
   craftWriteAccess  Boolean @default(false) // true if API has write permissions
   craftError        String? // error message if integration broke
   craftLastSyncAt   String? // ISO timestamp
+
+  // Email Provider Config
+  emailProvider   String? // "resend" | "smtp" | null
+  emailFromName   String?
+  emailFromAddress String?
+  resendApiKey    String? // Encrypted
+  smtpHost        String?
+  smtpPort        Int?    @default(587)
+  smtpSecure      Boolean @default(false)
+  smtpUser        String?
+  smtpPassword    String? // Encrypted
 
   updatedAt DateTime @updatedAt
 }
