@@ -35,14 +35,16 @@ describe('tagActions', () => {
     it('throws unauthorized error if session is null', async () => {
       vi.mocked(verifySession).mockResolvedValueOnce(null)
 
-      await expect(deleteTag('tag-1')).rejects.toThrow('Unauthorized')
+      const result = await deleteTag('tag-1')
+      expect(result).toEqual({ error: 'Unauthorized' })
       expect(prisma.tag.delete).not.toHaveBeenCalled()
     })
 
     it('throws unauthorized error if role is not ADMIN', async () => {
       vi.mocked(verifySession).mockResolvedValueOnce({ id: 'user-1', role: 'USER' })
 
-      await expect(deleteTag('tag-1')).rejects.toThrow('Unauthorized')
+      const result = await deleteTag('tag-1')
+      expect(result).toEqual({ error: 'Unauthorized' })
       expect(prisma.tag.delete).not.toHaveBeenCalled()
     })
 
@@ -65,7 +67,8 @@ describe('tagActions', () => {
       const dbError = new Error('Database error')
       vi.mocked(prisma.tag.delete).mockRejectedValueOnce(dbError)
 
-      await expect(deleteTag('tag-1')).rejects.toThrow('Failed to delete tag')
+      const result = await deleteTag('tag-1')
+      expect(result).toEqual({ error: 'Failed to delete tag' })
       expect(console.error).toHaveBeenCalledWith('Error deleting tag:', dbError)
     })
   })
