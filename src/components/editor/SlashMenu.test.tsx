@@ -6,6 +6,7 @@
 
 import { getSuggestionItems } from './SlashMenu';
 import { Editor, Range } from '@tiptap/core';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 describe('getSuggestionItems', () => {
   it('returns all items when query is empty', () => {
@@ -35,31 +36,31 @@ describe('getSuggestionItems', () => {
   describe('commands execution', () => {
     let mockEditor: any;
     let mockRange: any;
-    let mockRun: jest.Mock;
-    let mockSetNode: jest.Mock;
-    let mockDeleteRange: jest.Mock;
-    let mockFocus: jest.Mock;
-    let mockChain: jest.Mock;
-    let mockToggleBulletList: jest.Mock;
-    let mockToggleOrderedList: jest.Mock;
-    let mockToggleTaskList: jest.Mock;
-    let mockToggleBlockquote: jest.Mock;
-    let mockSetHorizontalRule: jest.Mock;
-    let mockToggleCodeBlock: jest.Mock;
-    let mockSetYoutubeVideo: jest.Mock;
+    let mockRun: ReturnType<typeof vi.fn>;
+    let mockSetNode: ReturnType<typeof vi.fn>;
+    let mockDeleteRange: ReturnType<typeof vi.fn>;
+    let mockFocus: ReturnType<typeof vi.fn>;
+    let mockChain: ReturnType<typeof vi.fn>;
+    let mockToggleBulletList: ReturnType<typeof vi.fn>;
+    let mockToggleOrderedList: ReturnType<typeof vi.fn>;
+    let mockToggleTaskList: ReturnType<typeof vi.fn>;
+    let mockToggleBlockquote: ReturnType<typeof vi.fn>;
+    let mockSetHorizontalRule: ReturnType<typeof vi.fn>;
+    let mockToggleCodeBlock: ReturnType<typeof vi.fn>;
+    let mockSetYoutubeVideo: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
-      mockRun = jest.fn();
-      mockSetNode = jest.fn().mockReturnValue({ run: mockRun });
-      mockToggleBulletList = jest.fn().mockReturnValue({ run: mockRun });
-      mockToggleOrderedList = jest.fn().mockReturnValue({ run: mockRun });
-      mockToggleTaskList = jest.fn().mockReturnValue({ run: mockRun });
-      mockToggleBlockquote = jest.fn().mockReturnValue({ run: mockRun });
-      mockSetHorizontalRule = jest.fn().mockReturnValue({ run: mockRun });
-      mockToggleCodeBlock = jest.fn().mockReturnValue({ run: mockRun });
-      mockSetYoutubeVideo = jest.fn();
+      mockRun = vi.fn();
+      mockSetNode = vi.fn().mockReturnValue({ run: mockRun });
+      mockToggleBulletList = vi.fn().mockReturnValue({ run: mockRun });
+      mockToggleOrderedList = vi.fn().mockReturnValue({ run: mockRun });
+      mockToggleTaskList = vi.fn().mockReturnValue({ run: mockRun });
+      mockToggleBlockquote = vi.fn().mockReturnValue({ run: mockRun });
+      mockSetHorizontalRule = vi.fn().mockReturnValue({ run: mockRun });
+      mockToggleCodeBlock = vi.fn().mockReturnValue({ run: mockRun });
+      mockSetYoutubeVideo = vi.fn();
 
-      mockDeleteRange = jest.fn().mockReturnValue({
+      mockDeleteRange = vi.fn().mockReturnValue({
         setNode: mockSetNode,
         toggleBulletList: mockToggleBulletList,
         toggleOrderedList: mockToggleOrderedList,
@@ -69,8 +70,8 @@ describe('getSuggestionItems', () => {
         toggleCodeBlock: mockToggleCodeBlock,
         run: mockRun
       });
-      mockFocus = jest.fn().mockReturnValue({ deleteRange: mockDeleteRange });
-      mockChain = jest.fn().mockReturnValue({ focus: mockFocus });
+      mockFocus = vi.fn().mockReturnValue({ deleteRange: mockDeleteRange });
+      mockChain = vi.fn().mockReturnValue({ focus: mockFocus });
 
       mockEditor = {
         chain: mockChain,
@@ -83,7 +84,7 @@ describe('getSuggestionItems', () => {
     });
 
     afterEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
     it('executes Heading 1 command correctly', () => {
@@ -164,7 +165,7 @@ describe('getSuggestionItems', () => {
     it('executes Image command and dispatches event', () => {
       const items = getSuggestionItems({ query: 'Image' });
 
-      const dispatchEventSpy = jest.spyOn(document, 'dispatchEvent').mockImplementation(() => true);
+      const dispatchEventSpy = vi.spyOn(document, 'dispatchEvent').mockImplementation(() => true);
 
       items[0].command({ editor: mockEditor, range: mockRange });
 
@@ -181,7 +182,7 @@ describe('getSuggestionItems', () => {
     it('executes YouTube command correctly when user provides URL', () => {
       const items = getSuggestionItems({ query: 'YouTube' });
 
-      const promptSpy = jest.spyOn(window, 'prompt').mockReturnValue('https://youtube.com/watch?v=123');
+      const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue('https://youtube.com/watch?v=123');
 
       items[0].command({ editor: mockEditor, range: mockRange });
 
@@ -196,7 +197,7 @@ describe('getSuggestionItems', () => {
     it('does not set YouTube video if prompt is cancelled', () => {
       const items = getSuggestionItems({ query: 'YouTube' });
 
-      const promptSpy = jest.spyOn(window, 'prompt').mockReturnValue(null);
+      const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue(null);
 
       items[0].command({ editor: mockEditor, range: mockRange });
 

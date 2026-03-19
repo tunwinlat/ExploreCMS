@@ -49,7 +49,7 @@ describe('updateSiteSettings', () => {
   })
 
   it('should successfully update site settings when authorized', async () => {
-    vi.mocked(verifySession).mockResolvedValue({ role: 'ADMIN' })
+    vi.mocked(verifySession).mockResolvedValue({ role: 'OWNER' })
     vi.mocked(prisma.siteSettings.upsert).mockResolvedValue({} as any)
 
     const args = ['New Title', 'favicon.ico', 'New Header Title', 'New Header Description', 'light'] as const
@@ -80,7 +80,7 @@ describe('updateSiteSettings', () => {
   })
 
   it('should return error if database operation fails', async () => {
-    vi.mocked(verifySession).mockResolvedValue({ role: 'ADMIN' })
+    vi.mocked(verifySession).mockResolvedValue({ role: 'OWNER' })
     vi.mocked(prisma.siteSettings.upsert).mockRejectedValue(new Error('DB Error'))
 
     const result = await updateSiteSettings('Title', null, 'Header Title', 'Header Description', 'dark')

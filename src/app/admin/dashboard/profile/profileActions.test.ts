@@ -20,6 +20,7 @@ vi.mock('@/lib/db', () => ({
   prisma: {
     user: {
       update: vi.fn(),
+      findUnique: vi.fn(),
     },
   },
 }))
@@ -51,13 +52,14 @@ describe('updateUserProfile', () => {
 
   it('should update profile with firstName and lastName when password is not provided', async () => {
     vi.mocked(verifySession).mockResolvedValue({ userId: 'user123' } as any)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ email: 'test@example.com' } as any)
     const formData = new FormData()
     formData.append('firstName', 'John')
     formData.append('lastName', 'Doe')
 
     const result = await updateUserProfile(formData)
 
-    expect(result).toEqual({ success: true })
+    expect(result).toEqual({ success: true, emailChanged: false })
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user123' },
       data: {
@@ -72,13 +74,14 @@ describe('updateUserProfile', () => {
 
   it('should format data correctly with nulls if empty fields are submitted', async () => {
     vi.mocked(verifySession).mockResolvedValue({ userId: 'user123' } as any)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ email: 'test@example.com' } as any)
     const formData = new FormData()
     formData.append('firstName', '')
     formData.append('lastName', '')
 
     const result = await updateUserProfile(formData)
 
-    expect(result).toEqual({ success: true })
+    expect(result).toEqual({ success: true, emailChanged: false })
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user123' },
       data: {
@@ -90,6 +93,7 @@ describe('updateUserProfile', () => {
 
   it('should hash and update password if provided', async () => {
     vi.mocked(verifySession).mockResolvedValue({ userId: 'user123' } as any)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ email: 'test@example.com' } as any)
     vi.mocked(bcrypt.hash).mockResolvedValue('hashedPassword123' as never)
 
     const formData = new FormData()
@@ -99,7 +103,7 @@ describe('updateUserProfile', () => {
 
     const result = await updateUserProfile(formData)
 
-    expect(result).toEqual({ success: true })
+    expect(result).toEqual({ success: true, emailChanged: false })
     expect(bcrypt.hash).toHaveBeenCalledWith('newsecretpassword', 10)
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user123' },
