@@ -104,7 +104,11 @@ function normalizePosts(posts: any[]) {
 }
 
 export default async function BlogPage() {
-  const [settings, popupConfig] = await Promise.all([getSettings(), getPopupConfig()]);
+  const [settings, popupConfig, blogData] = await Promise.all([
+    getSettings(),
+    getPopupConfig(),
+    getBlogData()
+  ]);
 
   const componentConfig = parseComponentConfig(settings);
   const { enabledComponents, defaultComponent } = componentConfig;
@@ -113,7 +117,7 @@ export default async function BlogPage() {
   if (!enabledComponents.includes('blog')) notFound();
 
   const enabledMeta = COMPONENTS.filter(c => enabledComponents.includes(c.id));
-  const { featuredPosts, trendingPosts, latestPosts, nextCursor } = await getBlogData();
+  const { featuredPosts, trendingPosts, latestPosts, nextCursor } = blogData;
 
   // Trigger Craft sync in the background after the response is sent
   after(async () => {

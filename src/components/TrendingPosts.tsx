@@ -31,6 +31,11 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
 
   const fetchTrending = async (p: '7d' | '30d' | 'all') => {
     setPeriod(p)
+    if (p === '7d' && initialPosts && initialPosts.length > 0) {
+      setPosts(initialPosts)
+      return
+    }
+
     setLoading(true)
     try {
       const res = await fetch(`/api/trending?period=${p}&limit=8`)
