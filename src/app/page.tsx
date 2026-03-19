@@ -4,8 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { prisma } from "@/lib/db";
-import { getPostDb } from "@/lib/bunnyDb";
+import { unstable_cache } from 'next/cache';
 import { ViewTracker } from "@/components/ViewTracker";
 import { PopupToast } from "@/components/PopupToast";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -13,94 +12,60 @@ import { BlogContent } from "@/components/blog/BlogContent";
 import { parseComponentConfig, COMPONENTS } from "@/lib/components-config";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
-import { isPrimaryPost } from "@/lib/translationUtils";
-import { getSettings } from "@/lib/settings-cache";
+import { getBlogPageData, BlogListingPost } from "@/lib/blog-cache";
+import { prisma } from "@/lib/db";
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+// Use ISR with 60 second revalidation for better performance
+export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
-async function getPopupConfig() {
-  try {
-    return await prisma.popupConfig.findUnique({ where: { id: 'singleton' } });
-  } catch { return null; }
-}
-
-async function getBlogData() {
-  try {
-    const postDb = await getPostDb();
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const limit = 9;
-
-    const [featuredRaw, trendingRaw, latestRaw] = await Promise.all([
-      postDb.post.findMany({
-        where: { published: true, isFeatured: true },
-        take: 30,
-        orderBy: { createdAt: 'desc' },
-        include: { author: { select: { username: true, firstName: true } }, tags: true, views: true },
-      }),
-      postDb.post.findMany({
-        where: { published: true, createdAt: { gte: sevenDaysAgo } },
-        take: 40,
-        orderBy: { views: { totalViews: 'desc' } },
-        include: { author: { select: { username: true, firstName: true } }, tags: true, views: true },
-      }),
-      postDb.post.findMany({
-        where: { published: true },
-        orderBy: { createdAt: 'desc' },
-        take: (limit + 1) * 5,
-        include: { author: true, tags: true, views: true },
-      }),
-    ]);
-
-    const featured = featuredRaw.filter(isPrimaryPost).slice(0, 5);
-    const trending = trendingRaw.filter(isPrimaryPost).slice(0, 8);
-
-    let featuredFinal = featured;
-    if (featured.length === 0) {
-      const fallbackRaw = await postDb.post.findMany({
-        where: { published: true },
-        take: 30,
-        orderBy: { createdAt: 'desc' },
-        include: { author: { select: { username: true, firstName: true } }, tags: true, views: true },
-      });
-      featuredFinal = fallbackRaw.filter(isPrimaryPost).slice(0, 5);
+// Cached settings fetch
+const getCachedSettings = unstable_cache(
+  async () => {
+    try {
+      return await prisma.siteSettings.findUnique({ where: { id: 'singleton' } });
+    } catch {
+      return null;
     }
+  },
+  ['site-settings'],
+  { revalidate: 60 }
+);
 
-    const primaryLatest = latestRaw.filter(isPrimaryPost);
-    let nextCursor: string | undefined;
-    const latestPosts = primaryLatest.slice(0, limit + 1);
-    if (latestPosts.length > limit) {
-      const nextItem = latestPosts.pop();
-      nextCursor = nextItem!.id;
+// Cached popup config fetch  
+const getCachedPopupConfig = unstable_cache(
+  async () => {
+    try {
+      return await prisma.popupConfig.findUnique({ where: { id: 'singleton' } });
+    } catch {
+      return null;
     }
+  },
+  ['popup-config'],
+  { revalidate: 60 }
+);
 
-    return { featuredPosts: featuredFinal, trendingPosts: trending, latestPosts, nextCursor };
-  } catch {
-    return { featuredPosts: [], trendingPosts: [], latestPosts: [], nextCursor: undefined };
-  }
-}
-
-function normalizePosts(posts: any[]) {
-  return posts.map((p: any) => ({
+function normalizePosts(posts: BlogListingPost[]) {
+  return posts.map((p) => ({
     id: p.id,
     title: p.title,
     slug: p.slug,
-    content: p.content,
+    content: '', // Content not needed for listing
     contentFormat: p.contentFormat || 'html',
     isFeatured: p.isFeatured,
     createdAt: typeof p.createdAt === 'string' ? p.createdAt : p.createdAt?.toISOString() || new Date().toISOString(),
     author: { username: p.author?.username || 'admin', firstName: p.author?.firstName || null },
-    tags: Array.isArray(p.tags) ? p.tags.map((t: any) => ({ name: t.name, slug: t.slug })) : [],
-    views: Array.isArray(p.views) ? p.views : p.views ? [p.views] : [],
+    tags: Array.isArray(p.tags) ? p.tags.map((t) => ({ name: t.name, slug: t.slug })) : [],
+    views: p.views ? [p.views] : [],
   }));
 }
 
 export default async function Home() {
+  // Fetch data in parallel with caching
   const [settings, popupConfig, blogData] = await Promise.all([
-    getSettings(),
-    getPopupConfig(),
-    getBlogData()
+    getCachedSettings(),
+    getCachedPopupConfig(),
+    getBlogPageData()
   ]);
 
   const componentConfig = parseComponentConfig(settings);
@@ -125,7 +90,7 @@ export default async function Home() {
     }
   });
 
-  let navItems: any[] = [];
+  let navItems: { id: string; type: string; label: string }[] = [];
   try {
     navItems = JSON.parse(settings?.navigationConfig || '[]');
   } catch {

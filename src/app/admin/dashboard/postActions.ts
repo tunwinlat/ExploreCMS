@@ -10,7 +10,7 @@ import { prisma } from '@/lib/db'
 import { getPostDb } from '@/lib/bunnyDb'
 import { verifySession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { after } from 'next/server'
 import { pushPostToCraft, getCraftSyncMode, deletePostFromCraft } from '@/lib/craftSync'
 
@@ -120,7 +120,9 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
 
   // Bust the homepage cache so the new/updated post appears on the site
   revalidatePath('/')
+  revalidatePath('/blog')
   revalidatePath('/admin/dashboard')
+  revalidateTag('blog-posts', 'default')
 
   // Push to Craft in backup/full-sync mode (runs after response)
   if (published) {
@@ -172,6 +174,8 @@ export async function deletePost(id: string) {
   }
 
   revalidatePath('/')
+  revalidatePath('/blog')
   revalidatePath('/admin/dashboard')
+  revalidateTag('blog-posts', 'default')
   redirect('/admin/dashboard')
 }

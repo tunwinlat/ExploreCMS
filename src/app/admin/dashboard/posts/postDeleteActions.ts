@@ -8,7 +8,7 @@
 
 import { getPostDb } from '@/lib/bunnyDb'
 import { verifySession } from '@/lib/auth'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { deletePostFromCraft } from '@/lib/craftSync'
 
 export async function deletePostById(id: string) {
@@ -42,6 +42,8 @@ export async function deletePostById(id: string) {
     
     revalidatePath('/admin/dashboard')
     revalidatePath('/')
+    revalidatePath('/blog')
+    revalidateTag('blog-posts', 'default')
     
     return { success: true }
   } catch (error) {

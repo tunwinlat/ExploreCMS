@@ -7,6 +7,7 @@
 import { prisma } from '@/lib/db'
 import { getPostDb } from '@/lib/bunnyDb'
 import { CraftClient } from '@/lib/craft'
+import { revalidateTag } from 'next/cache'
 import { createWriteStream, mkdirSync, existsSync } from 'fs'
 import { join } from 'path'
 import { v4 as uuidv4 } from 'uuid'
@@ -532,6 +533,11 @@ export async function craftImportSync(
     }
   }
 
+  // Invalidate blog cache if any posts were imported or updated
+  if (result.imported > 0 || result.updated > 0 || result.deleted > 0) {
+    revalidateTag('blog-posts', 'default')
+  }
+
   return result
 }
 
@@ -753,6 +759,11 @@ export async function runCraftSync(
       })
     } catch {
       // Non-critical
+    }
+
+    // Invalidate blog cache if any posts were modified during sync
+    if (result.imported > 0 || result.updated > 0 || result.deleted > 0 || result.backedUp > 0) {
+      revalidateTag('blog-posts', 'default')
     }
 
     lastSyncTime = Date.now()
