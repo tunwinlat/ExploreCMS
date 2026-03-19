@@ -4,6 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+import { Suspense } from 'react'
 import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import UserProfileForm from './UserProfileForm'
@@ -22,11 +23,13 @@ export default async function UsersPage() {
     <div className="fade-in-up">
       <header style={{ marginBottom: '2.5rem' }}>
         <h1 className="admin-page-title">My Profile</h1>
-        <p className="admin-page-subtitle">Update your personal information and password.</p>
+        <p className="admin-page-subtitle">Update your personal information, email address, and password.</p>
       </header>
 
       <div className="glass" style={{ padding: '2rem' }}>
-        <UserProfileForm user={user} />
+        <Suspense fallback={null}>
+          <UserProfileForm user={user} />
+        </Suspense>
       </div>
     </div>
   )

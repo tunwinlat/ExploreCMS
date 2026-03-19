@@ -10,6 +10,8 @@ import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import bcrypt from 'bcryptjs'
+import { randomBytes } from 'crypto'
+import { sendEmail, getVerificationEmailHtml } from '@/lib/email'
 
 export async function updateUserProfile(formData: FormData) {
   const session = await verifySession()
@@ -18,11 +20,38 @@ export async function updateUserProfile(formData: FormData) {
   const firstName = formData.get('firstName') as string
   const lastName = formData.get('lastName') as string
   const password = formData.get('password') as string
+  const email = (formData.get('email') as string)?.trim().toLowerCase() || null
 
   try {
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       firstName: firstName || null,
       lastName: lastName || null,
+    }
+
+    // Handle email change
+    const userId = (session as { userId: string }).userId
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, emailVerified: true }
+    })
+
+    if (email !== currentUser?.email) {
+      // Email changed — validate uniqueness and reset verification
+      if (email) {
+        const existing = await prisma.user.findUnique({ where: { email } })
+        if (existing && existing.id !== userId) {
+          return { error: 'This email address is already in use.' }
+        }
+        // Basic email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if (!emailRegex.test(email)) {
+          return { error: 'Please enter a valid email address.' }
+        }
+      }
+      updateData.email = email
+      updateData.emailVerified = false
+      updateData.emailVerificationToken = null
+      updateData.emailVerificationExpiry = null
     }
 
     if (password) {
@@ -34,14 +63,61 @@ export async function updateUserProfile(formData: FormData) {
     }
 
     await prisma.user.update({
-      where: { id: (session as { userId: string }).userId },
+      where: { id: userId },
       data: updateData
     })
     revalidatePath('/admin/dashboard/profile')
     revalidatePath('/')
-    return { success: true }
+    return { success: true, emailChanged: email !== currentUser?.email }
   } catch (error) {
     console.error('Error updating profile:', error)
     return { error: 'Failed to update profile' }
+  }
+}
+
+export async function sendVerificationEmail() {
+  const session = await verifySession()
+  if (!session) return { error: 'Unauthorized' }
+
+  const userId = (session as { userId: string }).userId
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, emailVerified: true, username: true }
+    })
+
+    if (!user?.email) return { error: 'No email address on file.' }
+    if (user.emailVerified) return { error: 'Email is already verified.' }
+
+    // Generate a secure random token
+    const token = randomBytes(32).toString('hex')
+    const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        emailVerificationToken: token,
+        emailVerificationExpiry: expiry,
+      }
+    })
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    const verifyUrl = `${baseUrl}/api/verify-email?token=${token}`
+
+    const result = await sendEmail({
+      to: user.email,
+      subject: 'Verify your email address — ExploreCMS',
+      html: getVerificationEmailHtml(user.username, verifyUrl),
+    })
+
+    if (!result.success) {
+      return { error: result.error || 'Failed to send verification email.' }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error sending verification email:', error)
+    return { error: 'Failed to send verification email.' }
   }
 }

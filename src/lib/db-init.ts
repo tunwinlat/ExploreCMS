@@ -54,6 +54,22 @@ export async function runSchemaMigrations(): Promise<void> {
       // v5 → Multilingual support columns
       `ALTER TABLE "Post" ADD COLUMN "language" TEXT NOT NULL DEFAULT 'en'`,
       `ALTER TABLE "Post" ADD COLUMN "translationGroupId" TEXT`,
+      // v6 → Email feature columns
+      `ALTER TABLE "User" ADD COLUMN "email" TEXT`,
+      `ALTER TABLE "User" ADD COLUMN "emailVerified" BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE "User" ADD COLUMN "emailVerificationToken" TEXT`,
+      `ALTER TABLE "User" ADD COLUMN "emailVerificationExpiry" DATETIME`,
+      `ALTER TABLE "User" ADD COLUMN "passwordResetToken" TEXT`,
+      `ALTER TABLE "User" ADD COLUMN "passwordResetExpiry" DATETIME`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "emailProvider" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "emailFromName" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "emailFromAddress" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "resendApiKey" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "smtpHost" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "smtpPort" INTEGER`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "smtpSecure" BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "smtpUser" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "smtpPassword" TEXT`,
       // New tables — CREATE IF NOT EXISTS is not supported by LibSQL, so we use CREATE TABLE and ignore "already exists"
       `CREATE TABLE "Project" (
         "id" TEXT NOT NULL PRIMARY KEY,
@@ -391,6 +407,22 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
       // Multilingual support
       `ALTER TABLE "Post" ADD COLUMN "language" TEXT NOT NULL DEFAULT 'en'`,
       `ALTER TABLE "Post" ADD COLUMN "translationGroupId" TEXT`,
+      // Email feature
+      `ALTER TABLE "User" ADD COLUMN "email" TEXT`,
+      `ALTER TABLE "User" ADD COLUMN "emailVerified" BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE "User" ADD COLUMN "emailVerificationToken" TEXT`,
+      `ALTER TABLE "User" ADD COLUMN "emailVerificationExpiry" DATETIME`,
+      `ALTER TABLE "User" ADD COLUMN "passwordResetToken" TEXT`,
+      `ALTER TABLE "User" ADD COLUMN "passwordResetExpiry" DATETIME`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "emailProvider" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "emailFromName" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "emailFromAddress" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "resendApiKey" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "smtpHost" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "smtpPort" INTEGER`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "smtpSecure" BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "smtpUser" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "smtpPassword" TEXT`,
     ];
     for (const stmt of alterStatements) {
       try {
