@@ -1,3 +1,4 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,29 +11,41 @@ import { compare } from 'bcryptjs';
 import { createSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
-jest.mock('@/lib/db', () => ({
+vi.mock('@/lib/db', () => ({
   prisma: {
     user: {
-      findUnique: jest.fn(),
+      findUnique: vi.fn(),
     },
   },
 }));
 
-jest.mock('bcryptjs', () => ({
-  compare: jest.fn(),
+vi.mock('bcryptjs', () => ({
+  compare: vi.fn(),
 }));
 
-jest.mock('@/lib/auth', () => ({
-  createSession: jest.fn(),
+vi.mock('@/lib/auth', () => ({
+  createSession: vi.fn(),
 }));
 
-jest.mock('next/navigation', () => ({
-  redirect: jest.fn(),
+
+vi.mock('next/headers', () => ({
+  headers: vi.fn().mockResolvedValue({
+    get: vi.fn().mockReturnValue(null)
+  }),
+}));
+
+vi.mock('@/lib/rateLimit', () => ({
+  checkRateLimit: vi.fn().mockReturnValue({ success: true }),
+  RATE_LIMITS: { auth: {} }
+}));
+
+vi.mock('next/navigation', () => ({
+  redirect: vi.fn(),
 }));
 
 describe('loginUser', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should return error if username or password is missing', async () => {
@@ -64,7 +77,7 @@ describe('loginUser', () => {
   });
 
   it('should return error if user is not found', async () => {
-    (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+    (prisma.user.findUnique as vi.Mock).mockResolvedValue(null);
 
     const formData = new FormData();
     formData.append('username', 'testuser');
@@ -79,13 +92,13 @@ describe('loginUser', () => {
   });
 
   it('should return error if password does not match', async () => {
-    (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+    (prisma.user.findUnique as vi.Mock).mockResolvedValue({
       id: 1,
       username: 'testuser',
       password: 'hashedpassword',
       role: 'ADMIN',
     });
-    (compare as jest.Mock).mockResolvedValue(false);
+    (compare as vi.Mock).mockResolvedValue(false);
 
     const formData = new FormData();
     formData.append('username', 'testuser');
@@ -98,25 +111,25 @@ describe('loginUser', () => {
   });
 
   it('should create session and redirect on success', async () => {
-    (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+    (prisma.user.findUnique as vi.Mock).mockResolvedValue({
       id: 1,
       username: 'testuser',
       password: 'hashedpassword',
       role: 'ADMIN',
     });
-    (compare as jest.Mock).mockResolvedValue(true);
+    (compare as vi.Mock).mockResolvedValue(true);
 
     const formData = new FormData();
     formData.append('username', 'testuser');
     formData.append('password', 'correctpassword');
 
-    await loginUser(formData);
+    const result = await loginUser(formData);
 
     expect(createSession).toHaveBeenCalledWith({
       userId: 1,
       username: 'testuser',
       role: 'ADMIN',
     });
-    expect(redirect).toHaveBeenCalledWith('/admin/dashboard');
+    expect(result).toEqual({ success: true });
   });
 });
