@@ -250,6 +250,8 @@ export default function ProjectEditor({ initialData }: { initialData?: ProjectDa
               {tag}
               <button
                 type="button"
+                aria-label={`Remove ${tag} tag`}
+                title="Remove tag"
                 onClick={() => removeTechTag(tag)}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0, lineHeight: 1, opacity: 0.7 }}
               >×</button>
@@ -308,6 +310,7 @@ export default function ProjectEditor({ initialData }: { initialData?: ProjectDa
               type="button"
               onClick={handleAddImage}
               disabled={addingImage || !imageUrl.trim()}
+              aria-busy={addingImage}
               style={{
                 padding: '0.65rem 1rem',
                 borderRadius: '10px',
@@ -321,7 +324,7 @@ export default function ProjectEditor({ initialData }: { initialData?: ProjectDa
                 alignSelf: 'stretch',
               }}
             >
-              {addingImage ? '...' : 'Add'}
+              {addingImage ? 'Adding...' : 'Add'}
             </button>
           </div>
 
@@ -340,6 +343,8 @@ export default function ProjectEditor({ initialData }: { initialData?: ProjectDa
                   <button
                     type="button"
                     onClick={() => handleDeleteImage(img.id)}
+                    aria-label="Delete image"
+                    title="Delete image"
                     style={{
                       position: 'absolute',
                       top: '0.35rem',
