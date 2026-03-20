@@ -4,7 +4,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { prisma } from "@/lib/db";
 import { getPostDb } from "@/lib/bunnyDb";
 import { ViewTracker } from "@/components/ViewTracker";
 import { PopupToast } from "@/components/PopupToast";
@@ -14,17 +13,10 @@ import { parseComponentConfig, COMPONENTS } from "@/lib/components-config";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
 import { isPrimaryPost } from "@/lib/translationUtils";
-import { getSettings } from "@/lib/settings-cache";
+import { getSettings, getPopupConfig } from "@/lib/settings-cache";
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
-
-async function getPopupConfig() {
-  try {
-    return await prisma.popupConfig.findUnique({ where: { id: 'singleton' } });
-  } catch { return null; }
-}
-
 
 async function getBlogData() {
   try {

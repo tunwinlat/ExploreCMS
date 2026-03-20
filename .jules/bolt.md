@@ -16,3 +16,7 @@
 ## 2026-03-18 - Avoid N+1 Queries in Bulk Deletions
 **Learning:** Performing database deletions in a loop (O(N)) creates significant overhead due to multiple roundtrips and individual transaction handling for each record.
 **Action:** When deleting multiple records by ID (e.g., during full-sync operations), collect the IDs into an array and use Prisma's `deleteMany` with an `in` clause to execute the entire operation in a single query (O(1)).
+
+## 2025-05-18 - Memoizing Singleton Database Queries in Next.js
+**Learning:** In Next.js App Router applications, `prisma` database queries are not automatically memoized like the native `fetch` function. When a singleton record (like `siteSettings` or `popupConfig`) is fetched across multiple layouts, pages, or components within the same request lifecycle, it can lead to redundant database calls and performance degradation.
+**Action:** Always wrap independent server-side database queries for shared singleton records (that are reused in layouts, pages, or components) using React's `cache()` function from `react`. This ensures the database query executes only once per request lifecycle, reducing latency and database load.

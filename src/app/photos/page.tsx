@@ -12,15 +12,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { ViewTracker } from "@/components/ViewTracker";
 import { PopupToast } from "@/components/PopupToast";
-import { getSettings } from "@/lib/settings-cache";
+import { getSettings, getPopupConfig } from "@/lib/settings-cache";
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
-
-async function getPopupConfig() {
-  try { return await prisma.popupConfig.findUnique({ where: { id: 'singleton' } }); }
-  catch { return null; }
-}
 
 async function getAlbums() {
   try {
