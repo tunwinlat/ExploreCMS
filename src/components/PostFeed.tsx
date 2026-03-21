@@ -9,6 +9,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { sanitizeContent } from '@/lib/sanitize'
+import { getExcerpt } from '@/lib/renderContent'
 
 // Create a unified type for the incoming posts from the API
 type FeedPost = {
@@ -119,11 +120,7 @@ export function PostFeed({ initialPosts = [], initialCursor }: { initialPosts?: 
                   overflow: 'hidden',
                   lineHeight: 1.6
                 }}
-                dangerouslySetInnerHTML={{ __html: sanitizeContent(
-                  (post as any).contentFormat === 'markdown'
-                    ? post.content.replace(/!\[[^\]]*\]\([^)]+\)/g, '').replace(/#{1,6}\s*/g, '').replace(/[*_~`]+/g, '').replace(/\n+/g, ' ').trim().substring(0, 200) + '...'
-                    : post.content.substring(0, 200) + '...'
-                ) }}
+                dangerouslySetInnerHTML={{ __html: sanitizeContent(getExcerpt(post.content, (post as any).contentFormat, 200)) }}
               />
               
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
