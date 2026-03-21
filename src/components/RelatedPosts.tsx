@@ -8,6 +8,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { getExcerpt, getFirstImage } from '@/lib/renderContent'
 
 interface RelatedPost {
   id: string
@@ -96,15 +97,9 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
         }}
       >
         {posts.map((post) => {
-          const isMarkdown = (post as any).contentFormat === 'markdown'
-          const excerpt = isMarkdown
-            ? post.content.replace(/!\[[^\]]*\]\([^)]+\)/g, '').replace(/#{1,6}\s*/g, '').replace(/[*_~`]+/g, '').replace(/\n+/g, ' ').trim().substring(0, 100) + '...'
-            : post.content.replace(/<[^>]*>?/gm, '').trim().substring(0, 100) + '...'
-
-          const imgMatch = isMarkdown
-            ? post.content.match(/!\[[^\]]*\]\(([^)]+)\)/)
-            : post.content.match(/<img[^>]+src="([^">]+)"/)
-          const coverImage = imgMatch ? imgMatch[1] : null
+          const contentFormat = (post as any).contentFormat
+          const excerpt = getExcerpt(post.content, contentFormat, 100)
+          const coverImage = getFirstImage(post.content, contentFormat)
 
           return (
             <Link 

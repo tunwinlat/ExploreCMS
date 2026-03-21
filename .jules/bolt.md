@@ -16,3 +16,6 @@
 ## 2026-03-18 - Avoid N+1 Queries in Bulk Deletions
 **Learning:** Performing database deletions in a loop (O(N)) creates significant overhead due to multiple roundtrips and individual transaction handling for each record.
 **Action:** When deleting multiple records by ID (e.g., during full-sync operations), collect the IDs into an array and use Prisma's `deleteMany` with an `in` clause to execute the entire operation in a single query (O(1)).
+## 2026-03-20 - Expensive Regex Parsing in UI Components
+**Learning:** Multiple React components (`DynamicPostGrid.tsx`, `FeaturedPostsCarousel.tsx`, `PostFeed.tsx`, etc.) were parsing `post.content` using complex, identical inline regular expressions within `.map()` loops on every render to extract excerpts and images. This unnecessarily slowed down UI rendering and duplicated logic.
+**Action:** Replace all inline content parsing regular expressions in UI components with calls to the dedicated `getExcerpt` and `getFirstImage` utility functions exported from `src/lib/renderContent.ts`.
