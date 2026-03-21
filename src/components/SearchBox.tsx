@@ -312,13 +312,17 @@ export function SearchBox() {
             </div>
 
             {/* Search Results */}
-            <div style={{ maxHeight: '60vh', overflowY: 'auto', borderTop: '1px solid var(--border-color)' }}>
+            <div
+              style={{ maxHeight: '60vh', overflowY: 'auto', borderTop: '1px solid var(--border-color)' }}
+              aria-live="polite"
+              aria-atomic="true"
+            >
               {loading ? (
-                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }} role="status">
                   <div style={{ animation: 'pulse 2s infinite' }}>Searching...</div>
                 </div>
               ) : hasSearched && results.length === 0 ? (
-                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }} role="status">
                   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ margin: '0 auto 1rem', opacity: 0.5, display: 'block' }}>
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.35-4.35"></path>
