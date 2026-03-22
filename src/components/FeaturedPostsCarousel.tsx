@@ -178,6 +178,7 @@ export function FeaturedPostsCarousel({ posts }: FeaturedPostsCarouselProps) {
             <button
               onClick={() => { prevSlide(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 5000) }}
               className="carousel-nav-btn"
+              aria-label="Previous slide"
               style={{
                 position: 'absolute',
                 left: '1rem',
@@ -206,6 +207,7 @@ export function FeaturedPostsCarousel({ posts }: FeaturedPostsCarouselProps) {
             <button
               onClick={() => { nextSlide(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 5000) }}
               className="carousel-nav-btn"
+              aria-label="Next slide"
               style={{
                 position: 'absolute',
                 right: '1rem',
@@ -251,6 +253,8 @@ export function FeaturedPostsCarousel({ posts }: FeaturedPostsCarouselProps) {
               <button
                 key={index}
                 onClick={() => goToSlide(index)}
+                aria-label={`Go to slide ${index + 1}`}
+                aria-current={index === currentIndex ? 'true' : 'false'}
                 style={{
                   width: index === currentIndex ? '32px' : '10px',
                   height: '10px',
