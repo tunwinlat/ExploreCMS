@@ -9,6 +9,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { getExcerpt } from '@/lib/renderContent'
 
 interface SearchPost {
   id: string
@@ -335,10 +336,7 @@ export function SearchBox() {
                     {results.length} result{results.length !== 1 ? 's' : ''} found
                   </div>
                   {results.map((post) => {
-                    const isMarkdown = (post as any).contentFormat === 'markdown'
-                    const excerpt = isMarkdown
-                      ? post.content.replace(/!\[[^\]]*\]\([^)]+\)/g, '').replace(/#{1,6}\s*/g, '').replace(/[*_~`]+/g, '').replace(/\n+/g, ' ').trim().substring(0, 150)
-                      : post.content.replace(/<[^>]*>?/gm, '').trim().substring(0, 150)
+                    const excerpt = getExcerpt(post.content, (post as any).contentFormat, 150)
 
                     return (
                       <Link
