@@ -23,3 +23,7 @@
 ## 2025-05-18 - Memoizing Singleton Database Queries in Next.js
 **Learning:** In Next.js App Router applications, `prisma` database queries are not automatically memoized like the native `fetch` function. When a singleton record (like `siteSettings` or `popupConfig`) is fetched across multiple layouts, pages, or components within the same request lifecycle, it can lead to redundant database calls and performance degradation.
 **Action:** Always wrap independent server-side database queries for shared singleton records (that are reused in layouts, pages, or components) using React's `cache()` function from `react`. This ensures the database query executes only once per request lifecycle, reducing latency and database load.
+
+## 2024-03-23 - Dynamic Route Caching with Next.js unstable_cache
+**Learning:** Next.js dynamic routes (`revalidate = 0`) trigger database queries on every request. For list pages like Projects and Photos that change infrequently, avoiding `revalidate = 0` and wrapping database queries in `unstable_cache` with a short revalidation period significantly reduces database load without sacrificing freshness.
+**Action:** When creating or optimizing list pages in Next.js, default to `unstable_cache` with `revalidate` (e.g., 60 seconds) rather than purely dynamic rendering (`revalidate = 0`), unless real-time data is strictly required.

@@ -4,7 +4,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { prisma } from "@/lib/db";
 import { SiteHeader } from "@/components/SiteHeader";
 import { parseComponentConfig, COMPONENTS } from "@/lib/components-config";
 import { notFound } from "next/navigation";
@@ -14,23 +13,14 @@ import { ViewTracker } from "@/components/ViewTracker";
 import { PopupToast } from "@/components/PopupToast";
 import { getSettings, getPopupConfig } from "@/lib/settings-cache";
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+import { getCachedAlbums } from "@/lib/photos-cache";
 
-async function getAlbums() {
-  try {
-    return await (prisma as any).photoAlbum.findMany({
-      where: { published: true },
-      orderBy: [{ featured: 'desc' }, { order: 'asc' }, { createdAt: 'desc' }],
-      include: { _count: { select: { photos: true } } },
-    });
-  } catch { return []; }
-}
+export const revalidate = 60
 
 export default async function PhotosPage() {
   const [settings, albums, popupConfig] = await Promise.all([
     getSettings(),
-    getAlbums(),
+    getCachedAlbums(),
     getPopupConfig()
   ]);
 
