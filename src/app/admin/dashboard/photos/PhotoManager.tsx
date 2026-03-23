@@ -226,7 +226,8 @@ export default function PhotoManager({ albumId, initialPhotos }: PhotoManagerPro
                 <button
                   type="button"
                   onClick={() => handleSetCover(photo.url)}
-                  title="Set as album cover"
+                  title={`Set ${photo.title || 'photo'} as album cover`}
+                  aria-label={`Set ${photo.title || 'photo'} as album cover`}
                   style={{
                     width: '22px',
                     height: '22px',
@@ -248,7 +249,8 @@ export default function PhotoManager({ albumId, initialPhotos }: PhotoManagerPro
                 <button
                   type="button"
                   onClick={() => handleDelete(photo.id)}
-                  title="Delete photo"
+                  title={`Delete ${photo.title || 'photo'}`}
+                  aria-label={`Delete ${photo.title || 'photo'}`}
                   style={{
                     width: '22px',
                     height: '22px',
