@@ -17,10 +17,12 @@ type Translation = {
 
 export function LanguageSwitcher({ 
   currentLanguage, 
-  translations 
+  translations,
+  compact = false
 }: { 
   currentLanguage: string
-  translations: Translation[] 
+  translations: Translation[]
+  compact?: boolean
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -62,10 +64,10 @@ export function LanguageSwitcher({
         onClick={() => setIsOpen(!isOpen)}
         disabled={isPending}
         style={{
-          background: 'var(--bg-color)',
+          background: compact ? 'transparent' : 'var(--bg-color)',
           color: 'var(--text-secondary)',
-          padding: '0.4rem 0.8rem',
-          borderRadius: '20px',
+          padding: compact ? '0.5rem' : '0.4rem 0.8rem',
+          borderRadius: compact ? '50%' : '20px',
           fontSize: '0.85rem',
           transition: 'all 0.2s ease',
           border: '1px solid var(--border-color)',
@@ -73,9 +75,14 @@ export function LanguageSwitcher({
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
-          opacity: isPending ? 0.7 : 1
+          opacity: isPending ? 0.7 : 1,
+          width: compact ? '36px' : 'auto',
+          height: compact ? '36px' : 'auto',
+          justifyContent: 'center'
         }}
         aria-expanded={isOpen}
+        aria-label={compact ? 'Switch language' : 'Available in multiple languages'}
+        title={compact ? 'Switch language' : 'Available in multiple languages'}
       >
         {isPending ? (
           <span 
@@ -91,15 +98,12 @@ export function LanguageSwitcher({
           />
         ) : (
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m5 8 6 6" />
-            <path d="m4 14 6-6 2-3" />
-            <path d="M2 5h12" />
-            <path d="M7 2h1" />
-            <path d="m22 22-5-10-5 10" />
-            <path d="M14 18h6" />
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+            <path d="M2 12h20"/>
           </svg>
         )}
-        {isPending ? 'Switching...' : 'Available in multiple languages'}
+        {!compact && (isPending ? 'Switching...' : 'Available in multiple languages')}
       </button>
 
       {isOpen && (
