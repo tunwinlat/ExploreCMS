@@ -343,8 +343,8 @@ export default function ProjectEditor({ initialData }: { initialData?: ProjectDa
                   <button
                     type="button"
                     onClick={() => handleDeleteImage(img.id)}
-                    aria-label="Delete image"
-                    title="Delete image"
+                    aria-label={`Delete ${img.caption || 'image'}`}
+                    title={`Delete ${img.caption || 'image'}`}
                     style={{
                       position: 'absolute',
                       top: '0.35rem',
