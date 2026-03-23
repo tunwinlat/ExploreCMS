@@ -4,7 +4,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { prisma } from "@/lib/db";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { parseComponentConfig, COMPONENTS } from "@/lib/components-config";
@@ -13,26 +12,14 @@ import { ViewTracker } from "@/components/ViewTracker";
 import { PopupToast } from "@/components/PopupToast";
 import { getSettings, getPopupConfig } from "@/lib/settings-cache";
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+import { getCachedProjects } from "@/lib/projects-cache";
 
-async function getProjects() {
-  try {
-    const projects = await (prisma as any).project.findMany({
-      where: { published: true },
-      orderBy: [{ featured: 'desc' }, { order: 'asc' }, { createdAt: 'desc' }],
-    });
-    return projects.map((p: any) => ({
-      ...p,
-      techTags: (() => { try { return JSON.parse(p.techTags || '[]') } catch { return [] } })(),
-    }));
-  } catch { return []; }
-}
+export const revalidate = 60
 
 export default async function ProjectsPage() {
   const [settings, projects, popupConfig] = await Promise.all([
     getSettings(),
-    getProjects(),
+    getCachedProjects(),
     getPopupConfig()
   ]);
 
