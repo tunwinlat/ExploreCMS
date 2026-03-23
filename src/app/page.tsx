@@ -4,7 +4,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { unstable_cache } from 'next/cache';
 import { ViewTracker } from "@/components/ViewTracker";
 import { PopupToast } from "@/components/PopupToast";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -13,37 +12,11 @@ import { parseComponentConfig, COMPONENTS } from "@/lib/components-config";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { getBlogPageData, BlogListingPost } from "@/lib/blog-cache";
-import { prisma } from "@/lib/db";
+import { getSettings, getPopupConfig } from "@/lib/settings-cache";
 
 // Use ISR with 60 second revalidation for better performance
 export const dynamic = 'force-dynamic';
 export const revalidate = 60;
-
-// Cached settings fetch
-const getCachedSettings = unstable_cache(
-  async () => {
-    try {
-      return await prisma.siteSettings.findUnique({ where: { id: 'singleton' } });
-    } catch {
-      return null;
-    }
-  },
-  ['site-settings'],
-  { revalidate: 60 }
-);
-
-// Cached popup config fetch  
-const getCachedPopupConfig = unstable_cache(
-  async () => {
-    try {
-      return await prisma.popupConfig.findUnique({ where: { id: 'singleton' } });
-    } catch {
-      return null;
-    }
-  },
-  ['popup-config'],
-  { revalidate: 60 }
-);
 
 function normalizePosts(posts: BlogListingPost[]) {
   return posts.map((p) => ({
@@ -63,8 +36,8 @@ function normalizePosts(posts: BlogListingPost[]) {
 export default async function Home() {
   // Fetch data in parallel with caching
   const [settings, popupConfig, blogData] = await Promise.all([
-    getCachedSettings(),
-    getCachedPopupConfig(),
+    getSettings(),
+    getPopupConfig(),
     getBlogPageData()
   ]);
 

@@ -19,3 +19,7 @@
 ## 2026-03-20 - Expensive Regex Parsing in UI Components
 **Learning:** Multiple React components (`DynamicPostGrid.tsx`, `FeaturedPostsCarousel.tsx`, `PostFeed.tsx`, etc.) were parsing `post.content` using complex, identical inline regular expressions within `.map()` loops on every render to extract excerpts and images. This unnecessarily slowed down UI rendering and duplicated logic.
 **Action:** Replace all inline content parsing regular expressions in UI components with calls to the dedicated `getExcerpt` and `getFirstImage` utility functions exported from `src/lib/renderContent.ts`.
+
+## 2025-05-18 - Memoizing Singleton Database Queries in Next.js
+**Learning:** In Next.js App Router applications, `prisma` database queries are not automatically memoized like the native `fetch` function. When a singleton record (like `siteSettings` or `popupConfig`) is fetched across multiple layouts, pages, or components within the same request lifecycle, it can lead to redundant database calls and performance degradation.
+**Action:** Always wrap independent server-side database queries for shared singleton records (that are reused in layouts, pages, or components) using React's `cache()` function from `react`. This ensures the database query executes only once per request lifecycle, reducing latency and database load.

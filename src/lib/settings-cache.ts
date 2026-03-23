@@ -20,3 +20,16 @@ export const getSettings = cache(async () => {
     return null
   }
 })
+
+/**
+ * Shared, per-request memoized getPopupConfig.
+ * ⚡ Bolt: Deduplicates database queries for the singleton popup config
+ * across the main frontend pages to prevent redundant round-trips.
+ */
+export const getPopupConfig = cache(async () => {
+  try {
+    return await prisma.popupConfig.findUnique({ where: { id: 'singleton' } })
+  } catch {
+    return null
+  }
+})
