@@ -74,6 +74,7 @@ export default function TagSelector({
               type="button"
               onClick={() => toggleTag(tag.name)}
               className={`btn ${isSelected ? 'btn-primary' : 'glass'}`}
+              aria-pressed={isSelected}
               style={{
                 padding: '0.3rem 0.8rem',
                 fontSize: '0.85rem',
@@ -81,7 +82,7 @@ export default function TagSelector({
                 transition: 'all var(--transition-fast)'
               }}
             >
-              {tag.name} {isSelected && '✓'}
+              {tag.name} {isSelected && <span aria-hidden="true">✓</span>}
             </button>
           )
         })}
@@ -92,6 +93,7 @@ export default function TagSelector({
             type="button"
             onClick={() => toggleTag(tag)}
             className="btn btn-primary"
+            aria-pressed={true}
             style={{
               padding: '0.3rem 0.8rem',
               fontSize: '0.85rem',
@@ -99,7 +101,7 @@ export default function TagSelector({
               transition: 'all var(--transition-fast)'
             }}
           >
-            {tag} ✓
+            {tag} <span aria-hidden="true">✓</span>
           </button>
         ))}
       </div>
