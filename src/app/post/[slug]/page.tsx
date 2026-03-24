@@ -14,6 +14,7 @@ import { RelatedPosts } from '@/components/RelatedPosts'
 import { renderPostContent } from '@/lib/renderContent'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { getFirstImage } from '@/lib/renderContent'
+import { getSettings } from '@/lib/settings-cache'
 import './post.css'
 
 // ⚡ Bolt: Memoize the post query to avoid duplicate database calls
@@ -40,12 +41,6 @@ const getTranslations = cache(async (translationGroupId: string | null, currentS
   })
 })
 
-const getSiteSettings = cache(async () => {
-  return await prisma.siteSettings.findUnique({
-    where: { id: 'singleton' }
-  })
-})
-
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const post = await getPost(slug)
@@ -62,13 +57,21 @@ function getReadingTime(content: string): number {
 
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const post = await getPost(slug)
-  const settings = await getSiteSettings()
+
+  // ⚡ Bolt: Parallelize independent DB queries
+  const [post, settings] = await Promise.all([
+    getPost(slug),
+    getSettings()
+  ])
 
   if (!post || !post.published) notFound()
 
-  const renderedContent = await renderPostContent(post.content, (post as any).contentFormat)
-  const translations = await getTranslations((post as any).translationGroupId, post.slug)
+  // ⚡ Bolt: Parallelize content rendering and translation fetching
+  const [renderedContent, translations] = await Promise.all([
+    renderPostContent(post.content, (post as any).contentFormat),
+    getTranslations((post as any).translationGroupId, post.slug)
+  ])
+
   const coverImage = getFirstImage(post.content, (post as any).contentFormat)
   const readingTime = getReadingTime(post.content)
   
