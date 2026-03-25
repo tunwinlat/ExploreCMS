@@ -6,6 +6,7 @@
 
 import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { getSettings } from '@/lib/settings-cache'
 import { redirect } from 'next/navigation'
 import NavBuilder from './NavBuilder'
 
@@ -22,9 +23,7 @@ export default async function NavigationPage() {
   let availableTags: { name: string; slug: string }[] = []
   try {
     const [settings, tags] = await Promise.all([
-      prisma.siteSettings.findUnique({
-        where: { id: 'singleton' }
-      }),
+      getSettings(),
       prisma.tag.findMany({
         select: { name: true, slug: true },
         orderBy: { name: 'asc' }

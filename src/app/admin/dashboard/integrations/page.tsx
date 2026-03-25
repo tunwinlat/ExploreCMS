@@ -5,7 +5,7 @@
  */
 
 import { verifySession } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getSettings } from '@/lib/settings-cache'
 import { redirect } from 'next/navigation'
 import IntegrationsForm from './IntegrationsForm'
 
@@ -19,9 +19,7 @@ export default async function IntegrationsPage() {
 
   let settings = null
   try {
-    settings = await prisma.siteSettings.findUnique({
-      where: { id: 'singleton' }
-    })
+    settings = await getSettings()
   } catch {
     // Database tables may not exist yet
   }
