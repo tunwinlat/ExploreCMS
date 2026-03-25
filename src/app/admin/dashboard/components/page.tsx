@@ -5,7 +5,7 @@
  */
 
 import { verifySession } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getSettings } from '@/lib/settings-cache'
 import { redirect } from 'next/navigation'
 import { parseComponentConfig } from '@/lib/components-config'
 import ComponentsForm from './ComponentsForm'
@@ -18,7 +18,7 @@ export default async function ComponentsPage() {
 
   let settings = null
   try {
-    settings = await prisma.siteSettings.findUnique({ where: { id: 'singleton' } })
+    settings = await getSettings()
   } catch {}
 
   const config = parseComponentConfig(settings as any)
