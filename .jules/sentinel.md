@@ -16,3 +16,7 @@
 **Vulnerability:** Brute-force attacks on the admin login endpoint.
 **Learning:** Next.js server actions do not receive a standard `Request` object. To extract client IPs for rate-limiting inside server actions, we must retrieve headers (`x-forwarded-for`, `x-real-ip`, `cf-connecting-ip`) using `headers()` from `next/headers`.
 **Prevention:** Explicitly construct the client IP from the `headers()` payload in critical server actions and pass it to utility rate limiters like `checkRateLimit`.
+## 2024-05-30 - Missing Rate Limiting on Password Reset Endpoints
+**Vulnerability:** The `requestPasswordReset` and `resetPassword` server actions lacked rate limiting.
+**Learning:** Even if the login page is rate limited, secondary authentication flows like password reset can be abused for brute force attacks (trying to guess reset tokens) or email enumeration/spam (flooding user inboxes with reset emails).
+**Prevention:** Always apply the `auth` rate limiting profile (or a similarly strict one) to *all* authentication-related endpoints, including password resets and account recovery flows.
