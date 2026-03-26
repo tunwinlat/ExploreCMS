@@ -35,3 +35,7 @@
 ## 2024-05-22 - Reusing Memoized Queries in Admin Dashboard
 **Learning:** Found multiple admin dashboard pages (`settings`, `components`, `integrations`, `navigation`) fetching the `siteSettings` singleton directly via `prisma.siteSettings.findUnique()`. This bypasses the React `cache()` optimization implemented in `getSettings()` from `@/lib/settings-cache.ts`, potentially leading to redundant database queries if settings are needed elsewhere in the component tree during the same request.
 **Action:** Consistently use memoized fetchers like `getSettings()` across all routes (both public and admin) instead of direct Prisma calls for singleton records to ensure query deduplication within the React render pass.
+
+## 2026-03-26 - Prevent Accidental Dependency Removal during Refactoring
+**Learning:** When refactoring code to use a centralized cached helper (like replacing `prisma.siteSettings.findUnique` with `getSettings()`), it's easy to accidentally remove the `import { prisma } from '@/lib/db'` statement if you assume it's only used for that single query. However, in complex files like `edit/[id]/page.tsx`, `prisma` is often used for other concurrent database queries within the same function block.
+**Action:** When replacing a specific method call on an imported object (like `prisma`), always verify if there are other usages of that object within the same file before removing the import statement to prevent `ReferenceError`s and application crashes.

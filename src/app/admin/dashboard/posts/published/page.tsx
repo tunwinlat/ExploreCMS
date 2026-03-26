@@ -6,6 +6,7 @@
 
 import { getPostDb } from '@/lib/bunnyDb'
 import { prisma } from '@/lib/db'
+import { getSettings } from '@/lib/settings-cache'
 import Link from 'next/link'
 import { DeletePostButton } from '../DeletePostButton'
 import { UnlinkCraftButton } from './UnlinkCraftButton'
@@ -21,7 +22,7 @@ export default async function PublishedPostsPage() {
       orderBy: { createdAt: 'desc' },
       include: { author: true }
     }),
-    (prisma as any).siteSettings.findUnique({ where: { id: 'singleton' } }).catch(() => null)
+    getSettings()
   ])
 
   const craftEnabled = settings?.craftEnabled || false

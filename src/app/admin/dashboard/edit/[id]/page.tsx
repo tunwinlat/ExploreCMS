@@ -6,6 +6,7 @@
 
 import { getPostDb } from '@/lib/bunnyDb'
 import { prisma } from '@/lib/db'
+import { getSettings } from '@/lib/settings-cache'
 import PostEditor from '../../PostEditor'
 import { notFound } from 'next/navigation'
 
@@ -24,7 +25,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
       select: { name: true, slug: true },
       orderBy: { name: 'asc' }
     }),
-    (prisma as any).siteSettings.findUnique({ where: { id: 'singleton' } }).catch(() => null)
+    getSettings()
   ])
 
   if (!post) notFound()
