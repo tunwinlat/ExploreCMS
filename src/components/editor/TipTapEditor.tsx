@@ -173,15 +173,15 @@ export default function TipTapEditor({ initialContent = '', onChange, editable =
       
       {editor && (
         <div className="editor-toolbar fade-in-up">
-          <button type="button" aria-label="Bold" title="Bold" onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive('bold') ? 'active' : ''}>B</button>
-          <button type="button" aria-label="Italic" title="Italic" onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive('italic') ? 'active' : ''}>I</button>
-          <button type="button" aria-label="Strike" title="Strike" onClick={() => editor.chain().focus().toggleStrike().run()} className={editor.isActive('strike') ? 'active' : ''}>S</button>
+          <button type="button" aria-label="Bold" aria-pressed={editor.isActive('bold')} title="Bold" onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive('bold') ? 'active' : ''}>B</button>
+          <button type="button" aria-label="Italic" aria-pressed={editor.isActive('italic')} title="Italic" onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive('italic') ? 'active' : ''}>I</button>
+          <button type="button" aria-label="Strike" aria-pressed={editor.isActive('strike')} title="Strike" onClick={() => editor.chain().focus().toggleStrike().run()} className={editor.isActive('strike') ? 'active' : ''}>S</button>
           <div className="divider" style={{ width: '1px', background: 'var(--border-color)', margin: '0 0.5rem' }}></div>
-          <button type="button" aria-label="Add Link" title="Add Link" onClick={setLink} className={editor.isActive('link') ? 'active' : ''}>🔗</button>
+          <button type="button" aria-label="Add Link" aria-pressed={editor.isActive('link')} title="Add Link" onClick={setLink} className={editor.isActive('link') ? 'active' : ''}>🔗</button>
           <div className="divider" style={{ width: '1px', background: 'var(--border-color)', margin: '0 0.5rem' }}></div>
-          <button type="button" aria-label="Align Left" title="Align Left" onClick={() => editor.chain().focus().setTextAlign('left').run()} className={editor.isActive({ textAlign: 'left' }) ? 'active' : ''}>⬅</button>
-          <button type="button" aria-label="Align Center" title="Align Center" onClick={() => editor.chain().focus().setTextAlign('center').run()} className={editor.isActive({ textAlign: 'center' }) ? 'active' : ''}>↔</button>
-          <button type="button" aria-label="Align Right" title="Align Right" onClick={() => editor.chain().focus().setTextAlign('right').run()} className={editor.isActive({ textAlign: 'right' }) ? 'active' : ''}>➡</button>
+          <button type="button" aria-label="Align Left" aria-pressed={editor.isActive({ textAlign: 'left' })} title="Align Left" onClick={() => editor.chain().focus().setTextAlign('left').run()} className={editor.isActive({ textAlign: 'left' }) ? 'active' : ''}>⬅</button>
+          <button type="button" aria-label="Align Center" aria-pressed={editor.isActive({ textAlign: 'center' })} title="Align Center" onClick={() => editor.chain().focus().setTextAlign('center').run()} className={editor.isActive({ textAlign: 'center' }) ? 'active' : ''}>↔</button>
+          <button type="button" aria-label="Align Right" aria-pressed={editor.isActive({ textAlign: 'right' })} title="Align Right" onClick={() => editor.chain().focus().setTextAlign('right').run()} className={editor.isActive({ textAlign: 'right' }) ? 'active' : ''}>➡</button>
           
           <div style={{ flex: 1 }}></div>
 
