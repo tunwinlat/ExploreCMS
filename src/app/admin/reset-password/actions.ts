@@ -8,8 +8,30 @@
 
 import { prisma } from '@/lib/db'
 import bcrypt from 'bcryptjs'
+import { headers } from 'next/headers'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rateLimit'
 
 export async function resetPassword(formData: FormData) {
+  // Rate limiting
+  const headersList = await headers()
+  const forwardedFor = headersList.get('x-forwarded-for')
+  const realIP = headersList.get('x-real-ip')
+  const cfIP = headersList.get('cf-connecting-ip')
+
+  let clientIP = 'unknown'
+  if (forwardedFor) {
+    clientIP = forwardedFor.split(',')[0].trim()
+  } else if (realIP) {
+    clientIP = realIP
+  } else if (cfIP) {
+    clientIP = cfIP
+  }
+
+  const rateLimit = checkRateLimit(clientIP, RATE_LIMITS.auth)
+  if (!rateLimit.success) {
+    return { error: 'Too many requests. Please try again later.' }
+  }
+
   const token = formData.get('token') as string
   const password = formData.get('password') as string
   const confirmPassword = formData.get('confirmPassword') as string
