@@ -20,3 +20,7 @@
 **Vulnerability:** The `requestPasswordReset` and `resetPassword` server actions lacked rate limiting.
 **Learning:** Even if the login page is rate limited, secondary authentication flows like password reset can be abused for brute force attacks (trying to guess reset tokens) or email enumeration/spam (flooding user inboxes with reset emails).
 **Prevention:** Always apply the `auth` rate limiting profile (or a similarly strict one) to *all* authentication-related endpoints, including password resets and account recovery flows.
+## 2025-03-27 - [High] Missing Rate Limiting on Verification Email Sending Action
+**Vulnerability:** The `sendVerificationEmail` server action in `src/app/admin/dashboard/profile/profileActions.ts` lacked rate limiting, allowing an attacker to abuse the endpoint to flood a user's inbox with verification emails and exhaust email sending quotas.
+**Learning:** Any endpoint that triggers an external action like sending emails MUST be rate limited to prevent abuse, spam, and resource exhaustion.
+**Prevention:** Always apply strict rate limiting (e.g. `RATE_LIMITS.auth`) to endpoints responsible for triggering email dispatches, leveraging `checkRateLimit` and extracting the client IP from the `headers()`.
