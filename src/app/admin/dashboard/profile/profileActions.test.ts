@@ -56,6 +56,7 @@ describe('updateUserProfile', () => {
     const formData = new FormData()
     formData.append('firstName', 'John')
     formData.append('lastName', 'Doe')
+    formData.append('email', 'test@example.com')
 
     const result = await updateUserProfile(formData)
 
@@ -78,6 +79,7 @@ describe('updateUserProfile', () => {
     const formData = new FormData()
     formData.append('firstName', '')
     formData.append('lastName', '')
+    formData.append('email', 'test@example.com')
 
     const result = await updateUserProfile(formData)
 
@@ -100,6 +102,7 @@ describe('updateUserProfile', () => {
     formData.append('firstName', 'Jane')
     formData.append('lastName', 'Smith')
     formData.append('password', 'newsecretpassword')
+    formData.append('email', 'test@example.com')
 
     const result = await updateUserProfile(formData)
 
