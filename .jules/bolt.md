@@ -39,3 +39,7 @@
 ## 2026-03-26 - Prevent Accidental Dependency Removal during Refactoring
 **Learning:** When refactoring code to use a centralized cached helper (like replacing `prisma.siteSettings.findUnique` with `getSettings()`), it's easy to accidentally remove the `import { prisma } from '@/lib/db'` statement if you assume it's only used for that single query. However, in complex files like `edit/[id]/page.tsx`, `prisma` is often used for other concurrent database queries within the same function block.
 **Action:** When replacing a specific method call on an imported object (like `prisma`), always verify if there are other usages of that object within the same file before removing the import statement to prevent `ReferenceError`s and application crashes.
+
+## 2024-05-24 - Conflicting Caching Strategies in Next.js App Router
+**Learning:** Combining `export const dynamic = 'force-dynamic'` with `export const revalidate = 60` (or any positive number) in the same route segment config causes a fatal build error due to conflicting caching strategies. When switching a route to ISR (revalidate > 0), `force-dynamic` must be removed.
+**Action:** When implementing ISR caching in Next.js using `export const revalidate = [seconds]`, always ensure `export const dynamic = 'force-dynamic'` is removed from the file to avoid build errors and ensure the cache strategy works properly.
