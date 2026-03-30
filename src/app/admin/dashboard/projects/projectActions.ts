@@ -15,6 +15,16 @@ function generateSlug(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
 }
 
+function isValidUrl(url: string | null): boolean {
+  if (!url) return true // Allow empty
+  try {
+    const parsed = new URL(url)
+    return ['http:', 'https:'].includes(parsed.protocol)
+  } catch {
+    return false
+  }
+}
+
 export async function saveProject(formData: FormData) {
   const session = await verifySession()
   if (!session) throw new Error('Unauthorized')
@@ -34,6 +44,8 @@ export async function saveProject(formData: FormData) {
   const slugInput = formData.get('slug') as string | null
 
   if (!title) return { error: 'Title is required' }
+  if (githubUrl && !isValidUrl(githubUrl)) return { error: 'Invalid GitHub URL. Must use http or https.' }
+  if (liveUrl && !isValidUrl(liveUrl)) return { error: 'Invalid Live Site URL. Must use http or https.' }
 
   const techTags = techTagsRaw.startsWith('[')
     ? techTagsRaw
