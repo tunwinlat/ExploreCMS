@@ -72,11 +72,12 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
         </div>
 
         {/* Period tabs */}
-        <div style={{ display: 'flex', gap: '0.15rem' }}>
+        <div role="group" aria-label="Trending period" style={{ display: 'flex', gap: '0.15rem' }}>
           {(['7d', '30d', 'all'] as const).map((p) => (
             <button
               key={p}
               onClick={() => fetchTrending(p)}
+              aria-pressed={period === p}
               style={{
                 padding: '0.2rem 0.5rem',
                 borderRadius: '4px',
