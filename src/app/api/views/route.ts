@@ -51,41 +51,57 @@ export async function POST(req: Request) {
     const isUniqueGlobal = !viewedPages.includes('global_site');
     const isUniquePost = slug && !viewedPages.includes(`post_${slug}`);
 
-    // Track Global Views
-    await prisma.siteAnalytics.upsert({
-      where: { id: 'singleton' },
-      update: {
-        totalViews: { increment: 1 },
-        ...(isUniqueGlobal ? { uniqueViews: { increment: 1 } } : {})
-      },
-      create: {
-        id: 'singleton',
-        totalViews: 1,
-        uniqueViews: 1,
-      }
-    });
+    // ⚡ Bolt: Parallelize independent database queries
+    const trackingPromises: Promise<any>[] = [];
 
-    if (isUniqueGlobal) viewedPages.push('global_site');
+    // Track Global Views
+    trackingPromises.push(
+      prisma.siteAnalytics.upsert({
+        where: { id: 'singleton' },
+        update: {
+          totalViews: { increment: 1 },
+          ...(isUniqueGlobal ? { uniqueViews: { increment: 1 } } : {})
+        },
+        create: {
+          id: 'singleton',
+          totalViews: 1,
+          uniqueViews: 1,
+        }
+      }).then(() => {
+        if (isUniqueGlobal) viewedPages.push('global_site');
+      })
+    );
 
     // Track Post Views
     if (slug) {
-      const post = await postDb.post.findUnique({ where: { slug } });
-      if (post) {
-        await postDb.postView.upsert({
-          where: { postId: post.id },
-          update: {
-            totalViews: { increment: 1 },
-            ...(isUniquePost ? { uniqueViews: { increment: 1 } } : {})
-          },
-          create: {
-            postId: post.id,
-            totalViews: 1,
-            uniqueViews: 1,
+      trackingPromises.push(
+        (async () => {
+          // Optimization: only select the required id field
+          const post = await postDb.post.findUnique({
+            where: { slug },
+            select: { id: true }
+          });
+
+          if (post) {
+            await postDb.postView.upsert({
+              where: { postId: post.id },
+              update: {
+                totalViews: { increment: 1 },
+                ...(isUniquePost ? { uniqueViews: { increment: 1 } } : {})
+              },
+              create: {
+                postId: post.id,
+                totalViews: 1,
+                uniqueViews: 1,
+              }
+            });
+            if (isUniquePost) viewedPages.push(`post_${slug}`);
           }
-        });
-        if (isUniquePost) viewedPages.push(`post_${slug}`);
-      }
+        })()
+      );
     }
+
+    await Promise.all(trackingPromises);
 
     const res = NextResponse.json({ success: true });
     
