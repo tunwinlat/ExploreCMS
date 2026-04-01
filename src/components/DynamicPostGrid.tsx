@@ -135,6 +135,7 @@ export default function DynamicPostGrid({
                     <button
                       key={child.id}
                       onClick={() => setActiveFilter({ type: 'tag', target: child.tagSlug })}
+                      aria-pressed={activeFilter.target === child.tagSlug}
                       style={{
                         padding: '0.75rem 1rem',
                         background: activeFilter.target === child.tagSlug ? 'var(--accent-color)' : 'transparent',
@@ -162,6 +163,7 @@ export default function DynamicPostGrid({
             <button
               key={item.id}
               onClick={() => setActiveFilter({ type: item.type as any, target: item.tagSlug })}
+              aria-pressed={isActive}
               className={`btn ${isActive ? 'btn-primary' : 'glass'}`}
               style={{ transition: 'all var(--transition-normal)', padding: '0.5rem 1.25rem' }}
             >
