@@ -15,6 +15,18 @@ function generateSlug(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
 }
 
+// Security enhancement: Prevent Stored XSS by validating URLs to ensure they use safe protocols
+function isValidUrl(url: string | null): boolean {
+  if (!url) return true
+  try {
+    const parsed = new URL(url, 'http://localhost')
+    if (url.startsWith('/')) return true
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 export async function saveProject(formData: FormData) {
   const session = await verifySession()
   if (!session) throw new Error('Unauthorized')
@@ -34,6 +46,10 @@ export async function saveProject(formData: FormData) {
   const slugInput = formData.get('slug') as string | null
 
   if (!title) return { error: 'Title is required' }
+
+  if (!isValidUrl(githubUrl) || !isValidUrl(liveUrl)) {
+    return { error: 'Invalid URL format. Please use http:// or https://' }
+  }
 
   const techTags = techTagsRaw.startsWith('[')
     ? techTagsRaw
