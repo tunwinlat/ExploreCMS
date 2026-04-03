@@ -78,6 +78,7 @@ export async function saveProject(formData: FormData) {
     revalidatePath('/projects')
     revalidatePath('/admin/dashboard/projects')
   } catch (error) {
+    console.error('Failed to save project:', error)
     return { error: 'Failed to save project' }
   }
 
