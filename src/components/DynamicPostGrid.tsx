@@ -108,6 +108,7 @@ export default function DynamicPostGrid({
               <div key={item.id} className="dropdown-container" style={{ position: 'relative', display: 'inline-block' }}>
                 <button 
                   className="btn glass" 
+                  aria-haspopup="menu"
                   style={{ padding: '0.5rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
                   {item.label} <span style={{ fontSize: '0.8rem' }} aria-hidden="true">▼</span>
