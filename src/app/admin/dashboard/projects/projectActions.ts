@@ -35,6 +35,24 @@ export async function saveProject(formData: FormData) {
 
   if (!title) return { error: 'Title is required' }
 
+  // Security: Validate URLs to prevent Stored XSS
+  try {
+    if (githubUrl) {
+      const url = new URL(githubUrl)
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+        return { error: 'Invalid GitHub URL protocol' }
+      }
+    }
+    if (liveUrl) {
+      const url = new URL(liveUrl)
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+        return { error: 'Invalid Live URL protocol' }
+      }
+    }
+  } catch (e) {
+    return { error: 'Invalid URL format' }
+  }
+
   const techTags = techTagsRaw.startsWith('[')
     ? techTagsRaw
     : JSON.stringify(techTagsRaw.split(',').map(t => t.trim()).filter(Boolean))
