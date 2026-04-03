@@ -11,6 +11,7 @@ import { verifySession } from '@/lib/auth'
 import { GitHubClient, GitHubRepo, generateRepoCoverImage } from '@/lib/github'
 import { getPostDb } from '@/lib/bunnyDb'
 import { getSettings } from '@/lib/settings-cache'
+import { encrypt, decrypt } from '@/lib/crypto'
 
 function generateSlug(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
@@ -71,12 +72,14 @@ export async function saveGitHubToken(token: string) {
       return { error: 'Invalid token: ' + test.error }
     }
 
-    // Save the token and username
+    // Encrypt and save the token
+    const encryptedToken = encrypt(token)
+    
     await prisma.siteSettings.update({
       where: { id: 'singleton' },
       data: {
         githubEnabled: true,
-        githubAccessToken: token,
+        githubAccessToken: encryptedToken,
         githubUsername: test.username,
       },
     })
@@ -125,7 +128,8 @@ export async function fetchGitHubRepos() {
       return { error: 'GitHub not connected' }
     }
 
-    const client = new GitHubClient(settings.githubAccessToken)
+    const token = decrypt(settings.githubAccessToken) || settings.githubAccessToken
+    const client = new GitHubClient(token)
     const repos = await client.getUserRepos('owner')
 
     // Get list of already imported repos
@@ -177,7 +181,8 @@ export async function importGitHubRepos(repoFullNames: string[]) {
       return { error: 'GitHub not connected' }
     }
 
-    const client = new GitHubClient(settings.githubAccessToken)
+    const token = decrypt(settings.githubAccessToken) || settings.githubAccessToken
+    const client = new GitHubClient(token)
     const db = await getPostDb()
 
     const results = []
@@ -266,7 +271,8 @@ export async function syncGitHubProject(projectId: string) {
       return { error: 'Project not linked to GitHub' }
     }
 
-    const client = new GitHubClient(settings.githubAccessToken)
+    const token = decrypt(settings.githubAccessToken) || settings.githubAccessToken
+    const client = new GitHubClient(token)
     const [owner, repoName] = project.githubRepoFullName.split('/')
 
     // Get repo details
@@ -337,7 +343,8 @@ export async function syncAllGitHubProjects() {
       },
     })
 
-    const client = new GitHubClient(settings.githubAccessToken)
+    const token = decrypt(settings.githubAccessToken) || settings.githubAccessToken
+    const client = new GitHubClient(token)
     const results = []
     const now = new Date().toISOString()
 

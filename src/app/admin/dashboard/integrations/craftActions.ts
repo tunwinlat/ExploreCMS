@@ -10,6 +10,7 @@ import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { getPostDb } from '@/lib/bunnyDb'
 import { revalidatePath } from 'next/cache'
+import { encrypt, decrypt } from '@/lib/crypto'
 
 export async function saveCraftSettings(
   serverUrl: string,
@@ -31,11 +32,14 @@ export async function saveCraftSettings(
   }
 
   try {
+    // Encrypt the API token before saving
+    const encryptedToken = apiToken ? encrypt(apiToken) : null
+    
     await (prisma as any).siteSettings.upsert({
       where: { id: 'singleton' },
       update: {
         craftServerUrl: serverUrl || null,
-        craftApiToken: apiToken || null,
+        craftApiToken: encryptedToken,
         craftFolderId: folderId || null,
         craftFolderName: folderName || null,
         craftSyncMode: syncMode || 'read-only',
@@ -46,7 +50,7 @@ export async function saveCraftSettings(
       create: {
         id: 'singleton',
         craftServerUrl: serverUrl || null,
-        craftApiToken: apiToken || null,
+        craftApiToken: encryptedToken,
         craftFolderId: folderId || null,
         craftFolderName: folderName || null,
         craftSyncMode: syncMode || 'read-only',

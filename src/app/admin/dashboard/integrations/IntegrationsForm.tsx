@@ -12,6 +12,7 @@ import { testTargetConnection, migrateToTarget } from '../settings/migrationActi
 import { testStorageConnection, migrateStorage, type StorageType } from '../settings/storageActions'
 import { saveEmailSettings, testEmailSettings, getEmailSettings } from './emailActions'
 import { useToast } from '@/components/admin/Toast'
+import EncryptionMigration from './EncryptionMigration'
 
 // Expandable Section Component
 function ExpandableSection({
@@ -1107,6 +1108,16 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
               {emailLoading ? 'Saving...' : 'Save Email Settings'}
             </button>
           </div>
+        </ExpandableSection>
+      </div>
+
+      {/* ── Encryption Migration ── */}
+      <div className="glass" style={{ padding: '2rem' }}>
+        <ExpandableSection
+          title="Security & Encryption"
+          icon="🔐"
+        >
+          <EncryptionMigration />
         </ExpandableSection>
       </div>
 

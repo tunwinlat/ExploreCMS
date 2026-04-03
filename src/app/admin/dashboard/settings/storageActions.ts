@@ -12,6 +12,7 @@ import { getPostDb } from '@/lib/bunnyDb'
 import { revalidatePath } from 'next/cache'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
+import { encrypt, decrypt } from '@/lib/crypto'
 
 // Storage Types
 export type StorageType = 'bunny' | 's3'
@@ -356,8 +357,10 @@ async function getCurrentStorageClient(): Promise<StorageClient | null> {
   const type = settings.storageType || 'bunny'
   
   if (type === 'bunny') {
+    // Decrypt the API key before use
+    const apiKey = decrypt(settings.bunnyStorageApiKey) || settings.bunnyStorageApiKey
     return new BunnyStorageClient(
-      settings.bunnyStorageApiKey,
+      apiKey,
       settings.bunnyStorageZoneName,
       settings.bunnyStorageRegion || '',
       settings.bunnyStorageUrl
@@ -577,7 +580,7 @@ export async function migrateStorage(
     if (type === 'bunny') {
       updateData.bunnyStorageRegion = config.region || ''
       updateData.bunnyStorageZoneName = config.zoneName
-      updateData.bunnyStorageApiKey = config.apiKey
+      updateData.bunnyStorageApiKey = encrypt(config.apiKey)
       updateData.bunnyStorageUrl = config.cdnUrl
     } else {
       // For S3, we might want to store some settings

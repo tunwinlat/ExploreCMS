@@ -13,6 +13,7 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaLibSql } from '@prisma/adapter-libsql'
 import { createClient } from '@libsql/client'
 import { syncRemoteSchema } from '@/lib/schemaSyncer'
+import { encrypt, decrypt } from '@/lib/crypto'
 
 /**
  * Validates the Bunny connection and triggers a full upward Migration (Local -> Remote)
@@ -78,10 +79,11 @@ export async function connectBunnyDb(url: string, token: string) {
 
     console.log("Migration complete!")
 
-    // 4. Save settings locally to permanently route all traffic to Bunny
+    // 4. Save settings locally to permanently route all traffic to Bunny (encrypt token)
+    const encryptedToken = encrypt(token)
     await (localPrisma as any).siteSettings.update({
       where: { id: 'singleton' },
-      data: { bunnyEnabled: true, bunnyUrl: safeUrl, bunnyToken: token }
+      data: { bunnyEnabled: true, bunnyUrl: safeUrl, bunnyToken: encryptedToken }
     })
 
     return { success: true }
@@ -105,7 +107,9 @@ export async function disconnectBunnyDb() {
        return { success: true } // Already disconnected
     }
 
-    const remotePrisma = new PrismaClient({ adapter: new PrismaLibSql({ url: settings.bunnyUrl, authToken: settings.bunnyToken }) })
+    // Decrypt the token before use
+    const token = decrypt(settings.bunnyToken) || settings.bunnyToken
+    const remotePrisma = new PrismaClient({ adapter: new PrismaLibSql({ url: settings.bunnyUrl, authToken: token }) })
     
     // 1. Fetch Remote Data
     const remote = remotePrisma as any
