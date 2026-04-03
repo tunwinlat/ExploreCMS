@@ -67,7 +67,7 @@ export async function saveProject(formData: FormData) {
         data: { title, tagline, content, coverImage, status, featured, published, githubUrl: safeGithubUrl, liveUrl: safeLiveUrl, techTags, order: orderVal, slug },
       })
     } else {
-      let existing = await (prisma as any).project.findUnique({ where: { slug } })
+      const existing = await (prisma as any).project.findUnique({ where: { slug } })
       if (existing) slug = `${slug}-${Date.now()}`
 
       await (prisma as any).project.create({
@@ -78,6 +78,7 @@ export async function saveProject(formData: FormData) {
     revalidatePath('/projects')
     revalidatePath('/admin/dashboard/projects')
   } catch (error) {
+    console.error('Failed to save project:', error)
     return { error: 'Failed to save project' }
   }
 
