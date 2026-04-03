@@ -319,7 +319,7 @@ export function SearchBox() {
               aria-atomic="true"
             >
               {loading ? (
-                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }} role="status">
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }} role="status" aria-label="Searching...">
                   <div style={{ animation: 'pulse 2s infinite' }}>Searching...</div>
                 </div>
               ) : hasSearched && results.length === 0 ? (
