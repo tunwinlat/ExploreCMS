@@ -51,7 +51,7 @@ export default function EncryptionMigration() {
         setResult({
           migrated: response.result.migrated.map(m => m.label),
           skipped: response.result.skipped.map(s => `${s.label} (${s.reason})`),
-          failed: response.result.failed.map(f => `${s.label}: ${f.error}`)
+          failed: response.result.failed.map(f => `${f.label}: ${f.error}`)
         })
         // Refresh status after migration
         await checkStatus()
