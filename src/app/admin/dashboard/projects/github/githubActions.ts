@@ -10,6 +10,7 @@ import { prisma } from '@/lib/db'
 import { verifySession } from '@/lib/auth'
 import { GitHubClient, GitHubRepo, generateRepoCoverImage } from '@/lib/github'
 import { getPostDb } from '@/lib/bunnyDb'
+import { getSettings } from '@/lib/settings-cache'
 
 function generateSlug(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
@@ -23,9 +24,7 @@ export async function getGitHubSettings() {
   }
 
   try {
-    const settings = await (prisma as any).siteSettings.findUnique({
-      where: { id: 'singleton' },
-    })
+    const settings = await getSettings()
 
     return {
       enabled: settings?.githubEnabled || false,
@@ -34,8 +33,8 @@ export async function getGitHubSettings() {
       lastSyncAt: settings?.githubLastSyncAt || null,
       // Don't return the access token
     }
-  } catch (err: any) {
-    return { error: err.message }
+  } catch (err: unknown) {
+    return { error: (err as Error).message }
   }
 }
 
@@ -60,7 +59,7 @@ export async function saveGitHubToken(token: string) {
     }
 
     // Save the token and username
-    await (prisma as any).siteSettings.update({
+    await prisma.siteSettings.update({
       where: { id: 'singleton' },
       data: {
         githubEnabled: true,
@@ -70,8 +69,8 @@ export async function saveGitHubToken(token: string) {
     })
 
     return { success: true, username: test.username }
-  } catch (err: any) {
-    return { error: err.message }
+  } catch (err: unknown) {
+    return { error: (err as Error).message }
   }
 }
 
@@ -83,7 +82,7 @@ export async function disconnectGitHub() {
   }
 
   try {
-    await (prisma as any).siteSettings.update({
+    await prisma.siteSettings.update({
       where: { id: 'singleton' },
       data: {
         githubEnabled: false,
@@ -94,8 +93,8 @@ export async function disconnectGitHub() {
     })
 
     return { success: true }
-  } catch (err: any) {
-    return { error: err.message }
+  } catch (err: unknown) {
+    return { error: (err as Error).message }
   }
 }
 
@@ -107,9 +106,7 @@ export async function fetchGitHubRepos() {
   }
 
   try {
-    const settings = await (prisma as any).siteSettings.findUnique({
-      where: { id: 'singleton' },
-    })
+    const settings = await getSettings()
 
     if (!settings?.githubEnabled || !settings?.githubAccessToken) {
       return { error: 'GitHub not connected' }
@@ -144,8 +141,8 @@ export async function fetchGitHubRepos() {
         alreadyImported: importedIds.has(String(repo.id)),
       })),
     }
-  } catch (err: any) {
-    return { error: err.message }
+  } catch (err: unknown) {
+    return { error: (err as Error).message }
   }
 }
 
@@ -161,9 +158,7 @@ export async function importGitHubRepos(repoFullNames: string[]) {
   }
 
   try {
-    const settings = await (prisma as any).siteSettings.findUnique({
-      where: { id: 'singleton' },
-    })
+    const settings = await getSettings()
 
     if (!settings?.githubEnabled || !settings?.githubAccessToken) {
       return { error: 'GitHub not connected' }
@@ -218,20 +213,20 @@ export async function importGitHubRepos(repoFullNames: string[]) {
         })
 
         results.push({ success: true, name: repo.name, id: project.id })
-      } catch (err: any) {
-        results.push({ success: false, name: fullName, error: err.message })
+      } catch (err: unknown) {
+        results.push({ success: false, name: fullName, error: (err as Error).message })
       }
     }
 
     // Update last sync time
-    await (prisma as any).siteSettings.update({
+    await prisma.siteSettings.update({
       where: { id: 'singleton' },
       data: { githubLastSyncAt: now },
     })
 
     return { results }
-  } catch (err: any) {
-    return { error: err.message }
+  } catch (err: unknown) {
+    return { error: (err as Error).message }
   }
 }
 
@@ -243,9 +238,7 @@ export async function syncGitHubProject(projectId: string) {
   }
 
   try {
-    const settings = await (prisma as any).siteSettings.findUnique({
-      where: { id: 'singleton' },
-    })
+    const settings = await getSettings()
 
     if (!settings?.githubEnabled || !settings?.githubAccessToken) {
       return { error: 'GitHub not connected' }
@@ -288,8 +281,8 @@ export async function syncGitHubProject(projectId: string) {
     })
 
     return { success: true }
-  } catch (err: any) {
-    return { error: err.message }
+  } catch (err: unknown) {
+    return { error: (err as Error).message }
   }
 }
 
@@ -301,23 +294,21 @@ export async function updateGitHubSyncMode(mode: 'all' | 'manual') {
   }
 
   try {
-    await (prisma as any).siteSettings.update({
+    await prisma.siteSettings.update({
       where: { id: 'singleton' },
       data: { githubSyncMode: mode },
     })
 
     return { success: true }
-  } catch (err: any) {
-    return { error: err.message }
+  } catch (err: unknown) {
+    return { error: (err as Error).message }
   }
 }
 
 // Auto-sync all enabled projects (for cron/background job)
 export async function syncAllGitHubProjects() {
   try {
-    const settings = await (prisma as any).siteSettings.findUnique({
-      where: { id: 'singleton' },
-    })
+    const settings = await getSettings()
 
     if (!settings?.githubEnabled || !settings?.githubAccessToken) {
       return { error: 'GitHub not connected' }
@@ -360,18 +351,18 @@ export async function syncAllGitHubProjects() {
         })
 
         results.push({ success: true, name: repo.name })
-      } catch (err: any) {
-        results.push({ success: false, name: project.githubRepoFullName, error: err.message })
+      } catch (err: unknown) {
+        results.push({ success: false, name: project.githubRepoFullName, error: (err as Error).message })
       }
     }
 
-    await (prisma as any).siteSettings.update({
+    await prisma.siteSettings.update({
       where: { id: 'singleton' },
       data: { githubLastSyncAt: now },
     })
 
     return { results }
-  } catch (err: any) {
-    return { error: err.message }
+  } catch (err: unknown) {
+    return { error: (err as Error).message }
   }
 }
