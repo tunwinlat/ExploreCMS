@@ -10,6 +10,7 @@ import { prisma } from '@/lib/db'
 import { verifySession } from '@/lib/auth'
 import { GitHubClient, GitHubRepo, generateRepoCoverImage } from '@/lib/github'
 import { getPostDb } from '@/lib/bunnyDb'
+import { getSettings } from '@/lib/settings-cache'
 
 function generateSlug(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
@@ -23,9 +24,7 @@ export async function getGitHubSettings() {
   }
 
   try {
-    const settings = await (prisma as any).siteSettings.findUnique({
-      where: { id: 'singleton' },
-    })
+    const settings = await getSettings()
 
     return {
       enabled: settings?.githubEnabled || false,
@@ -107,9 +106,7 @@ export async function fetchGitHubRepos() {
   }
 
   try {
-    const settings = await (prisma as any).siteSettings.findUnique({
-      where: { id: 'singleton' },
-    })
+    const settings = await getSettings()
 
     if (!settings?.githubEnabled || !settings?.githubAccessToken) {
       return { error: 'GitHub not connected' }
@@ -161,9 +158,7 @@ export async function importGitHubRepos(repoFullNames: string[]) {
   }
 
   try {
-    const settings = await (prisma as any).siteSettings.findUnique({
-      where: { id: 'singleton' },
-    })
+    const settings = await getSettings()
 
     if (!settings?.githubEnabled || !settings?.githubAccessToken) {
       return { error: 'GitHub not connected' }
@@ -243,9 +238,7 @@ export async function syncGitHubProject(projectId: string) {
   }
 
   try {
-    const settings = await (prisma as any).siteSettings.findUnique({
-      where: { id: 'singleton' },
-    })
+    const settings = await getSettings()
 
     if (!settings?.githubEnabled || !settings?.githubAccessToken) {
       return { error: 'GitHub not connected' }
@@ -315,9 +308,7 @@ export async function updateGitHubSyncMode(mode: 'all' | 'manual') {
 // Auto-sync all enabled projects (for cron/background job)
 export async function syncAllGitHubProjects() {
   try {
-    const settings = await (prisma as any).siteSettings.findUnique({
-      where: { id: 'singleton' },
-    })
+    const settings = await getSettings()
 
     if (!settings?.githubEnabled || !settings?.githubAccessToken) {
       return { error: 'GitHub not connected' }
