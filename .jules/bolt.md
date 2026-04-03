@@ -43,3 +43,7 @@
 ## 2024-05-24 - Conflicting Caching Strategies in Next.js App Router
 **Learning:** Combining `export const dynamic = 'force-dynamic'` with `export const revalidate = 60` (or any positive number) in the same route segment config causes a fatal build error due to conflicting caching strategies. When switching a route to ISR (revalidate > 0), `force-dynamic` must be removed.
 **Action:** When implementing ISR caching in Next.js using `export const revalidate = [seconds]`, always ensure `export const dynamic = 'force-dynamic'` is removed from the file to avoid build errors and ensure the cache strategy works properly.
+
+## 2026-04-12 - Parallelizing Independent Prisma Operations in Tracking Endpoints
+**Learning:** In tracking API routes like `/api/views`, independent tracking operations (e.g., updating global views via `prisma.siteAnalytics.upsert` and updating post-specific views via `postDb.postView.upsert`) were executed sequentially. This results in an unnecessary query waterfall that degrades API response latency.
+**Action:** Always encapsulate independent database write or read operations in an array of Promises and execute them concurrently using `Promise.all()` in API endpoints. Additionally, optimize lookup queries associated with tracking (e.g., finding a post by slug) by selecting only the required fields (`select: { id: true }`) to reduce memory overhead and wire transfer size.
