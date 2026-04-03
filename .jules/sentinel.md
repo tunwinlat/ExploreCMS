@@ -24,3 +24,8 @@
 **Vulnerability:** The `sendVerificationEmail` server action in `src/app/admin/dashboard/profile/profileActions.ts` lacked rate limiting, allowing an attacker to abuse the endpoint to flood a user's inbox with verification emails and exhaust email sending quotas.
 **Learning:** Any endpoint that triggers an external action like sending emails MUST be rate limited to prevent abuse, spam, and resource exhaustion.
 **Prevention:** Always apply strict rate limiting (e.g. `RATE_LIMITS.auth`) to endpoints responsible for triggering email dispatches, leveraging `checkRateLimit` and extracting the client IP from the `headers()`.
+
+## 2025-05-24 - [High] Stored XSS via Unvalidated Project URLs
+**Vulnerability:** The `saveProject` server action in `src/app/admin/dashboard/projects/projectActions.ts` allowed any input to be saved in the `githubUrl` and `liveUrl` database fields without validation. This allowed an attacker to input a `javascript:` URL, resulting in Stored XSS when users clicked "View on GitHub" or "Live Site" links.
+**Learning:** React escapes text content but does not protect against malicious URLs in `href` attributes. A malicious admin/user can exploit this to inject javascript payloads into attributes that trigger when a user interacts with the element.
+**Prevention:** Always validate URL fields server-side before storing them in the database. When dealing with absolute external links, use the `URL` constructor to enforce safe protocols (`http:` and `https:`).
