@@ -275,7 +275,7 @@ export function SearchBox() {
                       fontSize: '1rem',
                     }}
                   >
-                    ×
+                    <span aria-hidden="true">×</span>
                   </button>
                 )}
               </form>
