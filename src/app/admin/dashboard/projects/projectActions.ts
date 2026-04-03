@@ -35,7 +35,7 @@ export async function saveProject(formData: FormData) {
 
   if (!title) return { error: 'Title is required' }
 
-  const validateUrl = (urlStr: string | null) => {
+  const validateUrl = (urlStr?: string | null) => {
     if (!urlStr) return null
     try {
       const url = new URL(urlStr)

@@ -15,6 +15,19 @@ function generateSlug(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
 }
 
+function validateUrl(urlStr?: string | null) {
+  if (!urlStr) return null
+  try {
+    const url = new URL(urlStr)
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      return null
+    }
+    return urlStr
+  } catch {
+    return null
+  }
+}
+
 // Get GitHub settings
 export async function getGitHubSettings() {
   const session = await verifySession()
@@ -204,8 +217,8 @@ export async function importGitHubRepos(repoFullNames: string[]) {
             content: readme || '',
             contentFormat: 'markdown',
             coverImage,
-            githubUrl: repo.html_url,
-            liveUrl: repo.homepage || '',
+            githubUrl: validateUrl(repo.html_url),
+            liveUrl: validateUrl(repo.homepage || ''),
             techTags: JSON.stringify(repo.topics.length > 0 ? repo.topics : repo.language ? [repo.language] : []),
             status: repo.archived ? 'archived' : 'completed',
             published: true,
@@ -278,8 +291,8 @@ export async function syncGitHubProject(projectId: string) {
         title: repo.name,
         tagline: repo.description || project.tagline,
         content: readme || project.content,
-        githubUrl: repo.html_url,
-        liveUrl: repo.homepage || project.liveUrl,
+        githubUrl: validateUrl(repo.html_url),
+        liveUrl: validateUrl(repo.homepage || project.liveUrl),
         techTags: JSON.stringify(repo.topics.length > 0 ? repo.topics : repo.language ? [repo.language] : JSON.parse(project.techTags || '[]')),
         status: repo.archived ? 'archived' : project.status,
         githubLastSyncAt: now,
@@ -351,8 +364,8 @@ export async function syncAllGitHubProjects() {
             title: repo.name,
             tagline: repo.description || project.tagline,
             content: readme || project.content,
-            githubUrl: repo.html_url,
-            liveUrl: repo.homepage || project.liveUrl,
+            githubUrl: validateUrl(repo.html_url),
+            liveUrl: validateUrl(repo.homepage || project.liveUrl),
             techTags: JSON.stringify(repo.topics.length > 0 ? repo.topics : repo.language ? [repo.language] : JSON.parse(project.techTags || '[]')),
             status: repo.archived ? 'archived' : project.status,
             githubLastSyncAt: now,
