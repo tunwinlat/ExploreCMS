@@ -1,6 +1,9 @@
-## 2024-03-19 - Context-Aware ARIA Labels for Dynamic Remove Buttons
-**Learning:** Icon-only or text-symbol removal buttons (like '×') in dynamically generated lists (e.g., tech tags or gallery images) create significant accessibility issues for screen reader users when they lack context, as they only hear "button x".
-**Action:** Always provide context-aware `aria-label`s (e.g., `aria-label={"Remove " + tag + " tag"}`) and appropriate titles on dynamic remove buttons, ensuring each button's purpose is clear independently.
-## 2024-06-18 - Dynamic Search Announcer
-**Learning:** Dynamic search results (like debounced search-as-you-type) are completely invisible to screen readers unless the container uses `aria-live` to announce state changes (loading, no results, results found).
-**Action:** Always add `aria-live="polite"` to containers whose content updates dynamically without a page reload, especially for search and filtering components.
+## 2026-04-03 - Redundant Screen Reader Announcements for Visual Symbols
+**Learning:** Icon-only buttons with `aria-label` and visual text symbols (like emojis or "×") cause redundant/confusing announcements.
+**Action:** When adding semantic state attributes like `aria-pressed` or `aria-label` to interactive components, wrap any accompanying purely visual text symbols in `<span aria-hidden="true">` to prevent redundant screen reader announcements.
+## 2026-03-15 - Missing Dialog Roles in Custom Modals
+**Learning:** Found an app-wide accessibility issue where custom modals (like SearchBox and the generic Modal component) are missing essential ARIA roles (`role="dialog"` and `aria-modal="true"`). This prevents screen readers from correctly identifying the modal context and restricting interaction to the modal contents.
+**Action:** Add `role="dialog"` and `aria-modal="true"` to modal container elements across the application to ensure screen reader users understand when a modal is active.
+## 2024-03-24 - Interactive Grid Items Accessibility
+**Learning:** Interactive div elements used as buttons (e.g., photo grid items) are completely ignored by keyboard navigation, making features like the Lightbox inaccessible to non-mouse users.
+**Action:** Always add `tabIndex={0}`, `role="button"`, and an `onKeyDown` handler (listening for Enter/Space) to `div`s that act as clickable cards or grid items.
