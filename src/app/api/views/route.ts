@@ -51,11 +51,17 @@ export async function POST(req: Request) {
     const isUniqueGlobal = !viewedPages.includes('global_site');
     const isUniquePost = slug && !viewedPages.includes(`post_${slug}`);
 
+    // Fetch post first if slug provided
+    let post = null;
+    if (slug) {
+      post = await postDb.post.findUnique({ where: { slug } });
+    }
+
     // ⚡ Bolt: Parallelize independent database queries
-    const trackingPromises: Promise<any>[] = [];
+    const promises: Promise<any>[] = [];
 
     // Track Global Views
-    trackingPromises.push(
+    promises.push(
       prisma.siteAnalytics.upsert({
         where: { id: 'singleton' },
         update: {
@@ -73,35 +79,26 @@ export async function POST(req: Request) {
     );
 
     // Track Post Views
-    if (slug) {
-      trackingPromises.push(
-        (async () => {
-          // Optimization: only select the required id field
-          const post = await postDb.post.findUnique({
-            where: { slug },
-            select: { id: true }
-          });
-
-          if (post) {
-            await postDb.postView.upsert({
-              where: { postId: post.id },
-              update: {
-                totalViews: { increment: 1 },
-                ...(isUniquePost ? { uniqueViews: { increment: 1 } } : {})
-              },
-              create: {
-                postId: post.id,
-                totalViews: 1,
-                uniqueViews: 1,
-              }
-            });
-            if (isUniquePost) viewedPages.push(`post_${slug}`);
+    if (post) {
+      promises.push(
+        postDb.postView.upsert({
+          where: { postId: post.id },
+          update: {
+            totalViews: { increment: 1 },
+            ...(isUniquePost ? { uniqueViews: { increment: 1 } } : {})
+          },
+          create: {
+            postId: post.id,
+            totalViews: 1,
+            uniqueViews: 1,
           }
-        })()
+        }).then(() => {
+          if (isUniquePost) viewedPages.push(`post_${slug}`);
+        })
       );
     }
 
-    await Promise.all(trackingPromises);
+    await Promise.all(promises);
 
     const res = NextResponse.json({ success: true });
     
