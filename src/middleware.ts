@@ -8,6 +8,9 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { jwtVerify } from 'jose'
 
+// Configure for Edge Runtime (required for Cloudflare Workers)
+export const runtime = 'edge'
+
 const getSecret = () => {
   const secret = process.env.JWT_SECRET
   if (!secret) {
@@ -20,7 +23,7 @@ const getSecret = () => {
   return new TextEncoder().encode(secret)
 }
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname
 
   if (path.startsWith('/admin/dashboard')) {
