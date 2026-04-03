@@ -30,6 +30,19 @@ async function getProject(slug: string) {
   } catch { return null; }
 }
 
+function getSafeUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return url
+    }
+  } catch (e) {
+    // Invalid URL
+  }
+  return undefined
+}
+
 const STATUS_COLORS: Record<string, { text: string; label: string }> = {
   completed:   { text: '#22c55e', label: 'Completed' },
   in_progress: { text: 'var(--accent-color)', label: 'In Progress' },
@@ -48,6 +61,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
   const enabledMeta = COMPONENTS.filter(c => enabledComponents.includes(c.id));
   const status = STATUS_COLORS[project.status] || STATUS_COLORS.completed;
+
+  const safeGithubUrl = getSafeUrl(project.githubUrl)
+  const safeLiveUrl = getSafeUrl(project.liveUrl)
 
   return (
     <div className="main-content fade-in-up">
@@ -140,8 +156,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
           {/* Action links */}
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            {project.githubUrl && (
-              <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" style={{
+            {safeGithubUrl && (
+              <a href={safeGithubUrl} target="_blank" rel="noopener noreferrer" style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.5rem',
@@ -161,8 +177,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 View on GitHub
               </a>
             )}
-            {project.liveUrl && (
-              <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" style={{
+            {safeLiveUrl && (
+              <a href={safeLiveUrl} target="_blank" rel="noopener noreferrer" style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.5rem',

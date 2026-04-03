@@ -22,6 +22,19 @@ export interface ProjectCardData {
   techTags: string[]
 }
 
+function getSafeUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return url
+    }
+  } catch (e) {
+    // Invalid URL
+  }
+  return undefined
+}
+
 const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
   completed:   { bg: 'color-mix(in srgb, #22c55e 15%, transparent)', text: '#22c55e', label: 'Completed' },
   in_progress: { bg: 'color-mix(in srgb, var(--accent-color) 15%, transparent)', text: 'var(--accent-color)', label: 'In Progress' },
@@ -48,6 +61,9 @@ function ExternalLinkIcon() {
 
 export function ProjectCard({ project }: { project: ProjectCardData }) {
   const status = STATUS_COLORS[project.status] || STATUS_COLORS.completed
+
+  const safeGithubUrl = getSafeUrl(project.githubUrl)
+  const safeLiveUrl = getSafeUrl(project.liveUrl)
 
   return (
     <div
@@ -152,9 +168,9 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
             {status.label}
           </span>
           <div style={{ display: 'flex', gap: '0.4rem' }}>
-            {project.githubUrl && (
+            {safeGithubUrl && (
               <a
-                href={project.githubUrl}
+                href={safeGithubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -174,9 +190,9 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
                 <GitHubIcon />
               </a>
             )}
-            {project.liveUrl && (
+            {safeLiveUrl && (
               <a
-                href={project.liveUrl}
+                href={safeLiveUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
