@@ -31,7 +31,7 @@ export function ThemeToggle() {
       style={{ padding: '0.5rem', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
     >
-      {theme === 'dark' ? '🌞' : '🌙'}
+      <span aria-hidden="true">{theme === 'dark' ? '🌞' : '🌙'}</span>
     </button>
   )
 }
