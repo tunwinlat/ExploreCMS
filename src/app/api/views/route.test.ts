@@ -37,7 +37,7 @@ vi.mock('next/headers', () => {
 vi.mock('@/lib/db', () => ({
   prisma: {
     siteAnalytics: {
-      upsert: vi.fn(),
+      upsert: vi.fn().mockResolvedValue({}),
     },
   },
 }));
@@ -48,7 +48,7 @@ vi.mock('@/lib/bunnyDb', () => ({
       findUnique: vi.fn(),
     },
     postView: {
-      upsert: vi.fn(),
+      upsert: vi.fn().mockResolvedValue({}),
     },
   })
 }));
@@ -67,18 +67,18 @@ describe('POST /api/views', () => {
     });
   };
 
-  it('returns 400 when slug is not provided', async () => {
+  it('returns success and tracks global view when slug is not provided', async () => {
     const req = new Request('http://localhost:3000/api/views', {
       method: 'POST',
-      body: 'invalid json',
+      body: JSON.stringify({}),
     });
 
     mockCookiesGet.mockReturnValue(undefined);
 
     const res = await POST(req);
 
-    expect(res.body).toEqual({ error: 'Slug is required' });
-    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ success: true });
+    expect(prisma.siteAnalytics.upsert).toHaveBeenCalled();
   });
 
   it('tracks post view and global view for first time visitor to a post', async () => {

@@ -23,6 +23,7 @@ vi.mock('next/navigation', () => ({
 }))
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
 }))
 vi.mock('next/server', () => ({
   after: vi.fn((cb) => cb()),
@@ -36,19 +37,21 @@ vi.mock('@/lib/craftSync', () => ({
 describe('savePost action', () => {
   let mockUpdate: ReturnType<typeof vi.fn>
   let mockCreate: ReturnType<typeof vi.fn>
+  let mockPostDb: any
 
   beforeEach(() => {
     vi.clearAllMocks()
     mockUpdate = vi.fn()
     mockCreate = vi.fn()
-    ;(getPostDb as any).mockResolvedValue({
+    mockPostDb = {
       post: {
         findUnique: vi.fn(),
         findFirst: vi.fn(),
         update: mockUpdate,
         create: mockCreate.mockResolvedValue({ id: 'new-id' }),
       },
-    })
+    };
+    (getPostDb as any).mockImplementation(async () => mockPostDb);
   })
 
   function makeFormData(fields: Record<string, string|null>) {
@@ -61,6 +64,7 @@ describe('savePost action', () => {
 
   it('updates existing post and preserves isFeatured when absent from form', async () => {
     // mock fetch for existing flag
+    const { getPostDb } = await import('@/lib/bunnyDb')
     const postDb = await getPostDb()
     ;(postDb.post.findUnique as any).mockResolvedValue({ isFeatured: true })
 

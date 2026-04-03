@@ -51,27 +51,35 @@ export async function POST(req: Request) {
     const isUniqueGlobal = !viewedPages.includes('global_site');
     const isUniquePost = slug && !viewedPages.includes(`post_${slug}`);
 
-    // Track Global Views
-    await prisma.siteAnalytics.upsert({
-      where: { id: 'singleton' },
-      update: {
-        totalViews: { increment: 1 },
-        ...(isUniqueGlobal ? { uniqueViews: { increment: 1 } } : {})
-      },
-      create: {
-        id: 'singleton',
-        totalViews: 1,
-        uniqueViews: 1,
-      }
-    });
+    let post = null;
+    if (slug) {
+      post = await postDb.post.findUnique({ where: { slug } });
+    }
 
-    if (isUniqueGlobal) viewedPages.push('global_site');
+    const promises: Promise<any>[] = [];
+
+    // Track Global Views
+    promises.push(
+      prisma.siteAnalytics.upsert({
+        where: { id: 'singleton' },
+        update: {
+          totalViews: { increment: 1 },
+          ...(isUniqueGlobal ? { uniqueViews: { increment: 1 } } : {})
+        },
+        create: {
+          id: 'singleton',
+          totalViews: 1,
+          uniqueViews: 1,
+        }
+      }).then(() => {
+        if (isUniqueGlobal) viewedPages.push('global_site');
+      })
+    );
 
     // Track Post Views
-    if (slug) {
-      const post = await postDb.post.findUnique({ where: { slug } });
-      if (post) {
-        await postDb.postView.upsert({
+    if (post) {
+      promises.push(
+        postDb.postView.upsert({
           where: { postId: post.id },
           update: {
             totalViews: { increment: 1 },
@@ -82,12 +90,15 @@ export async function POST(req: Request) {
             totalViews: 1,
             uniqueViews: 1,
           }
-        });
-        if (isUniquePost) viewedPages.push(`post_${slug}`);
-      }
+        }).then(() => {
+          if (isUniquePost) viewedPages.push(`post_${slug}`);
+        })
+      );
     }
 
-    const res = NextResponse.json({ success: true });
+    await Promise.all(promises);
+
+    const res = NextResponse.json({ success: true }) as any;
     
     if (isUniqueGlobal || isUniquePost) {
       // Set the cookie for 30 days
