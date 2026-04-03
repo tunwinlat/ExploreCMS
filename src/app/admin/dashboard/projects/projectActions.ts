@@ -35,6 +35,22 @@ export async function saveProject(formData: FormData) {
 
   if (!title) return { error: 'Title is required' }
 
+  const validateUrl = (urlStr: string | null) => {
+    if (!urlStr) return null
+    try {
+      const url = new URL(urlStr)
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+        return null
+      }
+      return urlStr
+    } catch {
+      return null
+    }
+  }
+
+  const safeGithubUrl = validateUrl(githubUrl)
+  const safeLiveUrl = validateUrl(liveUrl)
+
   const techTags = techTagsRaw.startsWith('[')
     ? techTagsRaw
     : JSON.stringify(techTagsRaw.split(',').map(t => t.trim()).filter(Boolean))
@@ -48,14 +64,14 @@ export async function saveProject(formData: FormData) {
 
       await (prisma as any).project.update({
         where: { id },
-        data: { title, tagline, content, coverImage, status, featured, published, githubUrl, liveUrl, techTags, order: orderVal, slug },
+        data: { title, tagline, content, coverImage, status, featured, published, githubUrl: safeGithubUrl, liveUrl: safeLiveUrl, techTags, order: orderVal, slug },
       })
     } else {
       let existing = await (prisma as any).project.findUnique({ where: { slug } })
       if (existing) slug = `${slug}-${Date.now()}`
 
       await (prisma as any).project.create({
-        data: { title, tagline, content, coverImage, status, featured, published, githubUrl, liveUrl, techTags, order: orderVal, slug },
+        data: { title, tagline, content, coverImage, status, featured, published, githubUrl: safeGithubUrl, liveUrl: safeLiveUrl, techTags, order: orderVal, slug },
       })
     }
 
