@@ -341,7 +341,6 @@ async function getCurrentStorageClient(): Promise<StorageClient | null> {
   const settings = await (localPrisma as any).siteSettings.findUnique({
     where: { id: 'singleton' },
     select: {
-      storageType: true,
       bunnyStorageEnabled: true,
       bunnyStorageRegion: true,
       bunnyStorageZoneName: true,
@@ -350,26 +349,18 @@ async function getCurrentStorageClient(): Promise<StorageClient | null> {
     }
   })
 
-  if (!settings?.bunnyStorageEnabled && !settings?.storageType) {
+  if (!settings?.bunnyStorageEnabled) {
     return null
   }
 
-  const type = settings.storageType || 'bunny'
-  
-  if (type === 'bunny') {
-    // Decrypt the API key before use
-    const apiKey = decrypt(settings.bunnyStorageApiKey) || settings.bunnyStorageApiKey
-    return new BunnyStorageClient(
-      apiKey,
-      settings.bunnyStorageZoneName,
-      settings.bunnyStorageRegion || '',
-      settings.bunnyStorageUrl
-    )
-  }
-  
-  // For S3, we'd need to fetch the credentials from env or settings
-  // This is a simplified version
-  return null
+  // Decrypt the API key before use
+  const apiKey = decrypt(settings.bunnyStorageApiKey) || settings.bunnyStorageApiKey
+  return new BunnyStorageClient(
+    apiKey,
+    settings.bunnyStorageZoneName,
+    settings.bunnyStorageRegion || '',
+    settings.bunnyStorageUrl
+  )
 }
 
 // Test new storage connection
@@ -571,24 +562,13 @@ export async function migrateStorage(
       }
     }
 
-    // Save new storage settings
+    // Save new storage settings (only Bunny is supported for now)
     const updateData: any = {
-      storageType: type,
-      bunnyStorageEnabled: type === 'bunny',
-    }
-
-    if (type === 'bunny') {
-      updateData.bunnyStorageRegion = config.region || ''
-      updateData.bunnyStorageZoneName = config.zoneName
-      updateData.bunnyStorageApiKey = encrypt(config.apiKey)
-      updateData.bunnyStorageUrl = config.cdnUrl
-    } else {
-      // For S3, we might want to store some settings
-      // but credentials should go in environment variables
-      updateData.s3Endpoint = config.endpoint
-      updateData.s3Bucket = config.bucket
-      updateData.s3Region = config.region
-      updateData.s3CdnUrl = config.cdnUrl
+      bunnyStorageEnabled: true,
+      bunnyStorageRegion: config.region || '',
+      bunnyStorageZoneName: config.zoneName,
+      bunnyStorageApiKey: encrypt(config.apiKey),
+      bunnyStorageUrl: config.cdnUrl,
     }
 
     await (localPrisma as any).siteSettings.upsert({
@@ -658,7 +638,6 @@ export async function disconnectBunnyStorage() {
         where: { id: 'singleton' },
         data: { 
           bunnyStorageEnabled: false,
-          storageType: null
         }
       })
       return { success: true, stats: results }
@@ -723,7 +702,6 @@ export async function disconnectBunnyStorage() {
       where: { id: 'singleton' },
       data: { 
         bunnyStorageEnabled: false,
-        storageType: null
       }
     })
 
@@ -745,15 +723,10 @@ export async function getStorageSettings() {
     const settings = await (localPrisma as any).siteSettings.findUnique({
       where: { id: 'singleton' },
       select: {
-        storageType: true,
         bunnyStorageEnabled: true,
         bunnyStorageRegion: true,
         bunnyStorageZoneName: true,
         bunnyStorageUrl: true,
-        s3Endpoint: true,
-        s3Bucket: true,
-        s3Region: true,
-        s3CdnUrl: true,
       }
     })
 
