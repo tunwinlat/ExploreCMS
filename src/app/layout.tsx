@@ -14,6 +14,8 @@ import { ensureMigrations } from "@/lib/db-init";
 import { getSettings } from "@/lib/settings-cache";
 import { ParticleBackground } from "@/components/ParticleBackground";
 
+export const runtime = 'edge';
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,

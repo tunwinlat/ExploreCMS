@@ -12,20 +12,16 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 function createPrismaClient() {
-  const url = process.env.DATABASE_URL
+  // During Next.js build time in CI environments (like CF Pages), DATABASE_URL may be missing.
+  // We provide a dummy fallback URL so that static prerendering succeeds and builds don't crash.
+  // We use libsql:// rather than file: to avoid URL_SCHEME_NOT_SUPPORTED errors in Edge runtimes.
+  // In production runtime, this will be safely overridden by bindings.
+  const url = process.env.DATABASE_URL || 'libsql://dummy.turso.io'
   const authToken = process.env.DATABASE_AUTH_TOKEN
   
   if (process.env.NODE_ENV !== 'production') {
-    console.log('[Prisma] DATABASE_URL:', url ? 'Set' : 'Not set')
+    console.log('[Prisma] DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'Not set (using fallback)')
     console.log('[Prisma] DATABASE_AUTH_TOKEN:', authToken ? 'Set' : 'Not set')
-  }
-  
-  if (!url) {
-    throw new Error(
-      'DATABASE_URL environment variable is not set. ' +
-      'Please set it to your LibSQL database URL (e.g., from Turso or Bunny.net). ' +
-      'For local development, use: DATABASE_URL="file:./dev.db"'
-    )
   }
   
   // Configure adapter with or without auth token

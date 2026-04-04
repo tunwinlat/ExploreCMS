@@ -129,7 +129,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                     flexShrink: 0,
                   }}
                 >
-                  \u2715
+                  <span aria-hidden="true">{'\u2715'}</span>
                 </button>
               </div>
             )

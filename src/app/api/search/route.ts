@@ -57,3 +57,5 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Search failed' }, { status: 500 })
   }
 }
+
+export const runtime = 'edge';

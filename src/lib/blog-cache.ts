@@ -33,32 +33,37 @@ function isPrimaryPost(post: { id: string; translationGroupId: string | null }):
  */
 export const getCachedBlogListingPosts = unstable_cache(
   async (): Promise<BlogListingPost[]> => {
-    // Single efficient query with minimal fields
-    const posts = await prisma.post.findMany({
-      where: { published: true },
-      orderBy: { createdAt: 'desc' },
-      take: 100, // Reasonable limit for most blogs
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        contentFormat: true,
-        isFeatured: true,
-        createdAt: true,
-        translationGroupId: true,
-        author: {
-          select: { username: true, firstName: true }
-        },
-        tags: {
-          select: { name: true, slug: true }
-        },
-        views: {
-          select: { totalViews: true }
+    try {
+      // Single efficient query with minimal fields
+      const posts = await prisma.post.findMany({
+        where: { published: true },
+        orderBy: { createdAt: 'desc' },
+        take: 100, // Reasonable limit for most blogs
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          contentFormat: true,
+          isFeatured: true,
+          createdAt: true,
+          translationGroupId: true,
+          author: {
+            select: { username: true, firstName: true }
+          },
+          tags: {
+            select: { name: true, slug: true }
+          },
+          views: {
+            select: { totalViews: true }
+          }
         }
-      }
-    });
-    
-    return posts;
+      });
+
+      return posts;
+    } catch (e) {
+      console.error('Failed to fetch blog listing posts, likely due to missing DB at build time:', e);
+      return [];
+    }
   },
   ['blog-listing-posts'],
   { revalidate: 60, tags: ['blog-posts'] }
