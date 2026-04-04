@@ -27,7 +27,6 @@ function hexToRgb(hex: string): [number, number, number] {
       parseInt(result[3], 16)
     ]
   }
-  // Fallback colors for different themes if parsing fails
   return [99, 102, 241] // Default indigo
 }
 
@@ -39,11 +38,9 @@ function getAccentColorRgb(): [number, number, number] {
   const accentColor = computedStyle.getPropertyValue('--accent-color').trim()
   
   if (accentColor) {
-    // If it's a hex color
     if (accentColor.startsWith('#')) {
       return hexToRgb(accentColor)
     }
-    // If it's an rgb/rgba color
     const rgbMatch = accentColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/)
     if (rgbMatch) {
       return [
@@ -54,7 +51,7 @@ function getAccentColorRgb(): [number, number, number] {
     }
   }
   
-  return [99, 102, 241] // Default fallback
+  return [99, 102, 241]
 }
 
 export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
@@ -76,10 +73,8 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
       setAccentRgb(getAccentColorRgb())
     }
     
-    // Initial check
     updateThemeColors()
     
-    // Set up mutation observer to watch for class and data-theme changes
     const observer = new MutationObserver(updateThemeColors)
     observer.observe(document.documentElement, { 
       attributes: true, 
@@ -90,17 +85,20 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
   }, [enabled])
 
   const initParticles = useCallback((width: number, height: number) => {
-    const particleCount = Math.min(Math.floor((width * height) / 15000), 80)
+    // Much denser particles like Google's antigravity
+    // Google has many small particles scattered across the screen
+    const area = width * height
+    const particleCount = Math.min(Math.floor(area / 4000), 200) // 200 max particles, much denser
     const particles: Particle[] = []
     
     for (let i = 0; i < particleCount; i++) {
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.3,
-        size: Math.random() * 2 + 1,
-        alpha: Math.random() * 0.5 + 0.3
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        size: Math.random() * 1.5 + 0.5, // Smaller particles (0.5-2px)
+        alpha: Math.random() * 0.4 + 0.3
       })
     }
     
@@ -124,7 +122,6 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
       canvas.style.height = `${window.innerHeight}px`
       ctx.scale(dpr, dpr)
       
-      // Reinitialize particles on resize
       initParticles(window.innerWidth, window.innerHeight)
     }
 
@@ -140,7 +137,6 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
       const height = window.innerHeight
       const mouse = mouseRef.current
       
-      // Skip frames when mouse is inactive to save battery
       frameCount++
       const skipFrames = mouse.isActive ? 0 : 1
       if (frameCount % (skipFrames + 1) !== 0) {
@@ -153,37 +149,37 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
       const [r, g, b] = accentRgb
       
       particlesRef.current.forEach((particle, index) => {
-        // Mouse repulsion (antigravity effect)
+        // Mouse repulsion (antigravity effect) - stronger and wider radius
         if (mouse.isActive) {
           const dx = particle.x - mouse.x
           const dy = particle.y - mouse.y
           const dist = Math.sqrt(dx * dx + dy * dy)
           
-          if (dist < 150 && dist > 0) {
-            const force = (150 - dist) / 150
+          // Larger radius for more dramatic effect like Google
+          if (dist < 200 && dist > 0) {
+            const force = (200 - dist) / 200
             const angle = Math.atan2(dy, dx)
-            const repelForce = force * 2.5
+            const repelForce = force * 4 // Stronger repulsion
             
-            particle.vx += Math.cos(angle) * repelForce * 0.15
-            particle.vy += Math.sin(angle) * repelForce * 0.15
+            particle.vx += Math.cos(angle) * repelForce * 0.2
+            particle.vy += Math.sin(angle) * repelForce * 0.2
           }
         }
         
-        // Random drift (Brownian motion) - more active when mouse is away
-        const driftStrength = mouse.isActive ? 0.02 : 0.08
+        // Random drift - more active when mouse is away
+        const driftStrength = mouse.isActive ? 0.03 : 0.12
         particle.vx += (Math.random() - 0.5) * driftStrength
         particle.vy += (Math.random() - 0.5) * driftStrength
         
         // Apply velocity damping
-        particle.vx *= 0.98
-        particle.vy *= 0.98
+        particle.vx *= 0.97
+        particle.vy *= 0.97
         
-        // Minimum movement when idle (stardust floating effect)
+        // Organic floating when idle
         if (!mouse.isActive) {
-          // Add subtle sine wave motion for organic floating
           const time = Date.now() * 0.001
-          particle.vx += Math.sin(time + index * 0.5) * 0.005
-          particle.vy += Math.cos(time + index * 0.3) * 0.005
+          particle.vx += Math.sin(time + index * 0.3) * 0.008
+          particle.vy += Math.cos(time + index * 0.2) * 0.008
         }
         
         // Update position
@@ -200,28 +196,28 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
         ctx.beginPath()
         ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
         
-        // Dynamic alpha based on velocity (faster = brighter)
         const speed = Math.sqrt(particle.vx * particle.vx + particle.vy * particle.vy)
-        const dynamicAlpha = Math.min(particle.alpha + speed * 0.1, 0.8)
+        const dynamicAlpha = Math.min(particle.alpha + speed * 0.08, 0.9)
         
-        // Adjust opacity based on theme - lighter in dark mode, more subtle in light
-        const themeAlpha = isDark ? dynamicAlpha : dynamicAlpha * 0.7
+        // Adjust opacity based on theme
+        const themeAlpha = isDark ? dynamicAlpha : dynamicAlpha * 0.6
         
         ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${themeAlpha})`
         ctx.fill()
         
-        // Draw subtle glow for larger particles
-        if (particle.size > 1.5) {
+        // Subtle glow for medium particles
+        if (particle.size > 1.2) {
           ctx.beginPath()
-          ctx.arc(particle.x, particle.y, particle.size * 2, 0, Math.PI * 2)
-          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${themeAlpha * 0.15})`
+          ctx.arc(particle.x, particle.y, particle.size * 2.5, 0, Math.PI * 2)
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${themeAlpha * 0.1})`
           ctx.fill()
         }
       })
       
-      // Draw connections between nearby particles (subtle constellation effect)
-      const maxDistance = 100
-      const maxConnections = 3
+      // Draw connections between nearby particles (constellation effect)
+      // Increased connection distance for more connections like Google's effect
+      const maxDistance = 120
+      const maxConnections = 4
       
       for (let i = 0; i < particlesRef.current.length; i++) {
         let connections = 0
@@ -231,14 +227,13 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
           const dist = Math.sqrt(dx * dx + dy * dy)
           
           if (dist < maxDistance) {
-            const alpha = (1 - dist / maxDistance) * 0.15
-            // Lighter connections in light mode
-            const connectionAlpha = isDark ? alpha : alpha * 0.6
+            const alpha = (1 - dist / maxDistance) * 0.2
+            const connectionAlpha = isDark ? alpha : alpha * 0.5
             ctx.beginPath()
             ctx.moveTo(particlesRef.current[i].x, particlesRef.current[i].y)
             ctx.lineTo(particlesRef.current[j].x, particlesRef.current[j].y)
             ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${connectionAlpha})`
-            ctx.lineWidth = 0.5
+            ctx.lineWidth = 0.4
             ctx.stroke()
             connections++
           }
@@ -250,7 +245,6 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
 
     animate()
 
-    // Mouse event handlers
     const handleMouseMove = (e: MouseEvent) => {
       mouseRef.current = { x: e.clientX, y: e.clientY, isActive: true }
     }
@@ -285,7 +279,7 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
         height: '100%',
         pointerEvents: 'none',
         zIndex: 0,
-        opacity: isDark ? 0.6 : 0.5
+        opacity: isDark ? 0.7 : 0.55
       }}
       aria-hidden="true"
     />
