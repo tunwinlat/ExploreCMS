@@ -59,7 +59,7 @@ function getAccentColorRgb(): [number, number, number] {
 
 export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number | null>(null)
   const particlesRef = useRef<Particle[]>([])
   const mouseRef = useRef({ x: -1000, y: -1000, isActive: false })
   const [accentRgb, setAccentRgb] = useState<[number, number, number]>([99, 102, 241])
@@ -266,7 +266,7 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
       window.removeEventListener('resize', resizeCanvas)
       window.removeEventListener('mousemove', handleMouseMove)
       document.body.removeEventListener('mouseleave', handleMouseLeave)
-      if (animationRef.current) {
+      if (animationRef.current !== null) {
         cancelAnimationFrame(animationRef.current)
       }
     }
