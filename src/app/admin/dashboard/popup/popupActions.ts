@@ -54,7 +54,7 @@ export async function updatePopupConfig(
   if (content && content.length > 10000) {
     return { error: 'Content must be 10,000 characters or fewer' }
   }
-  const validModes = ['toast', 'modal', 'banner']
+  const validModes = ['once', 'always']
   if (displayMode && !validModes.includes(displayMode)) {
     return { error: 'Invalid display mode' }
   }
