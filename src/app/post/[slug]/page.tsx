@@ -80,7 +80,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   
   // Navigation items based on settings
   const navItems = [
-    { label: 'Dashboard', href: '/' },
+    { label: 'Home', href: '/' },
     { label: 'Blog', href: '/blog', active: true },
     { label: 'Projects', href: '/projects' },
     { label: 'Gallery', href: '/photos' },

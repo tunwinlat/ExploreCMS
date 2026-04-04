@@ -7,6 +7,16 @@
 import { NextResponse } from 'next/server'
 import { getPostDb } from '@/lib/bunnyDb'
 
+// Check if post content contains an image
+function hasImage(content: string, contentFormat?: string): boolean {
+  if (!content) return false
+  // Check for markdown image syntax ![alt](url)
+  if (/!\[.*?\]\(.*?\)/.test(content)) return true
+  // Check for HTML img tags
+  if (/<img\s+[^>]*src/i.test(content)) return true
+  return false
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const slug = searchParams.get('slug')
@@ -20,7 +30,7 @@ export async function GET(request: Request) {
   try {
     const postDb = await getPostDb()
     
-    // First, get the current post to find its tags
+    // First, get the current post to find its tags and translation group
     const currentPost = await postDb.post.findUnique({
       where: { slug },
       include: { tags: true }
@@ -31,19 +41,25 @@ export async function GET(request: Request) {
     }
 
     const tagIds = currentPost.tags.map(tag => tag.id)
+    const translationGroupId = (currentPost as any).translationGroupId
 
     // Find related posts that share tags with the current post
+    // Exclude: same post, same translation group (different languages), posts without images
     const relatedPosts = await postDb.post.findMany({
       where: {
         published: true,
         id: { not: currentPost.id }, // Exclude current post
+        // Exclude posts from the same translation group (other languages of same post)
+        ...(translationGroupId ? {
+          NOT: { translationGroupId: translationGroupId }
+        } : {}),
         tags: tagIds.length > 0 ? {
           some: {
             id: { in: tagIds }
           }
         } : undefined
       },
-      take: limit,
+      take: limit * 3, // Fetch more to filter out posts without images
       orderBy: [
         // Prioritize posts with more matching tags
         { createdAt: 'desc' }
@@ -57,15 +73,24 @@ export async function GET(request: Request) {
       }
     })
 
-    // If no related posts by tags, get recent posts
-    let posts = relatedPosts
-    if (posts.length === 0) {
-      posts = await postDb.post.findMany({
+    // Filter out posts without images
+    let posts = relatedPosts.filter(post => hasImage(post.content, (post as any).contentFormat))
+
+    // If not enough related posts by tags, get recent posts with images
+    if (posts.length < limit) {
+      const additionalPosts = await postDb.post.findMany({
         where: {
           published: true,
-          id: { not: currentPost.id }
+          id: { not: currentPost.id },
+          ...(translationGroupId ? {
+            NOT: { translationGroupId: translationGroupId }
+          } : {}),
+          // Exclude already fetched posts
+          ...(posts.length > 0 ? {
+            id: { notIn: posts.map(p => p.id) }
+          } : {})
         },
-        take: limit,
+        take: limit * 2,
         orderBy: { createdAt: 'desc' },
         include: {
           author: { select: { username: true, firstName: true } },
@@ -73,7 +98,16 @@ export async function GET(request: Request) {
           views: true
         }
       })
+      
+      // Filter and add more posts with images
+      const postsWithImages = additionalPosts.filter(post => 
+        hasImage(post.content, (post as any).contentFormat)
+      )
+      posts = [...posts, ...postsWithImages]
     }
+
+    // Limit to requested amount
+    posts = posts.slice(0, limit)
 
     return NextResponse.json({ posts, currentSlug: slug })
   } catch (error) {
