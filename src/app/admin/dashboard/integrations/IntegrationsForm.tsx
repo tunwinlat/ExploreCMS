@@ -111,6 +111,7 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
   const [craftWriteAccess, setCraftWriteAccess] = useState(initialSettings?.craftWriteAccess || false)
   const [craftError, setCraftError] = useState(initialSettings?.craftError || '')
   const [craftLoading, setCraftLoading] = useState(false)
+  const [craftEditMode, setCraftEditMode] = useState(!initialSettings?.craftEnabled)
   const [craftFolders, setCraftFolders] = useState<{ id: string; label: string }[]>([])
   const [craftSyncResult, setCraftSyncResult] = useState<any>(null)
   const [craftLastSync, setCraftLastSync] = useState(initialSettings?.craftLastSyncAt || '')
@@ -445,6 +446,31 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
               Sync blog posts with Craft.do. Import notes from a Craft folder as blog posts, back up posts to Craft, or enable full two-way sync.
             </p>
 
+            {/* Show Modify button when Craft is configured but not in edit mode */}
+            {craftEnabled && !craftEditMode && (
+              <div style={{ padding: '1rem', background: 'rgba(34, 197, 94, 0.1)', borderRadius: 'var(--radius-md)', border: '1px solid #22c55e' }}>
+                <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.9rem', color: '#22c55e' }}>
+                  ✅ Craft is configured and {craftEnabled ? 'enabled' : 'disabled'}
+                </p>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                  <div><strong>Server:</strong> {craftServerUrl}</div>
+                  <div><strong>Folder:</strong> {craftFolderName || craftFolderId}</div>
+                  <div><strong>Mode:</strong> {craftSyncMode}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCraftEditMode(true)}
+                  className="btn"
+                  style={{ background: 'var(--accent-color)', color: 'white', border: 'none' }}
+                >
+                  Modify Configuration
+                </button>
+              </div>
+            )}
+
+            {/* Show form fields only in edit mode */}
+            {craftEditMode && (
+              <>
             <div>
               <label style={{ fontWeight: 400 }}>Server URL *</label>
               <input
@@ -595,11 +621,16 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <button
                 type="button"
-                onClick={handleSaveCraft}
+                onClick={async () => {
+                  await handleSaveCraft()
+                  if (craftServerUrl && craftApiToken && craftFolderId) {
+                    setCraftEditMode(false)
+                  }
+                }}
                 disabled={craftLoading}
                 className="btn btn-primary"
               >
-                {craftLoading ? 'Saving...' : 'Save Craft Settings'}
+                {craftLoading ? 'Saving...' : (craftEnabled ? 'Update Settings' : 'Save Craft Settings')}
               </button>
               {craftEnabled && (
                 <>
@@ -651,6 +682,8 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
                   ))}
                 </ul>
               </div>
+            )}
+              </>
             )}
           </div>
         </ExpandableSection>
