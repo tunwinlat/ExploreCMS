@@ -31,9 +31,30 @@ export async function saveEmailSettings(input: SaveEmailSettingsInput) {
   if ((session as { role: string }).role !== 'OWNER') return { error: 'Permission denied' }
 
   try {
-    // Only encrypt non-empty secrets
-    const encryptedResendKey = input.resendApiKey ? encrypt(input.resendApiKey) : null
-    const encryptedSmtpPassword = input.smtpPassword ? encrypt(input.smtpPassword) : null
+    // Fetch existing settings to preserve encrypted values when not provided
+    const existing = await prisma.siteSettings.findUnique({
+      where: { id: 'singleton' },
+      select: { resendApiKey: true, smtpPassword: true }
+    })
+
+    // Only encrypt and update if new values provided, otherwise preserve existing
+    let encryptedResendKey = existing?.resendApiKey || null
+    if (input.resendApiKey && input.resendApiKey.trim() !== '') {
+      encryptedResendKey = encrypt(input.resendApiKey.trim())
+    }
+
+    let encryptedSmtpPassword = existing?.smtpPassword || null
+    if (input.smtpPassword && input.smtpPassword.trim() !== '') {
+      encryptedSmtpPassword = encrypt(input.smtpPassword.trim())
+    }
+
+    // Validate required credentials for the selected provider
+    if (input.provider === 'resend' && !encryptedResendKey) {
+      return { error: 'Resend API key is required.' }
+    }
+    if (input.provider === 'smtp' && !encryptedSmtpPassword && !input.smtpHost) {
+      return { error: 'SMTP host is required.' }
+    }
 
     await prisma.siteSettings.upsert({
       where: { id: 'singleton' },
