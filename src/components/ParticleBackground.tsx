@@ -15,6 +15,10 @@ interface Particle {
   vy: number
   size: number
   alpha: number
+  mass: number
+  fleeing: boolean
+  fleeTimer: number
+  id: number
 }
 
 // Convert hex color to RGB array
@@ -27,7 +31,7 @@ function hexToRgb(hex: string): [number, number, number] {
       parseInt(result[3], 16)
     ]
   }
-  return [99, 102, 241] // Default indigo
+  return [99, 102, 241]
 }
 
 // Get computed accent color from CSS variable
@@ -59,10 +63,12 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
   const animationRef = useRef<number | null>(null)
   const particlesRef = useRef<Particle[]>([])
   const mouseRef = useRef({ x: -1000, y: -1000, isActive: false })
+  const nextIdRef = useRef(0)
+  const spawnTimerRef = useRef(0)
   const [accentRgb, setAccentRgb] = useState<[number, number, number]>([99, 102, 241])
   const [isDark, setIsDark] = useState(true)
 
-  // Track theme changes and update accent color
+  // Track theme changes
   useEffect(() => {
     if (!enabled) return
     
@@ -84,26 +90,80 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
     return () => observer.disconnect()
   }, [enabled])
 
+  const createParticle = useCallback((x: number, y: number, size: number, vx: number = 0, vy: number = 0): Particle => ({
+    x,
+    y,
+    vx,
+    vy,
+    size,
+    alpha: Math.random() * 0.4 + 0.3,
+    mass: size * size, // Mass proportional to area
+    fleeing: false,
+    fleeTimer: 0,
+    id: nextIdRef.current++
+  }), [])
+
   const initParticles = useCallback((width: number, height: number) => {
-    // Much denser particles like Google's antigravity
-    // Google has many small particles scattered across the screen
     const area = width * height
-    const particleCount = Math.min(Math.floor(area / 4000), 200) // 200 max particles, much denser
+    const particleCount = Math.min(Math.floor(area / 4000), 200)
     const particles: Particle[] = []
     
     for (let i = 0; i < particleCount; i++) {
-      particles.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
-        size: Math.random() * 1.5 + 0.5, // Smaller particles (0.5-2px)
-        alpha: Math.random() * 0.4 + 0.3
-      })
+      particles.push(createParticle(
+        Math.random() * width,
+        Math.random() * height,
+        Math.random() * 1.5 + 0.5
+      ))
     }
     
     particlesRef.current = particles
-  }, [])
+  }, [createParticle])
+
+  // Spawn new particles periodically
+  const spawnParticles = useCallback((width: number, height: number) => {
+    const spawnCount = Math.floor(Math.random() * 3) + 2 // 2-4 particles
+    
+    for (let i = 0; i < spawnCount; i++) {
+      // Spawn at random edge
+      let x, y
+      const edge = Math.floor(Math.random() * 4)
+      switch (edge) {
+        case 0: x = Math.random() * width; y = -10; break
+        case 1: x = width + 10; y = Math.random() * height; break
+        case 2: x = Math.random() * width; y = height + 10; break
+        default: x = -10; y = Math.random() * height
+      }
+      
+      particlesRef.current.push(createParticle(
+        x,
+        y,
+        Math.random() * 1.5 + 0.5,
+        (Math.random() - 0.5) * 0.5,
+        (Math.random() - 0.5) * 0.5
+      ))
+    }
+  }, [createParticle])
+
+  // Explode a particle into smaller ones
+  const explodeParticle = useCallback((particle: Particle, width: number, height: number) => {
+    const fragments = Math.floor(Math.random() * 3) + 3 // 3-5 fragments
+    const newSize = Math.max(0.5, particle.size / Math.sqrt(fragments))
+    
+    const newParticles: Particle[] = []
+    for (let i = 0; i < fragments; i++) {
+      const angle = (Math.PI * 2 * i) / fragments + Math.random() * 0.5
+      const speed = Math.random() * 3 + 2
+      newParticles.push(createParticle(
+        particle.x + Math.cos(angle) * particle.size,
+        particle.y + Math.sin(angle) * particle.size,
+        newSize,
+        Math.cos(angle) * speed,
+        Math.sin(angle) * speed
+      ))
+    }
+    
+    return newParticles
+  }, [createParticle])
 
   useEffect(() => {
     if (!enabled) return
@@ -122,120 +182,254 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
       canvas.style.height = `${window.innerHeight}px`
       ctx.scale(dpr, dpr)
       
-      initParticles(window.innerWidth, window.innerHeight)
+      if (particlesRef.current.length === 0) {
+        initParticles(window.innerWidth, window.innerHeight)
+      }
     }
 
     resizeCanvas()
     window.addEventListener('resize', resizeCanvas)
 
-    let frameCount = 0
+    let lastTime = Date.now()
     
     const animate = () => {
       if (!ctx || !canvas) return
 
       const width = window.innerWidth
       const height = window.innerHeight
-      const mouse = mouseRef.current
+      const currentTime = Date.now()
+      const deltaTime = (currentTime - lastTime) / 1000
+      lastTime = currentTime
       
-      frameCount++
-      const skipFrames = mouse.isActive ? 0 : 1
-      if (frameCount % (skipFrames + 1) !== 0) {
-        animationRef.current = requestAnimationFrame(animate)
-        return
+      // Spawn new particles every ~10 seconds
+      spawnTimerRef.current += deltaTime
+      if (spawnTimerRef.current > 10) {
+        spawnTimerRef.current = 0
+        spawnParticles(width, height)
       }
+      
+      const mouse = mouseRef.current
+      const [r, g, b] = accentRgb
       
       ctx.clearRect(0, 0, width, height)
       
-      const [r, g, b] = accentRgb
+      // Physics simulation
+      const newParticles: Particle[] = []
+      const particlesToRemove = new Set<number>()
       
-      particlesRef.current.forEach((particle, index) => {
-        // Mouse repulsion (antigravity effect) - stronger and wider radius
-        if (mouse.isActive) {
-          const dx = particle.x - mouse.x
-          const dy = particle.y - mouse.y
+      // Update each particle
+      particlesRef.current.forEach((particle, i) => {
+        if (particlesToRemove.has(particle.id)) return
+        
+        // Calculate distance to mouse
+        const dxMouse = particle.x - mouse.x
+        const dyMouse = particle.y - mouse.y
+        const distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse)
+        
+        // Mouse repulsion (antigravity)
+        particle.fleeing = false
+        if (mouse.isActive && distMouse < 180) {
+          const force = (180 - distMouse) / 180
+          const angle = Math.atan2(dyMouse, dxMouse)
+          const repelForce = force * 8
+          
+          particle.vx += Math.cos(angle) * repelForce * 0.3
+          particle.vy += Math.sin(angle) * repelForce * 0.3
+          particle.fleeing = true
+          particle.fleeTimer = 10 // Frames to stay in fleeing state
+        }
+        
+        if (particle.fleeTimer > 0) {
+          particle.fleeTimer--
+          particle.fleeing = true
+        }
+        
+        // Attraction to other particles (gravity-like)
+        particlesRef.current.forEach((other, j) => {
+          if (i === j || particlesToRemove.has(other.id)) return
+          
+          const dx = other.x - particle.x
+          const dy = other.y - particle.y
           const dist = Math.sqrt(dx * dx + dy * dy)
           
-          // Larger radius for more dramatic effect like Google
-          if (dist < 200 && dist > 0) {
-            const force = (200 - dist) / 200
-            const angle = Math.atan2(dy, dx)
-            const repelForce = force * 4 // Stronger repulsion
-            
-            particle.vx += Math.cos(angle) * repelForce * 0.2
-            particle.vy += Math.sin(angle) * repelForce * 0.2
-          }
-        }
+          if (dist < 10 || dist > 150) return
+          
+          // Attraction force (stronger for larger particles)
+          const minMass = Math.min(particle.mass, other.mass)
+          const attractionStrength = 0.0005 * minMass / (dist * dist + 100)
+          
+          const ax = (dx / dist) * attractionStrength
+          const ay = (dy / dist) * attractionStrength
+          
+          particle.vx += ax / particle.mass
+          particle.vy += ay / particle.mass
+        })
         
-        // Random drift - more active when mouse is away
-        const driftStrength = mouse.isActive ? 0.03 : 0.12
-        particle.vx += (Math.random() - 0.5) * driftStrength
-        particle.vy += (Math.random() - 0.5) * driftStrength
+        // Repulsion from fleeing particles (shockwave effect)
+        particlesRef.current.forEach((other) => {
+          if (other.id === particle.id || !other.fleeing) return
+          
+          const dx = particle.x - other.x
+          const dy = particle.y - other.y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          
+          if (dist < 80 && dist > 0) {
+            const force = (80 - dist) / 80
+            const angle = Math.atan2(dy, dx)
+            particle.vx += Math.cos(angle) * force * 0.5
+            particle.vy += Math.sin(angle) * force * 0.5
+          }
+        })
         
         // Apply velocity damping
-        particle.vx *= 0.97
-        particle.vy *= 0.97
-        
-        // Organic floating when idle
-        if (!mouse.isActive) {
-          const time = Date.now() * 0.001
-          particle.vx += Math.sin(time + index * 0.3) * 0.008
-          particle.vy += Math.cos(time + index * 0.2) * 0.008
-        }
+        particle.vx *= 0.985
+        particle.vy *= 0.985
         
         // Update position
         particle.x += particle.vx
         particle.y += particle.vy
         
         // Wrap around edges
-        if (particle.x < -10) particle.x = width + 10
-        if (particle.x > width + 10) particle.x = -10
-        if (particle.y < -10) particle.y = height + 10
-        if (particle.y > height + 10) particle.y = -10
+        if (particle.x < -20) particle.x = width + 20
+        if (particle.x > width + 20) particle.x = -20
+        if (particle.y < -20) particle.y = height + 20
+        if (particle.y > height + 20) particle.y = -20
+      })
+      
+      // Check for collisions and merging
+      for (let i = 0; i < particlesRef.current.length; i++) {
+        const p1 = particlesRef.current[i]
+        if (particlesToRemove.has(p1.id)) continue
         
-        // Draw particle
+        for (let j = i + 1; j < particlesRef.current.length; j++) {
+          const p2 = particlesRef.current[j]
+          if (particlesToRemove.has(p2.id)) continue
+          
+          const dx = p2.x - p1.x
+          const dy = p2.y - p1.y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          const minDist = p1.size + p2.size
+          
+          if (dist < minDist) {
+            // Collision detected
+            
+            // If fleeing particle hits larger particle, explode
+            if ((p1.fleeing && p2.size > p1.size * 1.5) || (p2.fleeing && p1.size > p2.size * 1.5)) {
+              const fleeing = p1.fleeing ? p1 : p2
+              const larger = p1.fleeing ? p2 : p1
+              
+              particlesToRemove.add(fleeing.id)
+              particlesToRemove.add(larger.id)
+              
+              // Explode both into fragments
+              newParticles.push(...explodeParticle(fleeing, width, height))
+              if (larger.size > 2) {
+                newParticles.push(...explodeParticle(larger, width, height))
+              }
+            }
+            // Otherwise, merge if both are calm
+            else if (!p1.fleeing && !p2.fleeing) {
+              // Merge smaller into larger
+              const larger = p1.mass >= p2.mass ? p1 : p2
+              const smaller = p1.mass >= p2.mass ? p2 : p1
+              
+              // Conservation of momentum
+              larger.vx = (larger.vx * larger.mass + smaller.vx * smaller.mass) / (larger.mass + smaller.mass)
+              larger.vy = (larger.vy * larger.mass + smaller.vy * smaller.mass) / (larger.mass + smaller.mass)
+              
+              // New size based on combined area
+              larger.mass += smaller.mass
+              larger.size = Math.sqrt(larger.mass)
+              larger.alpha = Math.min(larger.alpha + 0.1, 0.9)
+              
+              particlesToRemove.add(smaller.id)
+            }
+            // If fleeing hits fleeing, bounce apart
+            else {
+              const angle = Math.atan2(dy, dx)
+              const force = 2
+              p1.vx -= Math.cos(angle) * force
+              p1.vy -= Math.sin(angle) * force
+              p2.vx += Math.cos(angle) * force
+              p2.vy += Math.sin(angle) * force
+            }
+          }
+        }
+      }
+      
+      // Remove merged/exploded particles and add new ones
+      particlesRef.current = particlesRef.current
+        .filter(p => !particlesToRemove.has(p.id))
+        .concat(newParticles)
+      
+      // Cap total particles for performance
+      if (particlesRef.current.length > 400) {
+        // Remove smallest particles
+        particlesRef.current.sort((a, b) => b.mass - a.mass)
+        particlesRef.current = particlesRef.current.slice(0, 400)
+      }
+      
+      // Draw particles
+      particlesRef.current.forEach((particle) => {
         ctx.beginPath()
         ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
         
         const speed = Math.sqrt(particle.vx * particle.vx + particle.vy * particle.vy)
-        const dynamicAlpha = Math.min(particle.alpha + speed * 0.08, 0.9)
+        let alpha = Math.min(particle.alpha + speed * 0.05, 1)
         
-        // Adjust opacity based on theme
-        const themeAlpha = isDark ? dynamicAlpha : dynamicAlpha * 0.6
+        // Fleeing particles glow brighter
+        if (particle.fleeing) {
+          alpha = Math.min(alpha * 1.3, 1)
+        }
         
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${themeAlpha})`
+        const themeAlpha = isDark ? alpha * 0.8 : alpha * 0.6
+        
+        // Color based on state
+        if (particle.fleeing) {
+          ctx.fillStyle = `rgba(${Math.min(r + 50, 255)}, ${g}, ${Math.min(b + 50, 255)}, ${themeAlpha})`
+        } else {
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${themeAlpha})`
+        }
         ctx.fill()
         
-        // Subtle glow for medium particles
-        if (particle.size > 1.2) {
+        // Glow effect for larger particles
+        if (particle.size > 2) {
           ctx.beginPath()
-          ctx.arc(particle.x, particle.y, particle.size * 2.5, 0, Math.PI * 2)
-          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${themeAlpha * 0.1})`
+          ctx.arc(particle.x, particle.y, particle.size * 2, 0, Math.PI * 2)
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${themeAlpha * 0.15})`
+          ctx.fill()
+        }
+        
+        // Fleeing particles get extra glow
+        if (particle.fleeing) {
+          ctx.beginPath()
+          ctx.arc(particle.x, particle.y, particle.size * 3, 0, Math.PI * 2)
+          ctx.fillStyle = `rgba(${Math.min(r + 50, 255)}, ${g}, ${Math.min(b + 50, 255)}, ${themeAlpha * 0.2})`
           ctx.fill()
         }
       })
       
-      // Draw connections between nearby particles (constellation effect)
-      // Increased connection distance for more connections like Google's effect
-      const maxDistance = 120
-      const maxConnections = 4
+      // Draw attraction lines between nearby particles
+      const maxDistance = 80
       
       for (let i = 0; i < particlesRef.current.length; i++) {
-        let connections = 0
-        for (let j = i + 1; j < particlesRef.current.length && connections < maxConnections; j++) {
-          const dx = particlesRef.current[i].x - particlesRef.current[j].x
-          const dy = particlesRef.current[i].y - particlesRef.current[j].y
+        for (let j = i + 1; j < particlesRef.current.length; j++) {
+          const p1 = particlesRef.current[i]
+          const p2 = particlesRef.current[j]
+          
+          const dx = p2.x - p1.x
+          const dy = p2.y - p1.y
           const dist = Math.sqrt(dx * dx + dy * dy)
           
           if (dist < maxDistance) {
-            const alpha = (1 - dist / maxDistance) * 0.2
+            const alpha = (1 - dist / maxDistance) * 0.15
             const connectionAlpha = isDark ? alpha : alpha * 0.5
             ctx.beginPath()
-            ctx.moveTo(particlesRef.current[i].x, particlesRef.current[i].y)
-            ctx.lineTo(particlesRef.current[j].x, particlesRef.current[j].y)
+            ctx.moveTo(p1.x, p1.y)
+            ctx.lineTo(p2.x, p2.y)
             ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${connectionAlpha})`
-            ctx.lineWidth = 0.4
+            ctx.lineWidth = 0.3
             ctx.stroke()
-            connections++
           }
         }
       }
@@ -264,7 +458,7 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [enabled, accentRgb, isDark, initParticles])
+  }, [enabled, accentRgb, isDark, initParticles, spawnParticles, explodeParticle])
 
   if (!enabled) return null
 
@@ -279,7 +473,7 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
         height: '100%',
         pointerEvents: 'none',
         zIndex: 0,
-        opacity: isDark ? 0.7 : 0.55
+        opacity: isDark ? 0.75 : 0.6
       }}
       aria-hidden="true"
     />
