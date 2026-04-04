@@ -5,14 +5,19 @@ ExploreCMS is a beautifully styled, self-hosted minimalistic blogging platform e
 ## ✨ Features
 
 * **Glassmorphic UI**: A stunning, custom-built CSS design system featuring translucent glass containers, smooth transitions, and high-performance fluid animations.
+* **Dynamic Particle Background**: Interactive particle system inspired by Google's Antigravity. Particles attract, merge, explode, and react to your cursor with beautiful physics.
 * **Animated Hero Gradient**: Dynamic flowing gradient animation on the hero title that smoothly transitions through theme colors.
-* **41 Dynamic Themes**: Switch instantly between 41 gorgeous, tailor-made color palettes, each with their own specialized Google Font pairing and full Light/Dark mode variants. Themes span a wide range of aesthetics — from **Ocean Depth**, **Cyberpunk 2077**, and **Neon Synthwave** to **Aurora Borealis**, **Gothic Cathedral**, **Deep Space**, **Steampunk Workshop**, **Pixel Art 8-bit**, and many more.
+* **40 Dynamic Themes**: Switch instantly between 40 gorgeous, tailor-made color palettes, each with their own specialized Google Font pairing and full Light/Dark mode variants. Themes span a wide range of aesthetics — from **Ocean Depth**, **Cyberpunk 2077**, and **Neon Synthwave** to **Aurora Borealis**, **Gothic Cathedral**, **Deep Space**, **Steampunk Workshop**, **Pixel Art 8-bit**, and many more.
 * **Infinite Scroll & Inline Reading**: A frictionless user experience. Navigate a dynamic masonry grid of articles that infinitely paginates using Intersection Observers. Click any article to read it in a sleek sliding Modal Overlay without ever losing your position in the feed! 
 * **Flexible Database**: Built on Prisma + LibSQL. Use a local SQLite file for development, or connect to a hosted LibSQL provider (Turso, Bunny.net) for production deployments.
 * **Rich WYSIWYG Editor**: A beautifully minimal, ghost-style writing experience built on TipTap. Supports slash commands (`/`), image dropping, embedded YouTube videos, and floating toolbars to get out of your way while you write.
 * **Built-in Analytics**: Complete with total site views and per-article unique view tracking, plotted in a beautiful native Admin Dashboard.
 * **Instant Auto-Save & Drafts**: Never lose your writing. ExploreCMS automatically saves your progress in the background to your Drafts queue every 5 seconds.
 * **Custom Favicon**: Upload a custom favicon (PNG, ICO, SVG) to personalize your site branding.
+* **Popup Toast System**: Configure custom popup messages that appear to visitors on the homepage. Control display frequency (once per visitor or every visit).
+* **Photo Gallery**: Create and manage photo albums with drag-and-drop organization, lightbox viewing, and optional location metadata.
+* **Component System**: Enable or disable site sections (Blog, Projects, Photos) and configure which component serves as your homepage default.
+* **User Management**: Multi-user support with role-based access control (OWNER, ADMIN, COLLABORATOR). Manage permissions and user accounts from the admin panel.
 
 ### 🌐 Storage Integration
 
@@ -38,6 +43,12 @@ ExploreCMS is a beautifully styled, self-hosted minimalistic blogging platform e
 - Auto-generate cover images with language-specific colors
 - Sync button to refresh project info from GitHub anytime
 - Supports manual selection or importing all public repos
+
+**Email Integration**: Configure email providers for notifications and user management.
+- Support for Resend and SMTP providers
+- Email verification for new users
+- Password reset via email
+- Configurable sender name and address
 
 ### 🗄️ Migration Tools
 
@@ -200,10 +211,38 @@ After deployment, visit your site URL. You'll be redirected to the setup wizard 
 
 3. Projects will be created with README content, tech tags, and auto-generated cover images
 
+### Email Setup
+
+1. Choose your email provider:
+   - **Resend**: Sign up at [resend.com](https://resend.com) and get an API key
+   - **SMTP**: Use your existing email provider (Gmail, Outlook, etc.)
+
+2. Go to **Admin** → **Integrations** → **Email**
+   - Select your provider
+   - Enter API key or SMTP credentials
+   - Configure sender name and email address
+   - Click "Test Connection" to verify
+   - Save settings
+
 ## 🎨 Changing Themes
 
 Themes can be easily previewed and activated live via the Admin Dashboard.
-Navigate to **Admin** -> **Settings** -> **Theme Configurator** to swap between aesthetics globally in real-time.
+Navigate to **Admin** → **Settings** → **Theme & Background** to:
+- Swap between 40 aesthetics globally in real-time
+- Enable/disable the Dynamic Particle Background
+
+### Particle Background
+
+The Dynamic Particle Background creates an interactive, living backdrop for your site:
+
+- **Cursor Reaction**: Particles are repelled from your cursor (antigravity effect)
+- **Attraction**: Particles naturally attract and slowly drift toward each other
+- **Merging**: When particles collide, they merge into larger particles
+- **Spawning**: New particles continuously spawn at screen edges
+- **Explosions**: Fleeing particles that hit larger ones cause explosive fragmentation
+- **Theme-Aware**: Particle colors adapt to match your selected theme's accent color
+
+To disable the particle background, toggle it off in **Admin** → **Settings** → **Theme & Background**.
 
 ## 🗄️ Database Architecture
 
@@ -215,12 +254,16 @@ ExploreCMS uses **LibSQL** (SQLite-compatible) via Prisma:
 ### Database Schema
 
 The database includes tables for:
-- **Users** - Admin accounts with roles (OWNER, COLLABORATOR)
+- **Users** - Admin accounts with roles (OWNER, ADMIN, COLLABORATOR)
 - **Posts** - Blog posts with rich HTML content
 - **Tags** - Categorization for posts
 - **SiteSettings** - Global site configuration
 - **SiteAnalytics** - View tracking and analytics
 - **PostView** - Per-post view statistics
+- **Projects** - GitHub projects and portfolio items
+- **PhotoAlbum** - Photo gallery albums
+- **Photo** - Individual photos with metadata
+- **PopupConfig** - Homepage popup configuration
 
 ### Database Migration
 
@@ -231,6 +274,8 @@ To migrate to a new database:
 4. Click **"Migrate Data"** to transfer all data
 5. Update your `DATABASE_URL` environment variable in Vercel
 6. Redeploy - the site now uses the new database!
+
+**Note**: Schema migrations are applied automatically on startup. No manual migration steps required.
 
 ## 📦 Storage Architecture
 
