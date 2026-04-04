@@ -46,3 +46,5 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${baseUrl}/admin/dashboard/profile?verified=error`)
   }
 }
+
+export const runtime = 'edge';

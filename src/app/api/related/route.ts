@@ -115,3 +115,5 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Failed to load related posts' }, { status: 500 })
   }
 }
+
+export const runtime = 'edge';

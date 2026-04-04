@@ -41,3 +41,5 @@ export async function POST(req: NextRequest) {
   const result = await client.testConnection(true) // Check write access on explicit test
   return NextResponse.json(result)
 }
+
+export const runtime = 'edge';
