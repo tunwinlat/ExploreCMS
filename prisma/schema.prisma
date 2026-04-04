@@ -73,6 +73,7 @@ model SiteSettings {
   navigationConfig  String  @default("[{\"id\":\"latest\",\"type\":\"latest\",\"label\":\"Latest\"},{\"id\":\"featured\",\"type\":\"featured\",\"label\":\"Featured\"}]")
   theme             String  @default("default")
   footerText        String  @default("")
+  dynamicPattern    Boolean @default(true)
 
   // Component System
   enabledComponents String @default("[\"blog\"]") // JSON array of enabled component IDs

@@ -12,6 +12,7 @@ import "./themes.css";
 import { getThemeConfig } from "@/lib/themes";
 import { ensureMigrations } from "@/lib/db-init";
 import { getSettings } from "@/lib/settings-cache";
+import { ParticleBackground } from "@/components/ParticleBackground";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -57,10 +58,12 @@ export default async function RootLayout({
 
   let themeId = 'default';
   let faviconUrl = '/favicon.ico';
+  let dynamicPattern = true;
   try {
     const settings = await getSettings();
     if (settings?.theme) themeId = settings.theme;
     if (settings?.faviconUrl) faviconUrl = settings.faviconUrl;
+    if (settings?.dynamicPattern !== undefined) dynamicPattern = settings.dynamicPattern;
   } catch {
     // Database might not be initialized yet
   }
@@ -85,6 +88,7 @@ export default async function RootLayout({
       </head>
       <body>
         <ThemeProvider>
+          <ParticleBackground enabled={dynamicPattern} />
           {children}
           {modal}
         </ThemeProvider>

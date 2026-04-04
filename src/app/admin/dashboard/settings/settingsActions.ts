@@ -17,7 +17,8 @@ export async function updateSiteSettings(
   headerDescription: string, 
   theme: string, 
   footerText: string,
-  sidebarAbout: string
+  sidebarAbout: string,
+  dynamicPattern: boolean = true
 ) {
   const payload = await verifySession()
   if (!payload || payload.role !== 'OWNER') {
@@ -27,8 +28,8 @@ export async function updateSiteSettings(
   try {
     await prisma.siteSettings.upsert({
       where: { id: 'singleton' },
-      update: { title, faviconUrl, headerTitle, headerDescription, theme, footerText, sidebarAbout },
-      create: { id: 'singleton', title, faviconUrl, headerTitle, headerDescription, theme, footerText, sidebarAbout }
+      update: { title, faviconUrl, headerTitle, headerDescription, theme, footerText, sidebarAbout, dynamicPattern },
+      create: { id: 'singleton', title, faviconUrl, headerTitle, headerDescription, theme, footerText, sidebarAbout, dynamicPattern }
     })
     
     revalidatePath('/', 'layout')

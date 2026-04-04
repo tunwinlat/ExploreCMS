@@ -83,6 +83,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
   const [theme, setTheme] = useState(initialSettings?.theme || 'default')
   const [footerText, setFooterText] = useState(initialSettings?.footerText || '')
   const [sidebarAbout, setSidebarAbout] = useState(initialSettings?.sidebarAbout || 'Discover articles on technology, creativity, and personal growth. Use the search or browse by tags to find what interests you.')
+  const [dynamicPattern, setDynamicPattern] = useState(initialSettings?.dynamicPattern ?? true)
 
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -123,7 +124,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
     }
     setLoading(true)
 
-    const res = await updateSiteSettings(title, faviconUrl || null, headerTitle, headerDescription, theme, footerText, sidebarAbout)
+    const res = await updateSiteSettings(title, faviconUrl || null, headerTitle, headerDescription, theme, footerText, sidebarAbout, dynamicPattern)
     if (res.success) {
       toast('Site settings saved! Reloading...', 'success')
       setTimeout(() => window.location.reload(), 1000)
@@ -256,7 +257,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
         </div>
       </ExpandableSection>
 
-      <ExpandableSection title="Theme" icon="🎭">
+      <ExpandableSection title="Theme & Background" icon="🎭">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.75rem' }}>
             Select the core aesthetic of your entire platform. Each theme changes fonts, colors, accents, and roundness.
@@ -308,6 +309,46 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
                 <strong>{t.name}</strong>
               </div>
             ))}
+          </div>
+          
+          <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', marginTop: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+              <div>
+                <label style={{ fontWeight: 500, display: 'block', marginBottom: '0.25rem' }}>Dynamic Particle Background</label>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                  Particles react to your cursor like antigravity. When idle, they drift randomly like stardust.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDynamicPattern(!dynamicPattern)}
+                style={{
+                  position: 'relative',
+                  width: '52px',
+                  height: '28px',
+                  borderRadius: '14px',
+                  border: 'none',
+                  background: dynamicPattern ? 'var(--accent-color)' : 'var(--border-color)',
+                  cursor: 'pointer',
+                  transition: 'background var(--transition-fast)',
+                  flexShrink: 0
+                }}
+                aria-checked={dynamicPattern}
+                role="switch"
+              >
+                <span style={{
+                  position: 'absolute',
+                  top: '3px',
+                  left: dynamicPattern ? '27px' : '3px',
+                  width: '22px',
+                  height: '22px',
+                  borderRadius: '50%',
+                  background: 'white',
+                  transition: 'left var(--transition-fast)',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }} />
+              </button>
+            </div>
           </div>
         </div>
       </ExpandableSection>
