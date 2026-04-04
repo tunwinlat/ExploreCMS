@@ -5,12 +5,14 @@
  */
 
 import { prisma } from '@/lib/db'
+import { Post } from '@prisma/client'
 import { getPostDb } from '@/lib/bunnyDb'
 import { CraftClient } from '@/lib/craft'
 import { revalidateTag } from 'next/cache'
 import { createWriteStream, mkdirSync, existsSync } from 'fs'
 import { join } from 'path'
 import { v4 as uuidv4 } from 'uuid'
+import { decrypt } from '@/lib/crypto'
 
 // Concurrency guard
 let syncInProgress = false
@@ -44,7 +46,17 @@ async function getStorageConfig(): Promise<StorageConfig> {
         bunnyStorageUrl: true,
       },
     })
-    return settings || { bunnyStorageEnabled: false }
+    if (!settings) return { bunnyStorageEnabled: false }
+    
+    // Decrypt the API key if it exists
+    const decryptedKey = settings.bunnyStorageApiKey 
+      ? decrypt(settings.bunnyStorageApiKey) 
+      : null
+    
+    return {
+      ...settings,
+      bunnyStorageApiKey: decryptedKey,
+    }
   } catch {
     return { bunnyStorageEnabled: false }
   }
@@ -317,11 +329,11 @@ async function delay(ms: number): Promise<void> {
  * so they can be round-tripped back as translations on import.
  * Primary / standalone posts use the bare title.
  */
-function craftDocumentTitle(post: { title: string; id: string; [k: string]: any }): string {
-  const lang: string = (post as any).language || 'en'
+function craftDocumentTitle(post: Post): string {
+  const lang: string = post.language || 'en'
   const isTranslation =
-    (post as any).translationGroupId &&
-    (post as any).translationGroupId !== post.id
+    post.translationGroupId &&
+    post.translationGroupId !== post.id
   return isTranslation ? `${post.title} [${lang}]` : post.title
 }
 
@@ -341,7 +353,16 @@ async function getCraftSettings() {
     if (!settings?.craftEnabled || !settings.craftServerUrl || !settings.craftApiToken || !settings.craftFolderId) {
       return null
     }
-    return settings
+    // Decrypt the API token before returning
+    const decryptedToken = decrypt(settings.craftApiToken)
+    if (!decryptedToken) {
+      console.error('[CraftSync] Failed to decrypt API token')
+      return null
+    }
+    return {
+      ...settings,
+      craftApiToken: decryptedToken,
+    }
   } catch {
     return null
   }

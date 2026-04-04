@@ -103,7 +103,10 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
 
   // ── Craft State ──
   const [craftServerUrl, setCraftServerUrl] = useState(initialSettings?.craftServerUrl || '')
-  const [craftApiToken, setCraftApiToken] = useState(initialSettings?.craftApiToken || '')
+  // API token is encrypted in DB - never load it client-side, always start empty
+  // Users must re-enter when modifying (placeholder shows if already configured)
+  const hasExistingToken = !!initialSettings?.craftApiToken
+  const [craftApiToken, setCraftApiToken] = useState('')
   const [craftFolderId, setCraftFolderId] = useState(initialSettings?.craftFolderId || '')
   const [craftFolderName, setCraftFolderName] = useState(initialSettings?.craftFolderName || '')
   const [craftSyncMode, setCraftSyncMode] = useState(initialSettings?.craftSyncMode || 'read-only')
@@ -158,7 +161,8 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
 
   // ── Craft Handlers ──
   const handleTestCraftConnection = async () => {
-    if (!craftServerUrl || !craftApiToken) {
+    const hasToken = craftApiToken.trim() !== '' || hasExistingToken
+    if (!craftServerUrl || !hasToken) {
       toast('Server URL and API token are required.', 'warning')
       return
     }
@@ -167,7 +171,10 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
       const res = await fetch('/api/craft/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ serverUrl: craftServerUrl, apiToken: craftApiToken }),
+        body: JSON.stringify({ 
+          serverUrl: craftServerUrl, 
+          apiToken: craftApiToken || undefined // Send empty as undefined to use DB token
+        }),
       })
       const data = await res.json()
       if (data.success) {
@@ -194,8 +201,9 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
   }
 
   const handleLoadFolders = async () => {
-    if (!craftServerUrl || !craftApiToken) {
-      toast('Connect to Craft first.', 'warning')
+    const hasToken = craftApiToken.trim() !== '' || hasExistingToken
+    if (!craftServerUrl || !hasToken) {
+      toast('Server URL and API token are required.', 'warning')
       return
     }
     setCraftLoading(true)
@@ -203,7 +211,10 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
       const res = await fetch('/api/craft/folders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ serverUrl: craftServerUrl, apiToken: craftApiToken }),
+        body: JSON.stringify({ 
+          serverUrl: craftServerUrl, 
+          apiToken: craftApiToken || undefined // Send empty as undefined to use DB token
+        }),
       })
       const data = await res.json()
       if (data.folders) {
@@ -224,14 +235,16 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
   }
 
   const handleSaveCraft = async () => {
-    if (craftEnabled && (!craftServerUrl || !craftApiToken || !craftFolderId)) {
+    // When enabling Craft, we need either a new token or an existing one
+    const hasToken = craftApiToken.trim() !== '' || hasExistingToken
+    if (craftEnabled && (!craftServerUrl || !hasToken || !craftFolderId)) {
       toast('Server URL, API token, and folder are required to enable Craft.', 'warning')
       return
     }
     setCraftLoading(true)
     const res = await saveCraftSettings(
       craftServerUrl,
-      craftApiToken,
+      craftApiToken, // Empty string is fine - server will preserve existing token
       craftFolderId,
       craftFolderName,
       craftSyncMode,
@@ -240,6 +253,8 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
     )
     if (res.success) {
       toast('Craft settings saved!', 'success')
+      // Clear the API token field after save (for security)
+      setCraftApiToken('')
     } else {
       toast(res.error || 'Failed to save.', 'error')
     }
@@ -493,18 +508,23 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
                 type="password"
                 value={craftApiToken}
                 onChange={(e) => setCraftApiToken(e.target.value)}
-                placeholder="Your Craft API bearer token"
+                placeholder={hasExistingToken ? '•••••••• (token configured - enter new to change)' : 'Your Craft API bearer token'}
                 disabled={craftLoading}
                 className="input-field"
                 autoComplete="new-password"
               />
+              {hasExistingToken && craftApiToken === '' && (
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                  A token is already configured. Leave empty to keep it, or enter a new one to replace it.
+                </p>
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 onClick={handleTestCraftConnection}
-                disabled={craftLoading || !craftServerUrl || !craftApiToken}
+                disabled={craftLoading || !craftServerUrl || (!craftApiToken && !hasExistingToken)}
                 className="btn"
                 style={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)' }}
               >
@@ -513,7 +533,7 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
               <button
                 type="button"
                 onClick={handleLoadFolders}
-                disabled={craftLoading || !craftServerUrl || !craftApiToken}
+                disabled={craftLoading || !craftServerUrl || (!craftApiToken && !hasExistingToken)}
                 className="btn"
                 style={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)' }}
               >

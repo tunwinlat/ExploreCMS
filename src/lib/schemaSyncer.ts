@@ -167,6 +167,56 @@ async function getRemoteColumns(client: LibSQLClient, tableName: string): Promis
 }
 
 /**
+ * Sanitize an SQL identifier (table name, column name, etc.).
+ * Removes any characters that aren't alphanumeric or underscore.
+ * Prevents SQL injection via identifier names.
+ */
+function sanitizeIdentifier(identifier: string): string {
+  // Only allow alphanumeric characters and underscores
+  // This is restrictive but safe for SQLite identifiers
+  return identifier.replace(/[^a-zA-Z0-9_]/g, '')
+}
+
+/**
+ * Sanitize a default value for use in SQL.
+ * Only allows safe literal values (strings, numbers, null, current_timestamp).
+ */
+function sanitizeDefaultValue(value: string): string {
+  const trimmed = value.trim()
+  
+  // Allow NULL
+  if (trimmed.toUpperCase() === 'NULL') {
+    return 'NULL'
+  }
+  
+  // Allow CURRENT_TIMESTAMP and similar
+  if (/^CURRENT_(TIMESTAMP|DATE|TIME)$/i.test(trimmed)) {
+    return trimmed.toUpperCase()
+  }
+  
+  // Allow quoted strings (single quotes) - but escape inner quotes
+  if (trimmed.startsWith("'") && trimmed.endsWith("'")) {
+    // Remove outer quotes, escape any inner single quotes by doubling them
+    const inner = trimmed.slice(1, -1).replace(/'/g, "''")
+    return `'${inner}'`
+  }
+  
+  // Allow numbers (integers and decimals)
+  if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+    return trimmed
+  }
+  
+  // Allow boolean literals
+  if (/^(true|false)$/i.test(trimmed)) {
+    return trimmed.toUpperCase()
+  }
+  
+  // For anything else, default to NULL to be safe
+  console.warn(`[SchemaSyncer] Unrecognized default value format: ${trimmed}. Using NULL.`)
+  return 'NULL'
+}
+
+/**
  * Build an ALTER TABLE ADD COLUMN statement for a missing column.
  *
  * SQLite constraints for ADD COLUMN:
@@ -175,16 +225,25 @@ async function getRemoteColumns(client: LibSQLClient, tableName: string): Promis
  *   - Cannot reference a foreign key (we skip relation columns)
  */
 function buildAlterColumn(tableName: string, col: ColumnDef): string {
-  let sql = `ALTER TABLE "${tableName}" ADD COLUMN "${col.name}" ${col.type}`
+  // Sanitize identifiers to prevent SQL injection
+  const safeTableName = sanitizeIdentifier(tableName)
+  const safeColumnName = sanitizeIdentifier(col.name)
+  const safeType = sanitizeIdentifier(col.type)
+  
+  if (!safeTableName || !safeColumnName) {
+    throw new Error(`Invalid table or column name: ${tableName}.${col.name}`)
+  }
+  
+  let sql = `ALTER TABLE "${safeTableName}" ADD COLUMN "${safeColumnName}" ${safeType || 'TEXT'}`
 
   if (col.notNull && col.defaultValue != null) {
-    sql += ` NOT NULL DEFAULT ${col.defaultValue}`
+    sql += ` NOT NULL DEFAULT ${sanitizeDefaultValue(col.defaultValue)}`
   } else if (col.notNull && col.defaultValue == null) {
     // SQLite won't allow NOT NULL without DEFAULT on ADD COLUMN
     // Fallback: add the column as nullable (safer than crashing)
     sql += ` DEFAULT NULL`
   } else if (col.defaultValue != null) {
-    sql += ` DEFAULT ${col.defaultValue}`
+    sql += ` DEFAULT ${sanitizeDefaultValue(col.defaultValue)}`
   }
 
   return sql + ';'

@@ -12,6 +12,38 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaLibSql } from '@prisma/adapter-libsql'
 import { createClient } from '@libsql/client'
 import { syncRemoteSchema } from '@/lib/schemaSyncer'
+import { getEncryptionStatus, getRawFieldValues, migrateToEncryption } from '@/lib/encryption-migration'
+
+/**
+ * Get encryption status for all sensitive fields
+ */
+export async function getEncryptionStatusAction() {
+  const session = await verifySession()
+  if (session?.role !== 'OWNER') return { success: false, error: 'Unauthorized' }
+  
+  try {
+    const status = await getEncryptionStatus()
+    const rawValues = await getRawFieldValues()
+    return { success: true, status, rawValues }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
+/**
+ * Run encryption migration for all legacy/plain fields
+ */
+export async function runEncryptionMigration() {
+  const session = await verifySession()
+  if (session?.role !== 'OWNER') return { success: false, error: 'Unauthorized' }
+  
+  try {
+    const result = await migrateToEncryption()
+    return { success: true, result }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
 
 export interface MigrationResult {
   success: boolean

@@ -19,7 +19,9 @@ export default async function ComponentsPage() {
   let settings = null
   try {
     settings = await getSettings()
-  } catch {}
+  } catch (e) {
+    console.error('Failed to load settings:', e)
+  }
 
   const config = parseComponentConfig(settings as any)
 

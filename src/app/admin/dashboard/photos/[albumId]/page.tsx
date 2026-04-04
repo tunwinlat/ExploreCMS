@@ -23,7 +23,9 @@ export default async function AlbumManagePage({ params }: { params: Promise<{ al
       where: { id: albumId },
       include: { photos: { orderBy: { order: 'asc' } } },
     })
-  } catch {}
+  } catch (e) {
+    console.error('Failed to load album:', e)
+  }
 
   if (!album) notFound()
 

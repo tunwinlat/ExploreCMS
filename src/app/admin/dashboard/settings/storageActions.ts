@@ -10,8 +10,8 @@ import { verifySession } from '@/lib/auth'
 import { prisma as localPrisma } from '@/lib/db'
 import { getPostDb } from '@/lib/bunnyDb'
 import { revalidatePath } from 'next/cache'
-import { readFile } from 'fs/promises'
-import { join } from 'path'
+import { readFile, writeFile, mkdir } from 'fs/promises'
+import { join, dirname } from 'path'
 import { encrypt, decrypt } from '@/lib/crypto'
 
 // Storage Types
@@ -651,40 +651,43 @@ export async function disconnectBunnyStorage() {
       }
     })
 
+    const publicDir = join(process.cwd(), 'public')
+
     // Download files and update posts
     for (const post of posts) {
       const imgRegex = new RegExp(`${storageUrl.replace(/[.*+?^${}()|[\]\\\\]/g, '\\\\$&')}([^"\\s]+)`, 'g')
       const matches = [...post.content.matchAll(imgRegex)]
       
       let updatedContent = post.content
-      let hasChanges = false
 
-      for (const match of matches) {
-        const fullUrl = match[0]
-        const path = match[1].replace(/^\//, '')
-        
-        try {
+      const downloadResults = await Promise.allSettled(
+        matches.map(async (match) => {
+          const fullUrl = match[0]
+          const path = match[1].replace(/^\//, '')
+          
           // Download from storage
           const buffer = await currentClient.downloadFile(path)
           
           // Save locally
-          const { writeFile, mkdir } = await import('fs/promises')
-          const { dirname } = await import('path')
-          const publicDir = join(process.cwd(), 'public')
           const localPath = join(publicDir, 'uploads', path.split('/').pop()!)
-          
           await mkdir(dirname(localPath), { recursive: true })
           await writeFile(localPath, buffer)
           
-          // Update URL in content
           const localUrl = `/uploads/${path.split('/').pop()}`
+          return { fullUrl, localUrl, path }
+        })
+      )
+
+      let hasChanges = false
+      for (const result of downloadResults) {
+        if (result.status === 'fulfilled') {
+          const { fullUrl, localUrl } = result.value
           updatedContent = updatedContent.replace(fullUrl, localUrl)
-          
           results.filesDownloaded++
           hasChanges = true
-        } catch (error: any) {
-          console.error(`[Storage] Failed to download ${path}:`, error)
-          results.errors.push(`Failed to download ${path}: ${error.message}`)
+        } else {
+          console.error('[Storage] Failed to download file:', result.reason)
+          results.errors.push(`Failed to download file: ${result.reason?.message || result.reason}`)
         }
       }
 
@@ -745,24 +748,51 @@ export async function saveStorageSettings(
   if (session?.role !== 'OWNER') return { success: false, error: 'Unauthorized' }
 
   try {
-    // Create client and test connection
-    const client = createStorageClient(type, config)
+    // Fetch existing settings to get current API key if not provided
+    const existing = await (localPrisma as any).siteSettings.findUnique({
+      where: { id: 'singleton' },
+      select: { bunnyStorageApiKey: true }
+    })
+    
+    // Determine which API key to use for testing
+    let apiKeyForTesting = config.apiKey
+    if (!apiKeyForTesting || apiKeyForTesting.trim() === '') {
+      // Use existing API key from database
+      apiKeyForTesting = existing?.bunnyStorageApiKey 
+        ? decrypt(existing.bunnyStorageApiKey) || existing.bunnyStorageApiKey
+        : null
+    }
+    
+    if (!apiKeyForTesting) {
+      return { success: false, error: 'API key is required' }
+    }
+
+    // Create client with the API key for testing
+    const testConfig = { ...config, apiKey: apiKeyForTesting }
+    const client = createStorageClient(type, testConfig)
     const testResult = await client.testConnection()
     
     if (!testResult.success) {
       return { success: false, error: testResult.error || 'Connection test failed' }
     }
 
+    // Build update data - only include API key if provided
+    const updateData: any = {
+      bunnyStorageEnabled: true,
+      bunnyStorageRegion: config.region || '',
+      bunnyStorageZoneName: config.zoneName,
+      bunnyStorageUrl: config.cdnUrl,
+    }
+    
+    // Only update API key if a new one was provided
+    if (config.apiKey && config.apiKey.trim() !== '') {
+      updateData.bunnyStorageApiKey = encrypt(config.apiKey.trim())
+    }
+
     // Save settings to database
     await (localPrisma as any).siteSettings.upsert({
       where: { id: 'singleton' },
-      update: {
-        bunnyStorageEnabled: true,
-        bunnyStorageRegion: config.region || '',
-        bunnyStorageZoneName: config.zoneName,
-        bunnyStorageApiKey: encrypt(config.apiKey),
-        bunnyStorageUrl: config.cdnUrl,
-      },
+      update: updateData,
       create: {
         id: 'singleton',
         bunnyStorageEnabled: true,

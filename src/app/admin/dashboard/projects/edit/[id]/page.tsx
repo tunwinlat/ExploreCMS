@@ -21,7 +21,9 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
       where: { id },
       include: { images: { orderBy: { order: 'asc' } } },
     })
-  } catch {}
+  } catch (e) {
+    console.error('Failed to load project:', e)
+  }
 
   if (!project) notFound()
 

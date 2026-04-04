@@ -32,8 +32,22 @@ export async function saveCraftSettings(
   }
 
   try {
-    // Encrypt the API token before saving
-    const encryptedToken = apiToken ? encrypt(apiToken) : null
+    // Fetch existing settings to check for current token
+    const existing = await (prisma as any).siteSettings.findUnique({
+      where: { id: 'singleton' },
+      select: { craftApiToken: true }
+    })
+
+    // Only update token if a new one is provided, otherwise preserve existing
+    let encryptedToken = existing?.craftApiToken || null
+    if (apiToken && apiToken.trim() !== '') {
+      encryptedToken = encrypt(apiToken.trim())
+    }
+    
+    // If enabling Craft but no token exists (new or existing), require one
+    if (enabled && !encryptedToken) {
+      return { error: 'API token is required to enable Craft integration' }
+    }
     
     await (prisma as any).siteSettings.upsert({
       where: { id: 'singleton' },

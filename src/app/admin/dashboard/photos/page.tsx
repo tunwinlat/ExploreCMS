@@ -20,7 +20,9 @@ export default async function PhotosAdminPage() {
       orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
       include: { _count: { select: { photos: true } } },
     })
-  } catch {}
+  } catch (e) {
+    console.error('Failed to load albums:', e)
+  }
 
   return (
     <div className="fade-in-up">

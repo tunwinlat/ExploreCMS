@@ -87,7 +87,7 @@ export default function TipTapEditor({ initialContent = '', onChange, editable =
               const transaction = view.state.tr.insert(coordinates?.pos || 0, node);
               view.dispatch(transaction);
             }
-          });
+          }).catch(console.error);
           return true;
         }
         return false;
@@ -102,7 +102,7 @@ export default function TipTapEditor({ initialContent = '', onChange, editable =
               const transaction = view.state.tr.replaceSelectionWith(node);
               view.dispatch(transaction);
             }
-          });
+          }).catch(console.error);
           return true;
         }
         return false;

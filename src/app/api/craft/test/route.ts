@@ -7,6 +7,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifySession } from '@/lib/auth'
 import { CraftClient } from '@/lib/craft'
+import { prisma } from '@/lib/db'
+import { decrypt } from '@/lib/crypto'
 
 export async function POST(req: NextRequest) {
   const session = await verifySession()
@@ -15,11 +17,27 @@ export async function POST(req: NextRequest) {
   }
 
   const { serverUrl, apiToken } = await req.json()
-  if (!serverUrl || !apiToken) {
-    return NextResponse.json({ error: 'Server URL and API token are required' }, { status: 400 })
+  if (!serverUrl) {
+    return NextResponse.json({ error: 'Server URL is required' }, { status: 400 })
   }
 
-  const client = new CraftClient(serverUrl, apiToken)
+  // Use provided token, or fetch from database if testing existing config
+  let tokenToUse = apiToken
+  if (!tokenToUse) {
+    const settings = await (prisma as any).siteSettings.findUnique({
+      where: { id: 'singleton' },
+      select: { craftApiToken: true }
+    })
+    if (settings?.craftApiToken) {
+      tokenToUse = decrypt(settings.craftApiToken)
+    }
+  }
+
+  if (!tokenToUse) {
+    return NextResponse.json({ error: 'API token is required' }, { status: 400 })
+  }
+
+  const client = new CraftClient(serverUrl, tokenToUse)
   const result = await client.testConnection(true) // Check write access on explicit test
   return NextResponse.json(result)
 }

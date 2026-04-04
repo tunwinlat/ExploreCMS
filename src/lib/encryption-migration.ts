@@ -20,7 +20,7 @@ const ENCRYPTABLE_FIELDS: { field: string; label: string }[] = [
   { field: 'resendApiKey', label: 'Resend API Key' },
   { field: 'smtpPassword', label: 'SMTP Password' },
   { field: 'githubAccessToken', label: 'GitHub Access Token' },
-  { field: 'bunnyToken', label: 'Bunny Storage Token' },
+  { field: 'bunnyToken', label: 'BunnyDB Token (DB Connection)' },
   { field: 'bunnyStorageApiKey', label: 'Bunny Storage API Key' },
   { field: 'craftApiToken', label: 'Craft.do API Token' },
 ]
@@ -181,6 +181,39 @@ export async function hasUnencryptedData(): Promise<boolean> {
 /**
  * Get a summary of encryption status for all sensitive fields
  */
+/**
+ * Get raw field values for debugging (admin use only)
+ */
+export async function getRawFieldValues(): Promise<{
+  field: string
+  label: string
+  value: string | null
+  valueType: string
+}[]> {
+  try {
+    const settings = await prisma.siteSettings.findUnique({
+      where: { id: 'singleton' }
+    })
+
+    if (!settings) return []
+
+    return ENCRYPTABLE_FIELDS.map(({ field, label }) => {
+      const value = settings[field as keyof typeof settings] as string | null
+      
+      let valueType = 'null'
+      if (value === null) valueType = 'null'
+      else if (value === '') valueType = 'empty string'
+      else if (value.startsWith('enc:')) valueType = 'encrypted'
+      else if (value.startsWith('plain:')) valueType = 'plain'
+      else valueType = 'legacy (no prefix)'
+
+      return { field, label, value, valueType }
+    })
+  } catch {
+    return []
+  }
+}
+
 export async function getEncryptionStatus(): Promise<{
   field: string
   label: string
