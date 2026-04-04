@@ -158,14 +158,14 @@ function isCloudflareProxy(ip: string): boolean {
  * In production this would come from the connection info.
  * For now, we use a heuristic based on headers or return null.
  */
-function getConnectingIP(request: Request): string | null {
+function getConnectingIP(headers: Headers): string | null {
   // In a real server environment, this would be the socket remoteAddress.
   // Since we're in a serverless/edge environment, we rely on headers
   // that are set by the platform (not user-controllable).
   
   // Next.js/Vercel specific: use the platform-provided IP
-  const vercelIP = request.headers.get('x-vercel-forwarded-for') || 
-                   request.headers.get('x-vercel-ip')
+  const vercelIP = headers.get('x-vercel-forwarded-for') ||
+                   headers.get('x-vercel-ip')
   if (vercelIP) {
     return vercelIP.split(',')[0].trim()
   }
@@ -176,25 +176,25 @@ function getConnectingIP(request: Request): string | null {
 }
 
 /**
- * Get client IP from request headers.
+ * Get client IP from request headers object.
  * Handles various proxy setups (Vercel, Cloudflare, etc.)
  * 
  * SECURITY: Only trusts forwarded headers from known trusted proxies.
  * Direct connections or untrusted proxies return a fallback identifier.
  */
-export function getClientIP(request: Request): string {
-  const connectingIP = getConnectingIP(request)
+export function getClientIPFromHeaders(headers: Headers): string {
+  const connectingIP = getConnectingIP(headers)
   const isTrusted = connectingIP ? isTrustedProxy(connectingIP) : false
   
   // Cloudflare-specific: Check CF-Connecting-IP only if request comes from Cloudflare
-  const cfIP = request.headers.get('cf-connecting-ip')
+  const cfIP = headers.get('cf-connecting-ip')
   if (cfIP && connectingIP && isCloudflareProxy(connectingIP)) {
     return cfIP
   }
   
   // Only trust X-Forwarded-For from trusted proxies
   if (isTrusted) {
-    const forwardedFor = request.headers.get('x-forwarded-for')
+    const forwardedFor = headers.get('x-forwarded-for')
     if (forwardedFor) {
       // Get the first IP in the chain (client IP)
       const clientIP = forwardedFor.split(',')[0].trim()
@@ -205,7 +205,7 @@ export function getClientIP(request: Request): string {
     }
     
     // Try X-Real-IP from trusted proxies only
-    const realIP = request.headers.get('x-real-ip')
+    const realIP = headers.get('x-real-ip')
     if (realIP && isValidIP(realIP)) {
       return realIP
     }
@@ -220,6 +220,13 @@ export function getClientIP(request: Request): string {
   // This prevents IP spoofing but may reduce rate limit effectiveness
   // for shared NAT scenarios
   return 'unknown'
+}
+
+/**
+ * Get client IP from a Request object.
+ */
+export function getClientIP(request: Request): string {
+  return getClientIPFromHeaders(request.headers)
 }
 
 /**
