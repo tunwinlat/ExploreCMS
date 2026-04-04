@@ -9,7 +9,7 @@
 import { useState } from 'react'
 import { saveCraftSettings, updateCraftWriteAccess } from './craftActions'
 import { testTargetConnection, migrateToTarget } from '../settings/migrationActions'
-import { testStorageConnection, migrateStorage, type StorageType } from '../settings/storageActions'
+import { testStorageConnection, migrateStorage, saveStorageSettings, type StorageType } from '../settings/storageActions'
 import { saveEmailSettings, testEmailSettings, getEmailSettings } from './emailActions'
 import { useToast } from '@/components/admin/Toast'
 import EncryptionMigration from './EncryptionMigration'
@@ -124,9 +124,10 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
   // ── Storage State ──
   const [storageType, setStorageType] = useState<StorageType>('bunny')
   const [currentStorageEnabled, setCurrentStorageEnabled] = useState(initialSettings?.bunnyStorageEnabled || false)
+  const [storageEditMode, setStorageEditMode] = useState(!initialSettings?.bunnyStorageEnabled)
   const [bunnyRegion, setBunnyRegion] = useState(initialSettings?.bunnyStorageRegion || '')
   const [bunnyZoneName, setBunnyZoneName] = useState(initialSettings?.bunnyStorageZoneName || '')
-  // Note: API key is not loaded from settings for security (encrypted), user must re-enter or use migration
+  // Note: API key is not loaded from settings for security (encrypted), user must re-enter to modify
   const [bunnyApiKey, setBunnyApiKey] = useState('')
   const [bunnyCdnUrl, setBunnyCdnUrl] = useState(initialSettings?.bunnyStorageUrl || '')
   const [s3Endpoint, setS3Endpoint] = useState('')
@@ -338,6 +339,22 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
         toast(`Migration complete! Migrated ${res.stats?.filesMigrated || 0} files.`, 'success')
       } else { toast(res.error || 'Migration failed.', 'error') }
     } catch (err: any) { toast(`Migration failed: ${err.message}`, 'error') }
+    setStorageLoading(false)
+  }
+
+  const handleSaveStorageSettings = async () => {
+    const config = { region: bunnyRegion, zoneName: bunnyZoneName, apiKey: bunnyApiKey, cdnUrl: bunnyCdnUrl }
+    if (!bunnyZoneName || !bunnyApiKey || !bunnyCdnUrl) { toast('Zone name, API key, and CDN URL are required.', 'warning'); return }
+    setStorageLoading(true)
+    toast('Saving storage settings...', 'info')
+    try {
+      const res = await saveStorageSettings(storageType, config)
+      if (res.success) {
+        setCurrentStorageEnabled(true)
+        setStorageEditMode(false)
+        toast('Storage settings saved successfully!', 'success')
+      } else { toast(res.error || 'Failed to save settings.', 'error') }
+    } catch (err: any) { toast(`Save failed: ${err.message}`, 'error') }
     setStorageLoading(false)
   }
 
@@ -780,86 +797,134 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
               </button>
             </div>
 
-            {storageType === 'bunny' ? (
-              <>
-                <div>
-                  <label style={{ fontWeight: 400 }}>Region (Optional)</label>
-                  <select value={bunnyRegion} onChange={(e) => setBunnyRegion(e.target.value)} disabled={storageLoading} className="input-field">
-                    <option value="">Auto (Falkenstein)</option>
-                    <option value="fsn1">Falkenstein (fsn1)</option>
-                    <option value="de">Frankfurt (de)</option>
-                    <option value="uk">London (uk)</option>
-                    <option value="se">Stockholm (se)</option>
-                    <option value="ny">New York (ny)</option>
-                    <option value="la">Los Angeles (la)</option>
-                    <option value="sg">Singapore (sg)</option>
-                    <option value="syd">Sydney (syd)</option>
-                    <option value="br">Sao Paulo (br)</option>
-                    <option value="jh">Johannesburg (jh)</option>
-                  </select>
+            {/* Show Modify button when storage is configured but not in edit mode */}
+            {currentStorageEnabled && !storageEditMode && (
+              <div style={{ padding: '1rem', background: 'rgba(34, 197, 94, 0.1)', borderRadius: 'var(--radius-md)', border: '1px solid #22c55e', marginBottom: '1rem' }}>
+                <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.9rem', color: '#22c55e' }}>
+                  ✅ Storage is configured and active
+                </p>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                  <div><strong>Zone:</strong> {bunnyZoneName}</div>
+                  <div><strong>Region:</strong> {bunnyRegion || 'Auto'}</div>
+                  <div><strong>CDN:</strong> {bunnyCdnUrl}</div>
                 </div>
-                <div>
-                  <label style={{ fontWeight: 400 }}>Zone Name *</label>
-                  <input type="text" value={bunnyZoneName} onChange={(e) => setBunnyZoneName(e.target.value)} placeholder="my-storage-zone" disabled={storageLoading} className="input-field" autoComplete="off" />
-                </div>
-                <div>
-                  <label style={{ fontWeight: 400 }}>API Key *</label>
-                  <input type="password" value={bunnyApiKey} onChange={(e) => setBunnyApiKey(e.target.value)} placeholder="your-api-key" disabled={storageLoading} className="input-field" autoComplete="new-password" />
-                </div>
-                <div>
-                  <label style={{ fontWeight: 400 }}>CDN URL *</label>
-                  <input type="url" value={bunnyCdnUrl} onChange={(e) => setBunnyCdnUrl(e.target.value)} placeholder="https://my-zone.b-cdn.net" disabled={storageLoading} className="input-field" />
-                </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  <label style={{ fontWeight: 400 }}>S3 Endpoint *</label>
-                  <input type="url" value={s3Endpoint} onChange={(e) => setS3Endpoint(e.target.value)} placeholder="https://s3.amazonaws.com or https://<account>.r2.cloudflarestorage.com" disabled={storageLoading} className="input-field" />
-                </div>
-                <div>
-                  <label style={{ fontWeight: 400 }}>Access Key ID *</label>
-                  <input type="text" value={s3AccessKeyId} onChange={(e) => setS3AccessKeyId(e.target.value)} placeholder="AKIA..." disabled={storageLoading} className="input-field" />
-                </div>
-                <div>
-                  <label style={{ fontWeight: 400 }}>Secret Access Key *</label>
-                  <input type="password" value={s3SecretAccessKey} onChange={(e) => setS3SecretAccessKey(e.target.value)} placeholder="..." disabled={storageLoading} className="input-field" autoComplete="new-password" />
-                </div>
-                <div>
-                  <label style={{ fontWeight: 400 }}>Bucket Name *</label>
-                  <input type="text" value={s3Bucket} onChange={(e) => setS3Bucket(e.target.value)} placeholder="my-bucket" disabled={storageLoading} className="input-field" />
-                </div>
-                <div>
-                  <label style={{ fontWeight: 400 }}>Region</label>
-                  <input type="text" value={s3Region} onChange={(e) => setS3Region(e.target.value)} placeholder="us-east-1" disabled={storageLoading} className="input-field" />
-                </div>
-                <div>
-                  <label style={{ fontWeight: 400 }}>CDN URL (Optional)</label>
-                  <input type="url" value={s3CdnUrl} onChange={(e) => setS3CdnUrl(e.target.value)} placeholder="https://cdn.example.com" disabled={storageLoading} className="input-field" />
-                </div>
-              </>
+                <button
+                  type="button"
+                  onClick={() => setStorageEditMode(true)}
+                  className="btn"
+                  style={{ background: 'var(--accent-color)', color: 'white', border: 'none' }}
+                >
+                  Modify Configuration
+                </button>
+              </div>
             )}
 
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={handleTestStorageConnection}
-                disabled={storageLoading}
-                className="btn"
-                style={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)' }}
-              >
-                {storageLoading ? 'Testing...' : 'Test Connection'}
-              </button>
-              <button
-                type="button"
-                onClick={handleStorageMigrate}
-                disabled={storageLoading}
-                className="btn"
-                style={{ background: '#22c55e', color: 'white', border: 'none' }}
-              >
-                {storageLoading ? 'Migrating...' : 'Migrate Files'}
-              </button>
-            </div>
+            {/* Show form fields only in edit mode */}
+            {storageEditMode && (
+              <>
+                {storageType === 'bunny' ? (
+                  <>
+                    <div>
+                      <label style={{ fontWeight: 400 }}>Region (Optional)</label>
+                      <select value={bunnyRegion} onChange={(e) => setBunnyRegion(e.target.value)} disabled={storageLoading} className="input-field">
+                        <option value="">Auto (Falkenstein)</option>
+                        <option value="fsn1">Falkenstein (fsn1)</option>
+                        <option value="de">Frankfurt (de)</option>
+                        <option value="uk">London (uk)</option>
+                        <option value="se">Stockholm (se)</option>
+                        <option value="ny">New York (ny)</option>
+                        <option value="la">Los Angeles (la)</option>
+                        <option value="sg">Singapore (sg)</option>
+                        <option value="syd">Sydney (syd)</option>
+                        <option value="br">Sao Paulo (br)</option>
+                        <option value="jh">Johannesburg (jh)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontWeight: 400 }}>Zone Name *</label>
+                      <input type="text" value={bunnyZoneName} onChange={(e) => setBunnyZoneName(e.target.value)} placeholder="my-storage-zone" disabled={storageLoading} className="input-field" autoComplete="off" />
+                    </div>
+                    <div>
+                      <label style={{ fontWeight: 400 }}>API Key * {currentStorageEnabled && '(enter new key to update)'}</label>
+                      <input type="password" value={bunnyApiKey} onChange={(e) => setBunnyApiKey(e.target.value)} placeholder={currentStorageEnabled ? 'Enter new API key to update' : 'your-api-key'} disabled={storageLoading} className="input-field" autoComplete="new-password" />
+                    </div>
+                    <div>
+                      <label style={{ fontWeight: 400 }}>CDN URL *</label>
+                      <input type="url" value={bunnyCdnUrl} onChange={(e) => setBunnyCdnUrl(e.target.value)} placeholder="https://my-zone.b-cdn.net" disabled={storageLoading} className="input-field" />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <label style={{ fontWeight: 400 }}>S3 Endpoint *</label>
+                      <input type="url" value={s3Endpoint} onChange={(e) => setS3Endpoint(e.target.value)} placeholder="https://s3.amazonaws.com or https://<account>.r2.cloudflarestorage.com" disabled={storageLoading} className="input-field" />
+                    </div>
+                    <div>
+                      <label style={{ fontWeight: 400 }}>Access Key ID *</label>
+                      <input type="text" value={s3AccessKeyId} onChange={(e) => setS3AccessKeyId(e.target.value)} placeholder="AKIA..." disabled={storageLoading} className="input-field" />
+                    </div>
+                    <div>
+                      <label style={{ fontWeight: 400 }}>Secret Access Key *</label>
+                      <input type="password" value={s3SecretAccessKey} onChange={(e) => setS3SecretAccessKey(e.target.value)} placeholder="..." disabled={storageLoading} className="input-field" autoComplete="new-password" />
+                    </div>
+                    <div>
+                      <label style={{ fontWeight: 400 }}>Bucket Name *</label>
+                      <input type="text" value={s3Bucket} onChange={(e) => setS3Bucket(e.target.value)} placeholder="my-bucket" disabled={storageLoading} className="input-field" />
+                    </div>
+                    <div>
+                      <label style={{ fontWeight: 400 }}>Region</label>
+                      <input type="text" value={s3Region} onChange={(e) => setS3Region(e.target.value)} placeholder="us-east-1" disabled={storageLoading} className="input-field" />
+                    </div>
+                    <div>
+                      <label style={{ fontWeight: 400 }}>CDN URL (Optional)</label>
+                      <input type="url" value={s3CdnUrl} onChange={(e) => setS3CdnUrl(e.target.value)} placeholder="https://cdn.example.com" disabled={storageLoading} className="input-field" />
+                    </div>
+                  </>
+                )}
+
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={handleTestStorageConnection}
+                    disabled={storageLoading}
+                    className="btn"
+                    style={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)' }}
+                  >
+                    {storageLoading ? 'Testing...' : 'Test Connection'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveStorageSettings}
+                    disabled={storageLoading}
+                    className="btn"
+                    style={{ background: 'var(--accent-color)', color: 'white', border: 'none' }}
+                  >
+                    {storageLoading ? 'Saving...' : (currentStorageEnabled ? 'Update Settings' : 'Save Settings')}
+                  </button>
+                </div>
+
+                {/* Migration option - only show if storage is already enabled */}
+                {currentStorageEnabled && (
+                  <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(99, 102, 241, 0.05)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                    <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: 'var(--accent-color)' }}>Migrate Files</h4>
+                    <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      Use this only when switching to a different storage provider or a different zone. 
+                      This will download all files from the current storage and upload them to the new one, 
+                      then update all URLs in your posts.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleStorageMigrate}
+                      disabled={storageLoading}
+                      className="btn"
+                      style={{ background: '#22c55e', color: 'white', border: 'none' }}
+                    >
+                      {storageLoading ? 'Migrating...' : 'Migrate Files to New Storage'}
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
 
             {storageWarning && (
               <div style={{ padding: '0.75rem', background: 'rgba(234, 179, 8, 0.1)', borderRadius: 'var(--radius-md)' }}>

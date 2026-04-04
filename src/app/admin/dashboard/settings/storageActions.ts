@@ -735,3 +735,48 @@ export async function getStorageSettings() {
     return { success: false, error: error.message }
   }
 }
+
+// Save storage settings without migrating files (for updating API key, etc.)
+export async function saveStorageSettings(
+  type: StorageType,
+  config: any
+) {
+  const session = await verifySession()
+  if (session?.role !== 'OWNER') return { success: false, error: 'Unauthorized' }
+
+  try {
+    // Create client and test connection
+    const client = createStorageClient(type, config)
+    const testResult = await client.testConnection()
+    
+    if (!testResult.success) {
+      return { success: false, error: testResult.error || 'Connection test failed' }
+    }
+
+    // Save settings to database
+    await (localPrisma as any).siteSettings.upsert({
+      where: { id: 'singleton' },
+      update: {
+        bunnyStorageEnabled: true,
+        bunnyStorageRegion: config.region || '',
+        bunnyStorageZoneName: config.zoneName,
+        bunnyStorageApiKey: encrypt(config.apiKey),
+        bunnyStorageUrl: config.cdnUrl,
+      },
+      create: {
+        id: 'singleton',
+        bunnyStorageEnabled: true,
+        bunnyStorageRegion: config.region || '',
+        bunnyStorageZoneName: config.zoneName,
+        bunnyStorageApiKey: encrypt(config.apiKey),
+        bunnyStorageUrl: config.cdnUrl,
+      }
+    })
+
+    revalidatePath('/', 'layout')
+    return { success: true }
+  } catch (error: any) {
+    console.error('[Storage] Save settings error:', error)
+    return { success: false, error: error.message }
+  }
+}
