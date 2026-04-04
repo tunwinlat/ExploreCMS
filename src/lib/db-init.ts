@@ -25,7 +25,7 @@ export async function runSchemaMigrations(): Promise<void> {
     // This avoids running 30+ sequential ALTER TABLE statements on every cold start
     // for databases that are already fully up to date.
     try {
-      await client.execute({ sql: "SELECT smtpPassword FROM \"SiteSettings\" WHERE 1=0", args: [] });
+      await client.execute({ sql: "SELECT dynamicPattern FROM \"SiteSettings\" WHERE 1=0", args: [] });
       // Column exists → all migrations have been applied, nothing to do.
       return;
     } catch {
@@ -81,6 +81,8 @@ export async function runSchemaMigrations(): Promise<void> {
       `ALTER TABLE "SiteSettings" ADD COLUMN "smtpSecure" BOOLEAN NOT NULL DEFAULT false`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "smtpUser" TEXT`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "smtpPassword" TEXT`,
+      // v7 → Dynamic particle background
+      `ALTER TABLE "SiteSettings" ADD COLUMN "dynamicPattern" BOOLEAN NOT NULL DEFAULT true`,
       // New tables — CREATE IF NOT EXISTS is not supported by LibSQL, so we use CREATE TABLE and ignore "already exists"
       `CREATE TABLE "Project" (
         "id" TEXT NOT NULL PRIMARY KEY,
@@ -434,6 +436,8 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
       `ALTER TABLE "SiteSettings" ADD COLUMN "smtpSecure" BOOLEAN NOT NULL DEFAULT false`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "smtpUser" TEXT`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "smtpPassword" TEXT`,
+      // Dynamic particle background
+      `ALTER TABLE "SiteSettings" ADD COLUMN "dynamicPattern" BOOLEAN NOT NULL DEFAULT true`,
     ];
     for (const stmt of alterStatements) {
       try {
