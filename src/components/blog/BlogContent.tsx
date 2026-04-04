@@ -82,9 +82,11 @@ export function BlogContent({
 
       {/* Right Column - Sidebar */}
       <aside className="sidebar">
-        <div className="glass" style={{ padding: '1.25rem', marginBottom: '1.5rem' }}>
-          <TrendingPosts initialPosts={trendingPosts} />
-        </div>
+        {trendingPosts.length > 0 && (
+          <div className="glass" style={{ padding: '1.25rem', marginBottom: '1.5rem' }}>
+            <TrendingPosts initialPosts={trendingPosts} />
+          </div>
+        )}
 
         <div className="glass" style={{ padding: '1.25rem' }}>
           <h4 style={{
