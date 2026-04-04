@@ -5,7 +5,6 @@ ExploreCMS is a beautifully styled, self-hosted minimalistic blogging platform e
 ## ✨ Features
 
 * **Glassmorphic UI**: A stunning, custom-built CSS design system featuring translucent glass containers, smooth transitions, and high-performance fluid animations.
-* **Dynamic Particle Background**: Interactive particle system inspired by Google's Antigravity. Particles attract, merge, explode, and react to your cursor with beautiful physics.
 * **Animated Hero Gradient**: Dynamic flowing gradient animation on the hero title that smoothly transitions through theme colors.
 * **40 Dynamic Themes**: Switch instantly between 40 gorgeous, tailor-made color palettes, each with their own specialized Google Font pairing and full Light/Dark mode variants. Themes span a wide range of aesthetics — from **Ocean Depth**, **Cyberpunk 2077**, and **Neon Synthwave** to **Aurora Borealis**, **Gothic Cathedral**, **Deep Space**, **Steampunk Workshop**, **Pixel Art 8-bit**, and many more.
 * **Infinite Scroll & Inline Reading**: A frictionless user experience. Navigate a dynamic masonry grid of articles that infinitely paginates using Intersection Observers. Click any article to read it in a sleek sliding Modal Overlay without ever losing your position in the feed! 
