@@ -1062,8 +1062,9 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
                   style={{ 
                     marginTop: '0.5rem',
                     alignSelf: 'flex-start',
-                    background: 'var(--bg-color)', 
-                    border: '1px solid var(--border-color)' 
+                    background: 'var(--accent-color)', 
+                    color: 'white',
+                    border: 'none' 
                   }}
                 >
                   Modify Configuration
