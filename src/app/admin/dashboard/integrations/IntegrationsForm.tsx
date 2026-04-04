@@ -124,10 +124,11 @@ export default function IntegrationsForm({ initialSettings }: { initialSettings:
   // ── Storage State ──
   const [storageType, setStorageType] = useState<StorageType>('bunny')
   const [currentStorageEnabled, setCurrentStorageEnabled] = useState(initialSettings?.bunnyStorageEnabled || false)
-  const [bunnyRegion, setBunnyRegion] = useState('')
-  const [bunnyZoneName, setBunnyZoneName] = useState('')
+  const [bunnyRegion, setBunnyRegion] = useState(initialSettings?.bunnyStorageRegion || '')
+  const [bunnyZoneName, setBunnyZoneName] = useState(initialSettings?.bunnyStorageZoneName || '')
+  // Note: API key is not loaded from settings for security (encrypted), user must re-enter or use migration
   const [bunnyApiKey, setBunnyApiKey] = useState('')
-  const [bunnyCdnUrl, setBunnyCdnUrl] = useState('')
+  const [bunnyCdnUrl, setBunnyCdnUrl] = useState(initialSettings?.bunnyStorageUrl || '')
   const [s3Endpoint, setS3Endpoint] = useState('')
   const [s3AccessKeyId, setS3AccessKeyId] = useState('')
   const [s3SecretAccessKey, setS3SecretAccessKey] = useState('')
