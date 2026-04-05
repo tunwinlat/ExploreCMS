@@ -96,7 +96,7 @@ export default function Modal({ children }: { children: React.ReactNode }) {
                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
              }}
            >
-             ✕
+             <span aria-hidden="true">✕</span>
            </button>
         </div>
         
