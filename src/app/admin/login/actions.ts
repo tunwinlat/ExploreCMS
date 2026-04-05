@@ -11,7 +11,7 @@ import { compare } from 'bcryptjs'
 import { createSession } from '@/lib/auth'
 
 import { headers } from 'next/headers'
-import { checkRateLimit, RATE_LIMITS } from '@/lib/rateLimit'
+import { checkRateLimit, getClientIPFromHeaders, RATE_LIMITS } from '@/lib/rateLimit'
 
 
 export async function loginUser(formData: FormData) {
@@ -20,18 +20,7 @@ export async function loginUser(formData: FormData) {
 
   // Rate limiting
   const headersList = await headers()
-  const forwardedFor = headersList.get('x-forwarded-for')
-  const realIP = headersList.get('x-real-ip')
-  const cfIP = headersList.get('cf-connecting-ip')
-
-  let clientIP = 'unknown'
-  if (forwardedFor) {
-    clientIP = forwardedFor.split(',')[0].trim()
-  } else if (realIP) {
-    clientIP = realIP
-  } else if (cfIP) {
-    clientIP = cfIP
-  }
+  const clientIP = getClientIPFromHeaders(headersList)
 
   const rateLimit = checkRateLimit(clientIP, RATE_LIMITS.auth)
   if (!rateLimit.success) {
