@@ -14,7 +14,6 @@ import { ViewTracker } from "@/components/ViewTracker";
 import { renderPostContent } from "@/lib/renderContent";
 import { getSettings } from "@/lib/settings-cache";
 
-// ⚡ Bolt: Use ISR instead of force-dynamic to cache the project details for 60 seconds, drastically reducing database queries on every request.
 export const revalidate = 60
 
 async function getProject(slug: string) {

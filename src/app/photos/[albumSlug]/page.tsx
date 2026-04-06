@@ -13,7 +13,6 @@ import { PhotoGrid } from "@/components/photos/PhotoGrid";
 import { ViewTracker } from "@/components/ViewTracker";
 import { getSettings } from "@/lib/settings-cache";
 
-// ⚡ Bolt: Use ISR instead of force-dynamic to cache the album details for 60 seconds, drastically reducing database queries on every request.
 export const revalidate = 60
 
 async function getAlbum(slug: string) {
