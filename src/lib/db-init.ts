@@ -187,7 +187,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
   
   // Only run for LibSQL URLs, not local SQLite
   if (!url.startsWith('libsql://') && !url.startsWith('https://') && !url.startsWith('wss://')) {
-    console.log('[DB Init] Skipping for local SQLite');
+    console.log("[DB Init] Skipping for local SQLite");
     return { success: true };
   }
   
