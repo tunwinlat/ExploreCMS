@@ -8,9 +8,6 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { jwtVerify } from 'jose'
 
-// Configure for Edge Runtime (required for Cloudflare Workers)
-export const runtime = 'experimental-edge'
-
 const getSecret = () => {
   const secret = process.env.JWT_SECRET
   if (!secret) {
