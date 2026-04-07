@@ -38,6 +38,11 @@ function createPrismaClient() {
     console.log('[Prisma] Creating client with URL:', url.substring(0, 20) + '...')
   }
   
+  // Use adapter only if not a local file URL
+  if (url.startsWith('file:')) {
+    return new PrismaClient()
+  }
+
   const adapter = new PrismaLibSql(adapterConfig)
   return new PrismaClient({ adapter })
 }
