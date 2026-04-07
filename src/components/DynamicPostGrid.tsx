@@ -245,9 +245,11 @@ export default function DynamicPostGrid({
       <div 
         ref={loadMoreRef} 
         style={{ height: '40px', margin: '3rem 0', display: 'flex', justifyContent: 'center' }}
+        role="status"
+        aria-live="polite"
       >
         {loading && (
-          <div style={{ color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.9rem', animation: 'pulse 2s infinite' }}>
+          <div style={{ color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.9rem', animation: 'pulse 2s infinite' }} aria-label="Loading more stories">
             Loading more stories...
           </div>
         )}
