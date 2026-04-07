@@ -107,7 +107,7 @@ export function PopupToast({ title, content, displayMode }: PopupToastProps) {
             borderRadius: '4px'
           }}
         >
-          ✕
+          <span aria-hidden="true">✕</span>
         </button>
 
         {title && (
