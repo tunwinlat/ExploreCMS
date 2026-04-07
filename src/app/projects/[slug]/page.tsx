@@ -17,6 +17,7 @@ import { getSettings } from "@/lib/settings-cache";
 export const revalidate = 60
 
 async function getProject(slug: string) {
+  if (!process.env.DATABASE_URL) return null;
   try {
     const project = await (prisma as any).project.findUnique({
       where: { slug },

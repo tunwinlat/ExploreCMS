@@ -12,6 +12,7 @@ import { prisma } from '@/lib/db';
  */
 export const getCachedAlbums = unstable_cache(
   async () => {
+    if (!process.env.DATABASE_URL) return [];
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return await (prisma as any).photoAlbum.findMany({

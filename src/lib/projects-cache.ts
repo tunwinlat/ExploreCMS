@@ -12,6 +12,7 @@ import { prisma } from '@/lib/db';
  */
 export const getCachedProjects = unstable_cache(
   async () => {
+    if (!process.env.DATABASE_URL) return [];
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const projects = await (prisma as any).project.findMany({

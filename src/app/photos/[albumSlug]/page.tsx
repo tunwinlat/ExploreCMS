@@ -16,6 +16,7 @@ import { getSettings } from "@/lib/settings-cache";
 export const revalidate = 60
 
 async function getAlbum(slug: string) {
+  if (!process.env.DATABASE_URL) return null;
   try {
     const album = await (prisma as any).photoAlbum.findUnique({
       where: { slug },
