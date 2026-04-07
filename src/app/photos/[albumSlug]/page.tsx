@@ -13,7 +13,7 @@ import { PhotoGrid } from "@/components/photos/PhotoGrid";
 import { ViewTracker } from "@/components/ViewTracker";
 import { getSettings } from "@/lib/settings-cache";
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 async function getAlbum(slug: string) {
   try {

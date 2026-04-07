@@ -14,7 +14,7 @@ import { ViewTracker } from "@/components/ViewTracker";
 import { renderPostContent } from "@/lib/renderContent";
 import { getSettings } from "@/lib/settings-cache";
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 async function getProject(slug: string) {
   try {
