@@ -13,23 +13,33 @@ import { PhotoGrid } from "@/components/photos/PhotoGrid";
 import { ViewTracker } from "@/components/ViewTracker";
 import { getSettings } from "@/lib/settings-cache";
 
-export const revalidate = 60
+import { unstable_cache } from "next/cache";
 
-async function getAlbum(slug: string) {
-  if (!process.env.DATABASE_URL) return null;
-  try {
-    const album = await (prisma as any).photoAlbum.findUnique({
-      where: { slug },
-      include: {
-        photos: {
-          orderBy: { order: 'asc' },
+export const dynamic = 'force-dynamic';
+
+const getAlbum = unstable_cache(
+  async (slug: string) => {
+    if (!process.env.DATABASE_URL) return null;
+    try {
+      const album = await (prisma as any).photoAlbum.findUnique({
+        where: { slug },
+        include: {
+          photos: {
+            orderBy: { order: 'asc' },
+          },
         },
-      },
-    });
-    if (!album || !album.published) return null;
-    return album;
-  } catch { return null; }
-}
+      });
+      if (!album || !album.published) return null;
+      return {
+        ...album,
+        createdAt: typeof album.createdAt === 'string' ? album.createdAt : album.createdAt?.toISOString(),
+        updatedAt: typeof album.updatedAt === 'string' ? album.updatedAt : album.updatedAt?.toISOString(),
+      };
+    } catch { return null; }
+  },
+  ['album-detail'],
+  { revalidate: 60 }
+);
 
 export default async function AlbumPage({ params }: { params: Promise<{ albumSlug: string }> }) {
   const { albumSlug } = await params;
