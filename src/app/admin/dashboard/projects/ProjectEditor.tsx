@@ -254,7 +254,7 @@ export default function ProjectEditor({ initialData }: { initialData?: ProjectDa
                 title="Remove tag"
                 onClick={() => removeTechTag(tag)}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0, lineHeight: 1, opacity: 0.7 }}
-              >×</button>
+              ><span aria-hidden="true">×</span></button>
             </span>
           ))}
         </div>
@@ -361,7 +361,7 @@ export default function ProjectEditor({ initialData }: { initialData?: ProjectDa
                       justifyContent: 'center',
                       fontSize: '0.7rem',
                     }}
-                  >×</button>
+                  ><span aria-hidden="true">×</span></button>
                 </div>
               ))}
             </div>
