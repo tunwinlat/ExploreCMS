@@ -11,7 +11,7 @@ import { compare } from 'bcryptjs'
 import { createSession } from '@/lib/auth'
 
 import { headers } from 'next/headers'
-import { checkRateLimit, RATE_LIMITS, getClientIPFromHeaders } from '@/lib/rateLimit'
+import { checkRateLimit, getClientIPFromHeaders, RATE_LIMITS } from '@/lib/rateLimit'
 
 
 export async function loginUser(formData: FormData) {

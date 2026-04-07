@@ -158,7 +158,7 @@ function isCloudflareProxy(ip: string): boolean {
  * In production this would come from the connection info.
  * For now, we use a heuristic based on headers or return null.
  */
-function getConnectingIP(headers: Headers): string | null {
+function getConnectingIPFromHeadersObj(headers: Headers | ReadonlyMap<string, string> | { get: (name: string) => string | null }): string | null {
   // In a real server environment, this would be the socket remoteAddress.
   // Since we're in a serverless/edge environment, we rely on headers
   // that are set by the platform (not user-controllable).
@@ -176,14 +176,14 @@ function getConnectingIP(headers: Headers): string | null {
 }
 
 /**
- * Get client IP from request headers object.
+ * Get client IP from a Next.js headers object (from next/headers).
  * Handles various proxy setups (Vercel, Cloudflare, etc.)
  * 
  * SECURITY: Only trusts forwarded headers from known trusted proxies.
  * Direct connections or untrusted proxies return a fallback identifier.
  */
-export function getClientIPFromHeaders(headers: Headers): string {
-  const connectingIP = getConnectingIP(headers)
+export function getClientIPFromHeaders(headers: Headers | ReadonlyMap<string, string> | { get: (name: string) => string | null }): string {
+  const connectingIP = getConnectingIPFromHeadersObj(headers)
   const isTrusted = connectingIP ? isTrustedProxy(connectingIP) : false
   
   // Cloudflare-specific: Check CF-Connecting-IP only if request comes from Cloudflare
@@ -223,7 +223,11 @@ export function getClientIPFromHeaders(headers: Headers): string {
 }
 
 /**
- * Get client IP from a Request object.
+ * Get client IP from request headers.
+ * Handles various proxy setups (Vercel, Cloudflare, etc.)
+ *
+ * SECURITY: Only trusts forwarded headers from known trusted proxies.
+ * Direct connections or untrusted proxies return a fallback identifier.
  */
 export function getClientIP(request: Request): string {
   return getClientIPFromHeaders(request.headers)

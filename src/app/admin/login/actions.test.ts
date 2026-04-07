@@ -36,8 +36,8 @@ vi.mock('next/headers', () => ({
 
 vi.mock('@/lib/rateLimit', () => ({
   checkRateLimit: vi.fn().mockReturnValue({ success: true }),
-  RATE_LIMITS: { auth: {} },
-  getClientIPFromHeaders: vi.fn().mockReturnValue('127.0.0.1')
+  getClientIPFromHeaders: vi.fn().mockReturnValue('127.0.0.1'),
+  RATE_LIMITS: { auth: {} }
 }));
 
 vi.mock('next/navigation', () => ({

@@ -9,7 +9,7 @@
 import { prisma } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 import { headers } from 'next/headers'
-import { checkRateLimit, RATE_LIMITS, getClientIPFromHeaders } from '@/lib/rateLimit'
+import { checkRateLimit, getClientIPFromHeaders, RATE_LIMITS } from '@/lib/rateLimit'
 
 export async function resetPassword(formData: FormData) {
   // Rate limiting

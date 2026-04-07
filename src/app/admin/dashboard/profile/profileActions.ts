@@ -13,7 +13,7 @@ import bcrypt from 'bcryptjs'
 import { randomBytes } from 'crypto'
 import { sendEmail, getVerificationEmailHtml } from '@/lib/email'
 import { headers } from 'next/headers'
-import { checkRateLimit, RATE_LIMITS, getClientIPFromHeaders } from '@/lib/rateLimit'
+import { checkRateLimit, getClientIPFromHeaders, RATE_LIMITS } from '@/lib/rateLimit'
 
 export async function updateUserProfile(formData: FormData) {
   const session = await verifySession()
