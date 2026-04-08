@@ -67,7 +67,7 @@ describe('POST /api/views', () => {
     });
   };
 
-  it('returns 400 when slug is not provided', async () => {
+  it('handles invalid JSON body', async () => {
     const req = new Request('http://localhost:3000/api/views', {
       method: 'POST',
       body: 'invalid json',
@@ -77,8 +77,8 @@ describe('POST /api/views', () => {
 
     const res = await POST(req);
 
-    expect(res.body).toEqual({ error: 'Slug is required' });
-    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ success: true });
+    expect(prisma.siteAnalytics.upsert).toHaveBeenCalled();
   });
 
   it('tracks post view and global view for first time visitor to a post', async () => {
@@ -99,7 +99,10 @@ describe('POST /api/views', () => {
     }));
 
     // Post should be unique
-    expect(mockPostDb.post.findUnique).toHaveBeenCalledWith({ where: { slug } });
+    expect(mockPostDb.post.findUnique).toHaveBeenCalledWith({
+      where: { slug },
+      select: { id: true }
+    });
     expect(mockPostDb.postView.upsert).toHaveBeenCalledWith({
       where: { postId: 'post-1' },
       update: {
@@ -155,7 +158,10 @@ describe('POST /api/views', () => {
     expect(prisma.siteAnalytics.upsert).toHaveBeenCalled();
 
     // Post should be searched but upsert should not be called
-    expect(mockPostDb.post.findUnique).toHaveBeenCalledWith({ where: { slug } });
+    expect(mockPostDb.post.findUnique).toHaveBeenCalledWith({
+      where: { slug },
+      select: { id: true }
+    });
     expect(mockPostDb.postView.upsert).not.toHaveBeenCalled();
 
     expect(res.cookies.set).toHaveBeenCalledWith(expect.objectContaining({

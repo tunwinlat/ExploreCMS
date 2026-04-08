@@ -53,3 +53,6 @@
 ## 2026-05-18 - Fixing Cloudflare Edge Compatibility with dynamic detail pages
 **Learning:** For Next.js dynamic detail pages (e.g., individual projects or photos) deployed to Cloudflare Workers/Pages, using `export const revalidate = 60` (ISR) causes build-time prerender failures when the database is unavailable or unsupported at build time. Furthermore, caching Prisma fetched `Date` objects using `unstable_cache` causes serialization errors since JSON stringification changes them to string.
 **Action:** When working with dynamic route parameters on Cloudflare deployments, stick to `export const dynamic = 'force-dynamic'` to force runtime rendering. If caching is needed, rely on Next.js `cache()` combined with global in-memory memoization during the request pass.
+## 2026-06-12 - Optimizing Post Database Lookups via Select Fields
+**Learning:** In database lookup functions such as fetching a post by slug in tracking API endpoints (`/api/views/route.ts`), fetching the entire record when only the `id` is required incurs unnecessary memory and network overhead.
+**Action:** Always append `select: { id: true }` to `prisma.model.findUnique` queries when retrieving records purely to determine existence or explicitly requiring only specific column identifiers. Avoid over-fetching data.
