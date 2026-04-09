@@ -14,8 +14,7 @@ import { after } from "next/server";
 import { getBlogPageData, BlogListingPost } from "@/lib/blog-cache";
 import { getSettings, getPopupConfig } from "@/lib/settings-cache";
 
-// Use ISR with 60 second revalidation for better performance
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 function normalizePosts(posts: BlogListingPost[]) {
   return posts.map((p) => ({
