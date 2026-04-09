@@ -10,3 +10,6 @@
 ## 2024-04-01 - Interactive Grid Filter Toggle Accessibility
 **Learning:** Found an app-wide accessibility issue where custom interactive filter toggle buttons (e.g., in DynamicPostGrid) are missing essential ARIA states (`aria-pressed`). This prevents screen readers from correctly communicating the active state of filter toggles.
 **Action:** Always add `aria-pressed={isActive}` to toggle buttons used for filtering or switching states to ensure screen reader users understand the currently active selection.
+## 2024-04-09 - Accessible CSS-driven Dropdowns
+**Learning:** Purely CSS-driven dropdown menus (using `:hover` to set `opacity: 1; visibility: visible`) are completely inaccessible to keyboard users and screen readers because they lack focus triggers and `aria-expanded` state communication.
+**Action:** Always pair CSS hover states with `:focus-within` or explicit `.is-open` classes, and manage the `aria-expanded` state of the trigger button dynamically via React event handlers (`onMouseEnter`, `onMouseLeave`, `onFocus`, `onBlur`) to support both pointer and keyboard interaction models seamlessly.

@@ -35,6 +35,7 @@ export default function DynamicPostGrid({
 }) {
   const [posts, setPosts] = useState<Post[]>(initialPosts)
   const [activeFilter, setActiveFilter] = useState<{type: 'latest'|'featured'|'tag', target?: string}>({type: 'latest'})
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
   
   // Pagination State
   const [cursor, setCursor] = useState<string | undefined>(initialCursor)
@@ -104,17 +105,31 @@ export default function DynamicPostGrid({
       <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '3rem', flexWrap: 'wrap' }}>
         {navItems.map((item) => {
           if (item.type === 'dropdown') {
+            const isOpen = openDropdownId === item.id;
             return (
-              <div key={item.id} className="dropdown-container" style={{ position: 'relative', display: 'inline-block' }}>
+              <div
+                key={item.id}
+                className="dropdown-container"
+                style={{ position: 'relative', display: 'inline-block' }}
+                onMouseEnter={() => setOpenDropdownId(item.id)}
+                onMouseLeave={() => setOpenDropdownId(null)}
+                onFocus={() => setOpenDropdownId(item.id)}
+                onBlur={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                    setOpenDropdownId(null)
+                  }
+                }}
+              >
                 <button 
                   className="btn glass" 
                   aria-haspopup="menu"
+                  aria-expanded={isOpen}
                   style={{ padding: '0.5rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
                   {item.label} <span style={{ fontSize: '0.8rem' }} aria-hidden="true">▼</span>
                 </button>
                 <div 
-                  className="dropdown-menu glass" 
+                  className={`dropdown-menu glass ${isOpen ? 'is-open' : ''}`}
                   style={{
                     position: 'absolute',
                     top: '100%',
@@ -127,8 +142,6 @@ export default function DynamicPostGrid({
                     gap: '0.25rem',
                     padding: '0.5rem',
                     zIndex: 50,
-                    opacity: 0,
-                    visibility: 'hidden',
                     transition: 'all var(--transition-fast)'
                   }}
                 >

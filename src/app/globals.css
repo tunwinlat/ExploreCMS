@@ -297,7 +297,14 @@ h1, h2, h3, h4 {
 }
 
 /* ===== Dropdown Menu ===== */
-.dropdown-container:hover .dropdown-menu {
+.dropdown-menu {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.dropdown-container:hover .dropdown-menu,
+.dropdown-container:focus-within .dropdown-menu,
+.dropdown-menu.is-open {
   opacity: 1;
   visibility: visible;
 }
