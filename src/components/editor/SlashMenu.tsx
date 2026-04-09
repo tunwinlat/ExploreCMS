@@ -29,6 +29,7 @@ interface CommandListProps {
 const CommandList = forwardRef((props: CommandListProps, ref) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     setSelectedIndex(0);
   }, [props.items]);
