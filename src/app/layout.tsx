@@ -11,6 +11,7 @@ import "./themes.css";
 
 import { getThemeConfig } from "@/lib/themes";
 import { ensureMigrations } from "@/lib/db-init";
+export const dynamic = 'force-dynamic';
 import { getSettings } from "@/lib/settings-cache";
 import { ParticleBackground } from "@/components/ParticleBackground";
 
