@@ -35,6 +35,7 @@ export default function DynamicPostGrid({
 }) {
   const [posts, setPosts] = useState<Post[]>(initialPosts)
   const [activeFilter, setActiveFilter] = useState<{type: 'latest'|'featured'|'tag', target?: string}>({type: 'latest'})
+  const [expandedDropdown, setExpandedDropdown] = useState<string | null>(null)
   
   // Pagination State
   const [cursor, setCursor] = useState<string | undefined>(initialCursor)
@@ -105,10 +106,19 @@ export default function DynamicPostGrid({
         {navItems.map((item) => {
           if (item.type === 'dropdown') {
             return (
-              <div key={item.id} className="dropdown-container" style={{ position: 'relative', display: 'inline-block' }}>
+              <div
+                key={item.id}
+                className="dropdown-container"
+                style={{ position: 'relative', display: 'inline-block' }}
+                onMouseEnter={() => setExpandedDropdown(item.id)}
+                onMouseLeave={() => setExpandedDropdown(null)}
+                onFocus={() => setExpandedDropdown(item.id)}
+                onBlur={() => setExpandedDropdown(null)}
+              >
                 <button 
                   className="btn glass" 
                   aria-haspopup="menu"
+                  aria-expanded={expandedDropdown === item.id}
                   style={{ padding: '0.5rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
                   {item.label} <span style={{ fontSize: '0.8rem' }} aria-hidden="true">▼</span>
