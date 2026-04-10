@@ -14,7 +14,7 @@ import { getSettings, getPopupConfig } from "@/lib/settings-cache";
 
 import { getCachedProjects } from "@/lib/projects-cache";
 
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
 export default async function ProjectsPage() {
   const [settings, projects, popupConfig] = await Promise.all([

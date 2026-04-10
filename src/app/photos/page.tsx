@@ -15,7 +15,7 @@ import { getSettings, getPopupConfig } from "@/lib/settings-cache";
 
 import { getCachedAlbums } from "@/lib/photos-cache";
 
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
 export default async function PhotosPage() {
   const [settings, albums, popupConfig] = await Promise.all([
