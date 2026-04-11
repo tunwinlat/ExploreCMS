@@ -40,7 +40,7 @@ function DropdownNav({ item, activeFilter, setActiveFilter }: {
       onMouseLeave={() => setIsOpen(false)}
       onFocus={() => setIsOpen(true)}
       onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget)) {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
           setIsOpen(false);
         }
       }}
