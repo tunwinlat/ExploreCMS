@@ -508,7 +508,6 @@ export async function migrateStorage(
         if (filename.endsWith('.png')) contentType = 'image/png'
         else if (filename.endsWith('.gif')) contentType = 'image/gif'
         else if (filename.endsWith('.webp')) contentType = 'image/webp'
-        else if (filename.endsWith('.svg')) contentType = 'image/svg+xml'
         else if (filename.endsWith('.ico')) contentType = 'image/x-icon'
 
         // Upload to new storage
