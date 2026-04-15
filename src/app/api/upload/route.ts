@@ -11,6 +11,7 @@ import { NextResponse } from 'next/server'
 import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rateLimit'
+import { isValidImageSignature } from '@/lib/upload'
 
 // Bunny Storage API Client
 class BunnyStorageClient {
@@ -112,6 +113,11 @@ export async function POST(req: Request) {
 
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
+
+    // SECURITY FIX: Prevent MIME spoofing by verifying magic bytes
+    if (!isValidImageSignature(buffer, mimeType)) {
+      return NextResponse.json({ error: 'File content does not match the provided image type.' }, { status: 415 })
+    }
 
     // Derive extension from validated MIME type (ignore client-supplied extension)
     const fileExtension = ALLOWED_MIME_TYPES[mimeType]
