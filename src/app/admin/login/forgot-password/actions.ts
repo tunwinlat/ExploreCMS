@@ -32,11 +32,18 @@ export async function requestPasswordReset(formData: FormData) {
   try {
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true, username: true, email: true, emailVerified: true }
+      select: { id: true, username: true, email: true, emailVerified: true, passwordResetExpiry: true }
     })
 
     // Don't reveal if email exists or is unverified
     if (!user || !user.emailVerified || !user.email) {
+      return genericSuccess
+    }
+
+    // Security: Prevent email spam by rate-limiting password reset emails per user.
+    // If a token was requested recently (e.g. less than 15 minutes ago), don't send another.
+    // Since expiry is set to 1 hour (60 mins), check if expiry > 45 mins from now.
+    if (user.passwordResetExpiry && user.passwordResetExpiry.getTime() > Date.now() + 45 * 60 * 1000) {
       return genericSuccess
     }
 
