@@ -58,21 +58,27 @@ describe('updateSiteSettings', () => {
     expect(result).toEqual({ success: true })
     expect(prisma.siteSettings.upsert).toHaveBeenCalledTimes(1)
     expect(prisma.siteSettings.upsert).toHaveBeenCalledWith({
-      where: { id: 'default' },
+      where: { id: 'singleton' },
       update: {
         title: args[0],
         faviconUrl: args[1],
         headerTitle: args[2],
         headerDescription: args[3],
-        theme: args[4]
+        theme: args[4],
+        dynamicPattern: true,
+        sidebarAbout: undefined,
+        footerText: undefined
       },
       create: {
-        id: 'default',
+        id: 'singleton',
         title: args[0],
         faviconUrl: args[1],
         headerTitle: args[2],
         headerDescription: args[3],
-        theme: args[4]
+        theme: args[4],
+        dynamicPattern: true,
+        sidebarAbout: undefined,
+        footerText: undefined
       }
     })
     expect(revalidatePath).toHaveBeenCalledTimes(1)
