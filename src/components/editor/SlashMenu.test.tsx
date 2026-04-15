@@ -171,6 +171,10 @@ describe('getSuggestionItems', () => {
 
       const dispatchEventSpy = vi.spyOn(document, 'dispatchEvent').mockImplementation(() => true);
 
+      // Mock URL to prevent ReferenceError since jsdom might not provide it
+      const originalURL = global.URL;
+      global.URL = vi.fn().mockImplementation(() => ({})) as any;
+
       items[0].command({ editor: mockEditor, range: mockRange });
 
       expect(mockDeleteRange).toHaveBeenCalledWith(mockRange);
