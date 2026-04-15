@@ -231,7 +231,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
             <div style={{ flex: 1 }}>
               <input
                 type="file"
-                accept="image/png, image/jpeg, image/x-icon, image/svg+xml"
+                accept="image/png, image/jpeg, image/x-icon"
                 onChange={handleUpload}
                 disabled={uploading}
                 style={{ display: 'none' }}

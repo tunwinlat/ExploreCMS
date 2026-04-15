@@ -108,11 +108,11 @@ function uploadToLocalStorage(buffer: Buffer, filename: string): string {
 function guessExtension(contentType: string, url: string): string {
   const mimeMap: Record<string, string> = {
     'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png',
-    'image/gif': 'gif', 'image/webp': 'webp', 'image/svg+xml': 'svg',
+    'image/gif': 'gif', 'image/webp': 'webp',
   }
   if (mimeMap[contentType]) return mimeMap[contentType]
   // Try from URL
-  const match = url.match(/\.(jpe?g|png|gif|webp|svg)(\?|$)/i)
+  const match = url.match(/\.(jpe?g|png|gif|webp)(\?|$)/i)
   if (match) return match[1].toLowerCase()
   return 'jpg' // fallback
 }
