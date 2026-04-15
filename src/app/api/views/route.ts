@@ -54,7 +54,10 @@ export async function POST(req: Request) {
     // Fetch post first if slug provided
     let post = null;
     if (slug) {
-      post = await postDb.post.findUnique({ where: { slug } });
+      post = await postDb.post.findUnique({
+        where: { slug },
+        select: { id: true }
+      });
     }
 
     // ⚡ Bolt: Parallelize independent database queries
