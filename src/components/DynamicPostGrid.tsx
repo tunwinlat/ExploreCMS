@@ -24,6 +24,84 @@ type Post = {
   content: string
 }
 
+
+function DropdownNav({ item, activeFilter, setActiveFilter }: {
+  item: NavItem,
+  activeFilter: {type: 'latest'|'featured'|'tag', target?: string},
+  setActiveFilter: (filter: {type: 'latest'|'featured'|'tag', target?: string}) => void
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div
+      className="dropdown-container"
+      style={{ position: 'relative', display: 'inline-block' }}
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
+      onFocus={() => setIsOpen(true)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains((e.relatedTarget as Node) || null)) {
+          setIsOpen(false);
+        }
+      }}
+    >
+      <button
+        className="btn glass"
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        style={{ padding: '0.5rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+      >
+        {item.label} <span style={{ fontSize: '0.8rem' }} aria-hidden="true">▼</span>
+      </button>
+      <div
+        className="dropdown-menu glass"
+        role="menu"
+        style={{
+          position: 'absolute',
+          top: '100%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          marginTop: '0.5rem',
+          minWidth: '200px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.25rem',
+          padding: '0.5rem',
+          zIndex: 50,
+          opacity: isOpen ? 1 : 0,
+          visibility: isOpen ? 'visible' : 'hidden',
+          transition: 'all var(--transition-fast)'
+        }}
+      >
+        {item.children?.map(child => (
+          <button
+            key={child.id}
+            role="menuitem"
+            onClick={() => {
+              setActiveFilter({ type: 'tag', target: child.tagSlug });
+              setIsOpen(false);
+            }}
+            aria-pressed={activeFilter.target === child.tagSlug}
+            style={{
+              padding: '0.75rem 1rem',
+              background: activeFilter.target === child.tagSlug ? 'var(--accent-color)' : 'transparent',
+              color: activeFilter.target === child.tagSlug ? 'white' : 'var(--text-primary)',
+              border: 'none',
+              textAlign: 'left',
+              cursor: 'pointer',
+              borderRadius: 'var(--radius-sm)',
+              transition: 'background var(--transition-fast)'
+            }}
+            className="dropdown-item"
+          >
+            {child.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function DynamicPostGrid({ 
   initialPosts, 
   navItems, 
@@ -105,55 +183,12 @@ export default function DynamicPostGrid({
         {navItems.map((item) => {
           if (item.type === 'dropdown') {
             return (
-              <div key={item.id} className="dropdown-container" style={{ position: 'relative', display: 'inline-block' }}>
-                <button 
-                  className="btn glass" 
-                  aria-haspopup="menu"
-                  style={{ padding: '0.5rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                >
-                  {item.label} <span style={{ fontSize: '0.8rem' }} aria-hidden="true">▼</span>
-                </button>
-                <div 
-                  className="dropdown-menu glass" 
-                  style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    marginTop: '0.5rem',
-                    minWidth: '200px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.25rem',
-                    padding: '0.5rem',
-                    zIndex: 50,
-                    opacity: 0,
-                    visibility: 'hidden',
-                    transition: 'all var(--transition-fast)'
-                  }}
-                >
-                  {item.children?.map(child => (
-                    <button
-                      key={child.id}
-                      onClick={() => setActiveFilter({ type: 'tag', target: child.tagSlug })}
-                      aria-pressed={activeFilter.target === child.tagSlug}
-                      style={{
-                        padding: '0.75rem 1rem',
-                        background: activeFilter.target === child.tagSlug ? 'var(--accent-color)' : 'transparent',
-                        color: activeFilter.target === child.tagSlug ? 'white' : 'var(--text-primary)',
-                        border: 'none',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        borderRadius: 'var(--radius-sm)',
-                        transition: 'background var(--transition-fast)'
-                      }}
-                      className="dropdown-item"
-                    >
-                      {child.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <DropdownNav
+                key={item.id}
+                item={item}
+                activeFilter={activeFilter}
+                setActiveFilter={setActiveFilter}
+              />
             )
           }
 
