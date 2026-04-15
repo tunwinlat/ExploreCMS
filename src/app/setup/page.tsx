@@ -10,6 +10,9 @@ import { initializeDatabase } from '@/lib/db-init'
 import SetupWizard from './SetupWizard'
 
 export default async function SetupPage() {
+  // If building, we don't have database, skip
+  if (!process.env.DATABASE_URL) return null;
+
   // First, try to initialize the database (for LibSQL databases)
   let initError: string | null = null;
   try {

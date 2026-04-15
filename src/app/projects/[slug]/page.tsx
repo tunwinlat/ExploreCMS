@@ -14,21 +14,30 @@ import { ViewTracker } from "@/components/ViewTracker";
 import { renderPostContent } from "@/lib/renderContent";
 import { getSettings } from "@/lib/settings-cache";
 
-export const revalidate = 60
+import { unstable_cache } from "next/cache";
 
-async function getProject(slug: string) {
-  try {
-    const project = await (prisma as any).project.findUnique({
-      where: { slug },
-      include: { images: { orderBy: { order: 'asc' } } },
-    });
-    if (!project || !project.published) return null;
-    return {
-      ...project,
-      techTags: (() => { try { return JSON.parse(project.techTags || '[]') } catch { return [] } })(),
-    };
-  } catch { return null; }
-}
+export const dynamic = 'force-dynamic';
+
+const getProject = unstable_cache(
+  async (slug: string) => {
+    if (!process.env.DATABASE_URL) return null;
+    try {
+      const project = await (prisma as any).project.findUnique({
+        where: { slug },
+        include: { images: { orderBy: { order: 'asc' } } },
+      });
+      if (!project || !project.published) return null;
+      return {
+        ...project,
+        createdAt: typeof project.createdAt === 'string' ? project.createdAt : project.createdAt?.toISOString(),
+        updatedAt: typeof project.updatedAt === 'string' ? project.updatedAt : project.updatedAt?.toISOString(),
+        techTags: (() => { try { return JSON.parse(project.techTags || '[]') } catch { return [] } })(),
+      };
+    } catch { return null; }
+  },
+  ['project-detail'],
+  { revalidate: 60 }
+);
 
 function getSafeUrl(url: string | null | undefined): string | undefined {
   if (!url) return undefined

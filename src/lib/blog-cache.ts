@@ -33,6 +33,7 @@ function isPrimaryPost(post: { id: string; translationGroupId: string | null }):
  */
 export const getCachedBlogListingPosts = unstable_cache(
   async (): Promise<BlogListingPost[]> => {
+    if (!process.env.DATABASE_URL) return [];
     try {
       // Single efficient query with minimal fields
       const posts = await prisma.post.findMany({

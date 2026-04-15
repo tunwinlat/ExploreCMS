@@ -14,6 +14,7 @@ import { prisma } from '@/lib/db'
  * the database once per request.
  */
 export const getSettings = cache(async () => {
+  if (!process.env.DATABASE_URL) return null;
   try {
     return await prisma.siteSettings.findUnique({ where: { id: 'singleton' } })
   } catch {
@@ -27,6 +28,7 @@ export const getSettings = cache(async () => {
  * across the main frontend pages to prevent redundant round-trips.
  */
 export const getPopupConfig = cache(async () => {
+  if (!process.env.DATABASE_URL) return null;
   try {
     return await prisma.popupConfig.findUnique({ where: { id: 'singleton' } })
   } catch {
