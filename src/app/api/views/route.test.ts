@@ -37,7 +37,7 @@ vi.mock('next/headers', () => {
 vi.mock('@/lib/db', () => ({
   prisma: {
     siteAnalytics: {
-      upsert: vi.fn(),
+      upsert: vi.fn().mockResolvedValue({}),
     },
   },
 }));
@@ -48,7 +48,7 @@ vi.mock('@/lib/bunnyDb', () => ({
       findUnique: vi.fn(),
     },
     postView: {
-      upsert: vi.fn(),
+      upsert: vi.fn().mockResolvedValue({}),
     },
   })
 }));
