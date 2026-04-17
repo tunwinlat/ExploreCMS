@@ -67,7 +67,7 @@ export async function saveProject(formData: FormData) {
         data: { title, tagline, content, coverImage, status, featured, published, githubUrl, liveUrl, techTags, order: orderVal, slug },
       })
     } else {
-      let existing = await (prisma as any).project.findUnique({ where: { slug } })
+      const existing = await (prisma as any).project.findUnique({ where: { slug } })
       if (existing) slug = `${slug}-${Date.now()}`
 
       await (prisma as any).project.create({

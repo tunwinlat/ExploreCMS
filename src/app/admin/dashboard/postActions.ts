@@ -87,7 +87,7 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
     })
   } else {
     // Generate unique slug
-    let existing = await postDb.post.findUnique({ where: { slug } })
+    const existing = await postDb.post.findUnique({ where: { slug } })
     if (existing) slug = `${slug}-${Date.now()}`
 
     // Ensure we handle setting the translationGroupId correctly.
