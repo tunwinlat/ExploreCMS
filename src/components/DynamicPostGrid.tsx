@@ -6,7 +6,7 @@
 
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { getExcerpt, getFirstImage } from '@/lib/renderContent'
 
@@ -167,14 +167,23 @@ export default function DynamicPostGrid({
     }
   }, [fetchNextPage, hasMore])
 
-  const filteredPosts = posts.filter(post => {
-    if (activeFilter.type === 'latest') return true;
-    if (activeFilter.type === 'featured') return post.isFeatured;
-    if (activeFilter.type === 'tag' && activeFilter.target) {
-      return post.tags.some(t => t.slug === activeFilter.target);
-    }
-    return true;
-  })
+  const filteredPosts = useMemo(() => {
+    return posts.filter(post => {
+      if (activeFilter.type === 'latest') return true;
+      if (activeFilter.type === 'featured') return post.isFeatured;
+      if (activeFilter.type === 'tag' && activeFilter.target) {
+        return post.tags.some(t => t.slug === activeFilter.target);
+      }
+      return true;
+    }).map(post => {
+      const contentFormat = (post as any).contentFormat
+      return {
+        ...post,
+        coverImage: getFirstImage(post.content, contentFormat),
+        excerpt: getExcerpt(post.content, contentFormat, 120)
+      }
+    });
+  }, [posts, activeFilter]);
 
   return (
     <div>
@@ -220,10 +229,6 @@ export default function DynamicPostGrid({
           <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-secondary)' }}>No posts found for this view.</p>
         ) : (
           filteredPosts.map(post => {
-            const contentFormat = (post as any).contentFormat
-            const coverImage = getFirstImage(post.content, contentFormat)
-            const excerpt = getExcerpt(post.content, contentFormat, 120)
-
             return (
               <Link key={post.id} href={`/post/${post.slug}`} style={{ textDecoration: 'none' }}>
                 <article className="glass article-card fade-in-up" style={{
@@ -235,9 +240,9 @@ export default function DynamicPostGrid({
                   padding: 0,
                   overflow: 'hidden'
                 }}>
-                  {coverImage && (
+                  {post.coverImage && (
                     <div style={{ width: '100%', height: '240px', overflow: 'hidden', borderBottom: '1px solid var(--border-color)' }}>
-                      <img src={coverImage} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} className="card-img" />
+                      <img src={post.coverImage} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} className="card-img" />
                     </div>
                   )}
                   
@@ -251,9 +256,9 @@ export default function DynamicPostGrid({
                       {post.title}
                     </h2>
                     
-                    {excerpt && (
+                    {post.excerpt && (
                       <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.5rem', lineHeight: 1.6, flex: 1 }}>
-                        {excerpt}
+                        {post.excerpt}
                       </p>
                     )}
                     
