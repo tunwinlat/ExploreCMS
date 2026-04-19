@@ -6,7 +6,7 @@
 
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { getExcerpt } from '@/lib/renderContent'
@@ -133,6 +133,13 @@ export function SearchBox() {
       </>
     )
   }
+
+  const processedResults = useMemo(() => {
+    return results.map(post => {
+      const excerpt = getExcerpt(post.content, (post as any).contentFormat, 150)
+      return { ...post, excerpt }
+    })
+  }, [results])
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
@@ -330,14 +337,12 @@ export function SearchBox() {
                   </svg>
                   <p>No posts found matching &ldquo;{query}&rdquo;</p>
                 </div>
-              ) : results.length > 0 ? (
+              ) : processedResults.length > 0 ? (
                 <div>
                   <div style={{ padding: '0.75rem 1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>
-                    {results.length} result{results.length !== 1 ? 's' : ''} found
+                    {processedResults.length} result{processedResults.length !== 1 ? 's' : ''} found
                   </div>
-                  {results.map((post) => {
-                    const excerpt = getExcerpt(post.content, (post as any).contentFormat, 150)
-
+                  {processedResults.map((post) => {
                     return (
                       <Link
                         key={post.id}
@@ -373,7 +378,7 @@ export function SearchBox() {
                             overflow: 'hidden'
                           }}
                         >
-                          {highlightMatch(excerpt, query)}
+                          {highlightMatch(post.excerpt, query)}
                         </p>
                         <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                           {post.author.firstName || post.author.username} • {new Date(post.createdAt).toLocaleDateString()}
