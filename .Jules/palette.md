@@ -10,3 +10,6 @@
 ## 2024-04-01 - Interactive Grid Filter Toggle Accessibility
 **Learning:** Found an app-wide accessibility issue where custom interactive filter toggle buttons (e.g., in DynamicPostGrid) are missing essential ARIA states (`aria-pressed`). This prevents screen readers from correctly communicating the active state of filter toggles.
 **Action:** Always add `aria-pressed={isActive}` to toggle buttons used for filtering or switching states to ensure screen reader users understand the currently active selection.
+## 2024-04-22 - Language Switcher Popup Indicator
+**Learning:** The language switcher button indicated state with `aria-expanded` but failed to tell assistive technologies *what* was expanding (a menu).
+**Action:** When implementing custom dropdowns or popups triggered by a button, ensure the trigger button includes `aria-haspopup="menu"` (or `"dialog"`, etc. as appropriate) alongside `aria-expanded` to properly signal to assistive technologies that interacting with the element opens a contextual menu.
