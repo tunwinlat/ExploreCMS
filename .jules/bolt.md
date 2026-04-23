@@ -56,3 +56,6 @@
 ## 2026-06-12 - Optimizing Post Database Lookups via Select Fields
 **Learning:** In database lookup functions such as fetching a post by slug in tracking API endpoints (`/api/views/route.ts`), fetching the entire record when only the `id` is required incurs unnecessary memory and network overhead.
 **Action:** Always append `select: { id: true }` to `prisma.model.findUnique` queries when retrieving records purely to determine existence or explicitly requiring only specific column identifiers. Avoid over-fetching data.
+## 2026-04-23 - Correct useMemo Placement and Dependencies
+**Learning:** When attempting to memoize mapped arrays in React, two common anti-patterns destroy the optimization or break React: 1. Placing `useMemo` inline within JSX violates the Rules of Hooks. 2. Passing dynamically generated arrays (like the output of an inline `.filter`) as a dependency to `useMemo` causes it to re-run on every render due to referential inequality.
+**Action:** Always define `useMemo` at the top level of the component block. Furthermore, move any data transformations (like `.filter`) *inside* the `useMemo` callback and depend only on stable properties (like raw `posts` and `activeFilter`) to preserve referential equality.
