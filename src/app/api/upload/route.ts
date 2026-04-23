@@ -11,6 +11,7 @@ import { NextResponse } from 'next/server'
 import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rateLimit'
+import { decrypt } from '@/lib/crypto'
 
 // Bunny Storage API Client
 class BunnyStorageClient {
@@ -121,8 +122,9 @@ export async function POST(req: Request) {
     // Use Bunny Storage if enabled
     if (settings?.bunnyStorageEnabled && settings.bunnyStorageApiKey) {
       try {
+        const decryptedKey = decrypt(settings.bunnyStorageApiKey) || settings.bunnyStorageApiKey
         const storage = new BunnyStorageClient(
-          settings.bunnyStorageApiKey,
+          decryptedKey,
           settings.bunnyStorageZoneName,
           settings.bunnyStorageRegion
         )
