@@ -56,3 +56,6 @@
 ## 2026-06-12 - Optimizing Post Database Lookups via Select Fields
 **Learning:** In database lookup functions such as fetching a post by slug in tracking API endpoints (`/api/views/route.ts`), fetching the entire record when only the `id` is required incurs unnecessary memory and network overhead.
 **Action:** Always append `select: { id: true }` to `prisma.model.findUnique` queries when retrieving records purely to determine existence or explicitly requiring only specific column identifiers. Avoid over-fetching data.
+## 2024-05-19 - Regex matching inside map of filtered component results
+**Learning:** In list views or grids, performing operations inside `map` callbacks can run continuously if re-rendering is triggered by any state update, even if the map data has not changed. Using regex string searches `getFirstImage` and `getExcerpt` inside map callbacks scales particularly poorly.
+**Action:** When filtering and iterating over data to prepare for rendering, push computationally expensive derivations directly to the `useMemo` array object alongside the mapping, to strictly limit O(N) tasks to dependency updates.
