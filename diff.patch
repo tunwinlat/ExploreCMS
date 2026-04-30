@@ -1,0 +1,36 @@
+<<<<<<< SEARCH
+  const filteredPosts = posts.filter(post => {
+    if (activeFilter.type === 'latest') return true;
+    if (activeFilter.type === 'featured') return post.isFeatured;
+    if (activeFilter.type === 'tag' && activeFilter.target) {
+      return post.tags.some(t => t.slug === activeFilter.target);
+    }
+    return true;
+  })
+
+  return (
+=======
+  const filteredPosts = useMemo(() => {
+    return posts.filter(post => {
+      if (activeFilter.type === 'latest') return true;
+      if (activeFilter.type === 'featured') return post.isFeatured;
+      if (activeFilter.type === 'tag' && activeFilter.target) {
+        return post.tags.some(t => t.slug === activeFilter.target);
+      }
+      return true;
+    });
+  }, [posts, activeFilter]);
+
+  const gridPosts = useMemo(() => {
+    return filteredPosts.map(post => {
+      const contentFormat = (post as any).contentFormat;
+      return {
+        ...post,
+        coverImage: getFirstImage(post.content, contentFormat),
+        excerpt: getExcerpt(post.content, contentFormat, 120),
+      };
+    });
+  }, [filteredPosts]);
+
+  return (
+>>>>>>> REPLACE
