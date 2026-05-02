@@ -277,7 +277,7 @@ function convertHtmlToMarkdown(html: string): string {
       md = md.replace(block.placeholder, `\`${escaped}\``)
     } else {
       // Code block: wrap in triple backticks, remove any surrounding backticks
-      let code = block.content.replace(/^```\n?|\n?```$/g, '')
+      const code = block.content.replace(/^```\n?|\n?```$/g, '')
       md = md.replace(block.placeholder, `\n\`\`\`\n${code}\n\`\`\`\n`)
     }
   }
