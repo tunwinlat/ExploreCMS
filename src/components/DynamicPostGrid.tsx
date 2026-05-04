@@ -22,6 +22,7 @@ type Post = {
   tags: { name: string, slug: string }[]
   views?: { uniqueViews: number }[]
   content: string
+  contentFormat?: string
 }
 
 
@@ -178,7 +179,7 @@ export default function DynamicPostGrid({
         return true;
       })
       .map(post => {
-        const contentFormat = (post as any).contentFormat
+        const contentFormat = post.contentFormat
         const coverImage = getFirstImage(post.content, contentFormat)
         const excerpt = getExcerpt(post.content, contentFormat, 120)
 
@@ -212,7 +213,7 @@ export default function DynamicPostGrid({
           return (
             <button
               key={item.id}
-              onClick={() => setActiveFilter({ type: item.type as any, target: item.tagSlug })}
+              onClick={() => setActiveFilter({ type: item.type as 'latest'|'featured'|'tag', target: item.tagSlug })}
               aria-pressed={isActive}
               className={`btn ${isActive ? 'btn-primary' : 'glass'}`}
               style={{ transition: 'all var(--transition-normal)', padding: '0.5rem 1.25rem' }}
