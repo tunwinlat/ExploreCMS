@@ -20,7 +20,7 @@ type Post = {
   author: { username: string, firstName: string | null }
   createdAt: string | Date 
   tags: { name: string, slug: string }[]
-  views?: { uniqueViews: number }[]
+  views?: { uniqueViews?: number, totalViews?: number }[]
   content: string
   contentFormat?: string
 }

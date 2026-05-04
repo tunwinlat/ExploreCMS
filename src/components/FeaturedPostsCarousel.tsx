@@ -15,10 +15,10 @@ interface FeaturedPost {
   title: string
   slug: string
   content: string
-  createdAt: string
+  createdAt: string | Date
   author: { username: string; firstName: string | null }
   tags: { name: string; slug: string }[]
-  views?: { uniqueViews: number }[]
+  views?: { uniqueViews?: number, totalViews?: number }[]
 }
 
 interface FeaturedPostsCarouselProps {
@@ -157,7 +157,7 @@ export function FeaturedPostsCarousel({ posts }: FeaturedPostsCarouselProps) {
             <span style={{ fontWeight: 600 }}>{currentPost.author.firstName || currentPost.author.username}</span>
             <span>•</span>
             <span>{new Date(currentPost.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-            {currentPost.views && currentPost.views[0]?.uniqueViews > 0 && (
+            {currentPost.views && (currentPost.views[0]?.uniqueViews ?? 0) > 0 && (
               <>
                 <span>•</span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>

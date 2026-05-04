@@ -13,11 +13,12 @@ interface Post {
   title: string
   slug: string
   content: string
+  contentFormat?: string
   isFeatured: boolean
-  createdAt: string
+  createdAt: string | Date
   author: { username: string; firstName: string | null }
   tags: { name: string; slug: string }[]
-  views: any[]
+  views?: { uniqueViews?: number, totalViews?: number }[]
 }
 
 interface BlogContentProps {

@@ -14,10 +14,10 @@ interface TrendingPost {
   title: string
   slug: string
   content: string
-  createdAt: string
+  createdAt: string | Date
   author: { username: string; firstName: string | null }
   tags: { name: string; slug: string }[]
-  views?: { totalViews: number; uniqueViews: number }[]
+  views?: { totalViews?: number; uniqueViews?: number }[]
 }
 
 interface TrendingPostsProps {
