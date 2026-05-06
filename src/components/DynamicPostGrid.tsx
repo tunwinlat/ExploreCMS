@@ -6,7 +6,7 @@
 
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { getExcerpt, getFirstImage } from '@/lib/renderContent'
 
@@ -22,6 +22,7 @@ type Post = {
   tags: { name: string, slug: string }[]
   views?: { uniqueViews: number }[]
   content: string
+  contentFormat?: string
 }
 
 
@@ -167,14 +168,28 @@ export default function DynamicPostGrid({
     }
   }, [fetchNextPage, hasMore])
 
-  const filteredPosts = posts.filter(post => {
-    if (activeFilter.type === 'latest') return true;
-    if (activeFilter.type === 'featured') return post.isFeatured;
-    if (activeFilter.type === 'tag' && activeFilter.target) {
-      return post.tags.some(t => t.slug === activeFilter.target);
-    }
-    return true;
-  })
+  const memoizedPosts = useMemo(() => {
+    const filtered = posts.filter(post => {
+      if (activeFilter.type === 'latest') return true;
+      if (activeFilter.type === 'featured') return post.isFeatured;
+      if (activeFilter.type === 'tag' && activeFilter.target) {
+        return post.tags.some(t => t.slug === activeFilter.target);
+      }
+      return true;
+    });
+
+    return filtered.map(post => {
+      const contentFormat = post.contentFormat;
+      const coverImage = getFirstImage(post.content, contentFormat);
+      const excerpt = getExcerpt(post.content, contentFormat, 120);
+
+      return {
+        ...post,
+        computedCoverImage: coverImage,
+        computedExcerpt: excerpt
+      };
+    });
+  }, [posts, activeFilter]);
 
   return (
     <div>
@@ -198,7 +213,7 @@ export default function DynamicPostGrid({
           return (
             <button
               key={item.id}
-              onClick={() => setActiveFilter({ type: item.type as any, target: item.tagSlug })}
+              onClick={() => setActiveFilter({ type: item.type as 'latest'|'featured'|'tag', target: item.tagSlug })}
               aria-pressed={isActive}
               className={`btn ${isActive ? 'btn-primary' : 'glass'}`}
               style={{ transition: 'all var(--transition-normal)', padding: '0.5rem 1.25rem' }}
@@ -216,13 +231,11 @@ export default function DynamicPostGrid({
         gap: '2rem',
         alignItems: 'start'
       }}>
-        {filteredPosts.length === 0 ? (
+        {memoizedPosts.length === 0 ? (
           <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-secondary)' }}>No posts found for this view.</p>
         ) : (
-          filteredPosts.map(post => {
-            const contentFormat = (post as any).contentFormat
-            const coverImage = getFirstImage(post.content, contentFormat)
-            const excerpt = getExcerpt(post.content, contentFormat, 120)
+          memoizedPosts.map(post => {
+            const { computedCoverImage: coverImage, computedExcerpt: excerpt } = post;
 
             return (
               <Link key={post.id} href={`/post/${post.slug}`} style={{ textDecoration: 'none' }}>

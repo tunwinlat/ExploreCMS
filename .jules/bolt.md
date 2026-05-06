@@ -56,3 +56,6 @@
 ## 2026-06-12 - Optimizing Post Database Lookups via Select Fields
 **Learning:** In database lookup functions such as fetching a post by slug in tracking API endpoints (`/api/views/route.ts`), fetching the entire record when only the `id` is required incurs unnecessary memory and network overhead.
 **Action:** Always append `select: { id: true }` to `prisma.model.findUnique` queries when retrieving records purely to determine existence or explicitly requiring only specific column identifiers. Avoid over-fetching data.
+## 2026-06-15 - Memoizing Array Computations inside React Components
+**Learning:** In React components that iterate over lists, performing heavy string manipulations (e.g. regex extractions) or complex conditional filtering on every render is a massive performance drain. These computations block the main thread and can slow down rendering dramatically, especially for UI elements like responsive grids (`DynamicPostGrid.tsx`).
+**Action:** When working with list rendering components, wrap both the filtering logic and the heavy computations in a single `useMemo` hook, producing an array of objects that attach computed values. This prevents expensive O(N) operations from re-running unnecessarily on unrelated state updates.
