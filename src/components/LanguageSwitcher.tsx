@@ -81,6 +81,8 @@ export function LanguageSwitcher({
           justifyContent: 'center'
         }}
         aria-expanded={isOpen}
+        aria-haspopup="menu"
+        aria-controls={isOpen ? "language-switcher-menu" : undefined}
         aria-label={compact ? 'Switch language' : 'Available in multiple languages'}
         title={compact ? 'Switch language' : 'Available in multiple languages'}
       >
@@ -116,7 +118,10 @@ export function LanguageSwitcher({
             }}
             onClick={() => setIsOpen(false)}
           />
-          <div style={{
+          <div
+            id="language-switcher-menu"
+            role="menu"
+            style={{
             position: 'absolute',
             top: 'calc(100% + 0.5rem)',
             left: '50%',
@@ -159,6 +164,7 @@ export function LanguageSwitcher({
               return (
                 <button
                   key={lang.language}
+                  role="menuitem"
                   onClick={() => handleLanguageClick(lang.slug, lang.language)}
                   onMouseEnter={() => handleMouseEnter(lang.slug)}
                   disabled={isPending}

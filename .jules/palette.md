@@ -13,3 +13,6 @@
 ## 2024-05-18 - CSS-Driven Dropdown Menu Accessibility
 **Learning:** Dropdown menus driven purely by CSS `:hover` states are completely inaccessible to keyboard users and screen readers, trapping navigation or preventing access to sub-items.
 **Action:** When implementing CSS-driven dropdown menus, ensure keyboard accessibility by adding `:focus-within` selectors to the container alongside `:hover`, and manage the trigger button's `aria-expanded` attribute dynamically via React state (`onFocus`, `onBlur`, `onMouseEnter`, `onMouseLeave`).
+## 2024-05-19 - Missing ARIA Relationships in Dropdown Menus
+**Learning:** Custom dropdown menus built with `<div>` and `<button>` elements often lack the necessary ARIA relationships to inform screen readers that a button opens a menu and which elements constitute the menu items.
+**Action:** Always add `aria-haspopup="menu"` and `aria-controls="[menu-id]"` to the toggle button. Ensure the dropdown container has `id="[menu-id]"` and `role="menu"`, and each item inside has `role="menuitem"`.
