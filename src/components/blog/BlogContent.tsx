@@ -13,6 +13,7 @@ interface Post {
   title: string
   slug: string
   content: string
+  contentFormat: string
   isFeatured: boolean
   createdAt: string
   author: { username: string; firstName: string | null }
