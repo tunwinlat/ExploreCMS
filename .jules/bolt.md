@@ -56,3 +56,6 @@
 ## 2026-06-12 - Optimizing Post Database Lookups via Select Fields
 **Learning:** In database lookup functions such as fetching a post by slug in tracking API endpoints (`/api/views/route.ts`), fetching the entire record when only the `id` is required incurs unnecessary memory and network overhead.
 **Action:** Always append `select: { id: true }` to `prisma.model.findUnique` queries when retrieving records purely to determine existence or explicitly requiring only specific column identifiers. Avoid over-fetching data.
+## 2026-06-25 - Expensive Regex Parsing in Dynamic UI Components
+**Learning:** In dynamically filtered list components like `DynamicPostGrid.tsx`, mapping over an array to parse complex string content (e.g., `getFirstImage` and `getExcerpt`) inside the render loop causes expensive string operations on every re-render.
+**Action:** Always wrap list filtering and heavy data-transformation logic in a `useMemo` hook. Critically, perform the expensive `.map()` transformations on the *already filtered* array, ensuring the expensive text parsing is only performed when the active filter or data source actually changes, and never runs on discarded items.
