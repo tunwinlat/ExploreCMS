@@ -17,6 +17,8 @@ import { getFirstImage } from '@/lib/renderContent'
 import { getSettings } from '@/lib/settings-cache'
 import './post.css'
 
+export const dynamic = 'force-dynamic';
+
 // ⚡ Bolt: Memoize the post query to avoid duplicate database calls
 const getPost = cache(async (slug: string) => {
   return await prisma.post.findUnique({
