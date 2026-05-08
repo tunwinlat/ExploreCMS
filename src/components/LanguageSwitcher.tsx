@@ -80,6 +80,7 @@ export function LanguageSwitcher({
           height: compact ? '36px' : 'auto',
           justifyContent: 'center'
         }}
+        aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-label={compact ? 'Switch language' : 'Available in multiple languages'}
         title={compact ? 'Switch language' : 'Available in multiple languages'}
