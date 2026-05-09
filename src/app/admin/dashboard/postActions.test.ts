@@ -22,7 +22,7 @@ vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
 }))
 vi.mock('next/cache', () => ({
-  revalidatePath: vi.fn(),
+  revalidatePath: vi.fn(), revalidateTag: vi.fn(),
 }))
 vi.mock('next/server', () => ({
   after: vi.fn((cb) => cb()),
