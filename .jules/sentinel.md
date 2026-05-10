@@ -7,3 +7,8 @@
 **Vulnerability:** The file upload endpoints (`src/app/api/upload/route.ts`, `src/app/admin/dashboard/settings/storageActions.ts`, etc.) explicitly allowed uploading `image/svg+xml` files.
 **Learning:** Allowing SVG file uploads in a web application without strict server-side sanitization is a critical security risk. SVGs are XML documents that can contain `<script>` tags or `javascript:` handlers. If a malicious user uploads an SVG containing an XSS payload and a victim opens the image directly or it gets rendered appropriately by the browser, the script will execute in the context of the application's domain, leading to Stored XSS.
 **Prevention:** Do not include `image/svg+xml` in the allowed MIME types for user file uploads unless the application implements and enforces robust server-side SVG sanitization (e.g. using libraries like `dompurify` specifically configured for SVGs or stripping dangerous tags natively) before storing and serving the file.
+
+## 2025-05-10 - Encrypted API Key Exposure Risk
+**Vulnerability:** The `bunnyStorageApiKey` was retrieved from the database, which stores it in an encrypted format. This encrypted value was then passed directly into the `BunnyStorageClient` without being decrypted first.
+**Learning:** This is an operational error where encrypted keys are used as-is instead of being decrypted first, causing the upload API to either fail or potentially expose the encrypted payload format if errors are logged.
+**Prevention:** Whenever retrieving credentials or tokens from the database, verify whether they are stored natively or encrypted (via `lib/crypto.ts`) and ensure they are decrypted using `decrypt(value) || value` pattern before usage.
