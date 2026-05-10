@@ -18,6 +18,7 @@ interface Post {
   author: { username: string; firstName: string | null }
   tags: { name: string; slug: string }[]
   views: any[]
+  contentFormat?: string | null
 }
 
 interface BlogContentProps {
