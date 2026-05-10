@@ -10,3 +10,6 @@
 ## 2024-04-01 - Interactive Grid Filter Toggle Accessibility
 **Learning:** Found an app-wide accessibility issue where custom interactive filter toggle buttons (e.g., in DynamicPostGrid) are missing essential ARIA states (`aria-pressed`). This prevents screen readers from correctly communicating the active state of filter toggles.
 **Action:** Always add `aria-pressed={isActive}` to toggle buttons used for filtering or switching states to ensure screen reader users understand the currently active selection.
+## 2024-05-10 - Redundant aria-hidden on aria-label buttons
+**Learning:** Adding `aria-hidden="true"` to child elements of a component that already has an `aria-label` (like an icon-only button) is a redundant 'cargo cult' pattern. The `aria-label` completely supersedes the inner child content for screen readers, resulting in zero change to the accessibility experience. However, adding `/** @vitest-environment jsdom */` to UI test files is critical for testing components that interact with globals like `document` or `window`.
+**Action:** Focus on meaningful semantic additions. Always remember to add the `jsdom` pragma to test files that mock DOM globals.
