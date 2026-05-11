@@ -15,11 +15,17 @@ export const getCachedAlbums = unstable_cache(
     if (!process.env.DATABASE_URL) return [];
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return await (prisma as any).photoAlbum.findMany({
+      const albums = await (prisma as any).photoAlbum.findMany({
         where: { published: true },
         orderBy: [{ featured: 'desc' }, { order: 'asc' }, { createdAt: 'desc' }],
         include: { _count: { select: { photos: true } } },
       });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return albums.map((a: any) => ({
+        ...a,
+        createdAt: typeof a.createdAt === 'string' ? a.createdAt : (a.createdAt ? a.createdAt.toISOString() : null),
+        updatedAt: typeof a.updatedAt === 'string' ? a.updatedAt : (a.updatedAt ? a.updatedAt.toISOString() : null),
+      }));
     } catch { return []; }
   },
   ['albums-listing'],
