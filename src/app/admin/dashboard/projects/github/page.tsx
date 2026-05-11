@@ -3,8 +3,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
+
 'use client'
-export const runtime = 'edge';
+
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { 
@@ -15,6 +16,7 @@ import {
   importGitHubRepos,
   updateGitHubSyncMode
 } from './githubActions'
+
 interface GitHubRepo {
   id: number
   name: string
@@ -31,6 +33,7 @@ interface GitHubRepo {
   fork: boolean
   alreadyImported: boolean
 }
+
 export default function GitHubIntegrationPage() {
   const [settings, setSettings] = useState<{ enabled: boolean; username: string | null; syncMode: string; lastSyncAt: string | null } | null>(null)
   const [loading, setLoading] = useState(true)
@@ -43,6 +46,7 @@ export default function GitHubIntegrationPage() {
   const [importing, setImporting] = useState(false)
   const [importResults, setImportResults] = useState<any[] | null>(null)
   const [syncMode, setSyncMode] = useState<'all' | 'manual'>('manual')
+
   const loadSettings = useCallback(async () => {
     const result = await getGitHubSettings()
     if (result.error) {
@@ -53,9 +57,11 @@ export default function GitHubIntegrationPage() {
     }
     setLoading(false)
   }, [])
+
   useEffect(() => {
     loadSettings()
   }, [loadSettings])
+
   const handleConnect = async () => {
     if (!token.trim()) return
     
@@ -73,6 +79,7 @@ export default function GitHubIntegrationPage() {
     
     setConnecting(false)
   }
+
   const handleDisconnect = async () => {
     if (!confirm('Disconnect GitHub? This will not delete any imported projects.')) return
     
@@ -89,6 +96,7 @@ export default function GitHubIntegrationPage() {
     
     setLoading(false)
   }
+
   const handleFetchRepos = async () => {
     setFetchingRepos(true)
     setError(null)
@@ -103,6 +111,7 @@ export default function GitHubIntegrationPage() {
     
     setFetchingRepos(false)
   }
+
   const toggleRepoSelection = (fullName: string) => {
     const newSelected = new Set(selectedRepos)
     if (newSelected.has(fullName)) {
@@ -112,6 +121,7 @@ export default function GitHubIntegrationPage() {
     }
     setSelectedRepos(newSelected)
   }
+
   const handleImport = async () => {
     if (selectedRepos.size === 0) return
     
@@ -132,10 +142,12 @@ export default function GitHubIntegrationPage() {
     
     setImporting(false)
   }
+
   const handleSyncModeChange = async (mode: 'all' | 'manual') => {
     setSyncMode(mode)
     await updateGitHubSyncMode(mode)
   }
+
   if (loading) {
     return (
       <div className="fade-in-up">
@@ -149,6 +161,7 @@ export default function GitHubIntegrationPage() {
       </div>
     )
   }
+
   return (
     <div className="fade-in-up">
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
@@ -157,6 +170,7 @@ export default function GitHubIntegrationPage() {
         </Link>
         <h1 className="admin-page-title">GitHub Integration</h1>
       </div>
+
       {error && (
         <div style={{
           padding: '1rem 1.25rem',
@@ -169,6 +183,7 @@ export default function GitHubIntegrationPage() {
           {error}
         </div>
       )}
+
       {/* Connection Status */}
       <div className="glass" style={{ padding: '2rem', marginBottom: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
@@ -198,6 +213,7 @@ export default function GitHubIntegrationPage() {
             </button>
           ) : null}
         </div>
+
         {!settings?.enabled ? (
           <div>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
@@ -286,6 +302,7 @@ export default function GitHubIntegrationPage() {
           </div>
         )}
       </div>
+
       {/* Repository Selection */}
       {settings?.enabled && (
         <div className="glass" style={{ padding: '2rem' }}>
@@ -300,6 +317,7 @@ export default function GitHubIntegrationPage() {
               {fetchingRepos ? 'Fetching...' : 'Refresh Repos'}
             </button>
           </div>
+
           {repos.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
               <p>No repositories loaded yet.</p>
@@ -334,6 +352,7 @@ export default function GitHubIntegrationPage() {
                   {importing ? 'Importing...' : `Import ${selectedRepos.size} Projects`}
                 </button>
               </div>
+
               {importResults && (
                 <div style={{
                   padding: '1rem',
@@ -356,6 +375,7 @@ export default function GitHubIntegrationPage() {
                   ))}
                 </div>
               )}
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {repos.map((repo) => (
                   <div
@@ -455,6 +475,7 @@ export default function GitHubIntegrationPage() {
     </div>
   )
 }
+
 function getLanguageColor(language: string): string {
   const colors: Record<string, string> = {
     'TypeScript': '#3178C6',
