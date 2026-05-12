@@ -80,7 +80,6 @@ export function LanguageSwitcher({
           height: compact ? '36px' : 'auto',
           justifyContent: 'center'
         }}
-        aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-label={compact ? 'Switch language' : 'Available in multiple languages'}
         title={compact ? 'Switch language' : 'Available in multiple languages'}
@@ -117,22 +116,19 @@ export function LanguageSwitcher({
             }}
             onClick={() => setIsOpen(false)}
           />
-          <div
-            role="menu"
-            style={{
-              position: 'absolute',
-              top: 'calc(100% + 0.5rem)',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: 'var(--bg-color-secondary)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-md)',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              minWidth: '150px',
-              zIndex: 10,
-              overflow: 'hidden'
-            }}
-          >
+          <div style={{
+            position: 'absolute',
+            top: 'calc(100% + 0.5rem)',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'var(--bg-color-secondary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            minWidth: '150px',
+            zIndex: 10,
+            overflow: 'hidden'
+          }}>
             {allLanguages.map((lang) => {
               const langName = iso6391.getNativeName(lang.language) || lang.language.toUpperCase()
               const isNavigating = navigatingTo === lang.language && isPending
@@ -141,7 +137,6 @@ export function LanguageSwitcher({
                 return (
                   <div 
                     key={lang.language}
-                    role="menuitem"
                     style={{
                       padding: '0.75rem 1rem',
                       display: 'flex',
@@ -164,7 +159,6 @@ export function LanguageSwitcher({
               return (
                 <button
                   key={lang.language}
-                  role="menuitem"
                   onClick={() => handleLanguageClick(lang.slug, lang.language)}
                   onMouseEnter={() => handleMouseEnter(lang.slug)}
                   disabled={isPending}
