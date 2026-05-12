@@ -6,7 +6,7 @@
 
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { sanitizeContent } from '@/lib/sanitize'
 import { getExcerpt } from '@/lib/renderContent'
@@ -17,6 +17,7 @@ type FeedPost = {
   title: string
   slug: string
   content: string
+  contentFormat?: string | null
   createdAt: string
   isFeatured: boolean
   author: { firstName: string | null; username: string }
@@ -79,6 +80,13 @@ export function PostFeed({ initialPosts = [], initialCursor }: { initialPosts?: 
     }
   }, [fetchNextPage, hasMore])
 
+  const memoizedPosts = useMemo(() => {
+    return posts.map(post => {
+      const excerptHtml = sanitizeContent(getExcerpt(post.content, post.contentFormat, 200))
+      return { ...post, excerptHtml }
+    })
+  }, [posts])
+
   if (posts.length === 0 && !loading) {
     return (
       <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--text-secondary)' }}>
@@ -89,7 +97,7 @@ export function PostFeed({ initialPosts = [], initialCursor }: { initialPosts?: 
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      {posts.map(post => {
+      {memoizedPosts.map(post => {
         const uniqueViews = post.views?.[0]?.uniqueViews || 0
 
         return (
@@ -120,7 +128,7 @@ export function PostFeed({ initialPosts = [], initialCursor }: { initialPosts?: 
                   overflow: 'hidden',
                   lineHeight: 1.6
                 }}
-                dangerouslySetInnerHTML={{ __html: sanitizeContent(getExcerpt(post.content, (post as any).contentFormat, 200)) }}
+                dangerouslySetInnerHTML={{ __html: post.excerptHtml }}
               />
               
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
