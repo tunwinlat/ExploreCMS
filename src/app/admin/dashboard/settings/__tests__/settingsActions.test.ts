@@ -52,27 +52,33 @@ describe('updateSiteSettings', () => {
     vi.mocked(verifySession).mockResolvedValue({ role: 'OWNER' })
     vi.mocked(prisma.siteSettings.upsert).mockResolvedValue({} as any)
 
-    const args = ['New Title', 'favicon.ico', 'New Header Title', 'New Header Description', 'light'] as const
+    const args = ['New Title', 'favicon.ico', 'New Header Title', 'New Header Description', 'light', 'Footer', 'About', true] as const
     const result = await updateSiteSettings(...args)
 
     expect(result).toEqual({ success: true })
     expect(prisma.siteSettings.upsert).toHaveBeenCalledTimes(1)
     expect(prisma.siteSettings.upsert).toHaveBeenCalledWith({
-      where: { id: 'default' },
+      where: { id: 'singleton' },
       update: {
         title: args[0],
         faviconUrl: args[1],
         headerTitle: args[2],
         headerDescription: args[3],
-        theme: args[4]
+        theme: args[4],
+        footerText: args[5],
+        sidebarAbout: args[6],
+        dynamicPattern: args[7]
       },
       create: {
-        id: 'default',
+        id: 'singleton',
         title: args[0],
         faviconUrl: args[1],
         headerTitle: args[2],
         headerDescription: args[3],
-        theme: args[4]
+        theme: args[4],
+        footerText: args[5],
+        sidebarAbout: args[6],
+        dynamicPattern: args[7]
       }
     })
     expect(revalidatePath).toHaveBeenCalledTimes(1)
@@ -83,7 +89,7 @@ describe('updateSiteSettings', () => {
     vi.mocked(verifySession).mockResolvedValue({ role: 'OWNER' })
     vi.mocked(prisma.siteSettings.upsert).mockRejectedValue(new Error('DB Error'))
 
-    const result = await updateSiteSettings('Title', null, 'Header Title', 'Header Description', 'dark')
+    const result = await updateSiteSettings('Title', null, 'Header Title', 'Header Description', 'dark', '', '', true)
 
     expect(result).toEqual({ error: 'Failed to update site settings' })
     expect(prisma.siteSettings.upsert).toHaveBeenCalledTimes(1)
