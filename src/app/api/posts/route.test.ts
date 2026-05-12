@@ -4,24 +4,29 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GET } from './route';
 import { getPostDb } from '@/lib/bunnyDb';
 
 // Mock the database dependency
-jest.mock('@/lib/bunnyDb', () => ({
-  getPostDb: jest.fn(),
+vi.mock('@/lib/bunnyDb', () => ({
+  getPostDb: vi.fn(),
 }));
 
 describe('GET /api/posts', () => {
-  const mockFindMany = jest.fn();
+  const mockFindMany = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    (getPostDb as jest.Mock).mockResolvedValue({
+    vi.clearAllMocks();
+    (getPostDb as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
       post: {
         findMany: mockFindMany,
       },
     });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   const createMockRequest = (url: string) => {
@@ -52,7 +57,7 @@ describe('GET /api/posts', () => {
     // Check arguments strictly matching what is sent
     expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({
       where: { published: true },
-      take: 10, // limit + 1
+      take: 50, // (limit + 1) * 5
       orderBy: { createdAt: 'desc' },
       include: {
         author: {
@@ -87,7 +92,7 @@ describe('GET /api/posts', () => {
     expect(data.nextCursor).toBeUndefined();
 
     expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({
-      take: 10,
+      take: 50, // (limit + 1) * 5
       cursor: { id: 'some-cursor-id' },
     }));
   });
@@ -108,7 +113,7 @@ describe('GET /api/posts', () => {
     mockFindMany.mockRejectedValue(new Error('Database connection failed'));
 
     // Suppress console.error for this test to avoid noisy output
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const req = createMockRequest('http://localhost:3000/api/posts');
     const response = await GET(req);
