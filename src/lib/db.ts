@@ -5,7 +5,7 @@
  */
 
 import { PrismaClient } from '@prisma/client'
-import { PrismaLibSql } from '@prisma/adapter-libsql'
+import { PrismaLibSQL } from '@prisma/adapter-libsql'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
@@ -34,7 +34,7 @@ function createPrismaClient() {
     console.log('[Prisma] Creating client with URL:', url.substring(0, 20) + '...')
   }
   
-  const adapter = new PrismaLibSql(adapterConfig)
+  const adapter = new PrismaLibSQL(adapterConfig)
   return new PrismaClient({ adapter })
 }
 

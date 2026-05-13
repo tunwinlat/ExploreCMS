@@ -36,7 +36,7 @@ vi.mock('@prisma/client', () => ({
 }))
 
 vi.mock('@prisma/adapter-libsql', () => ({
-  PrismaLibSql: class {}
+  PrismaLibSQL: class {}
 }))
 
 // We'll import these after mocks are set up

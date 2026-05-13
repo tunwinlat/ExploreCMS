@@ -83,7 +83,6 @@ export function LanguageSwitcher({
           height: compact ? '36px' : 'auto',
           justifyContent: 'center'
         }}
-        aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-haspopup="menu"
         aria-controls={isOpen ? "language-switcher-menu" : undefined}

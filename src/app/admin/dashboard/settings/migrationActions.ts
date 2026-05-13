@@ -9,7 +9,7 @@
 import { verifySession } from '@/lib/auth'
 import { prisma as sourcePrisma } from '@/lib/db'
 import { PrismaClient } from '@prisma/client'
-import { PrismaLibSql } from '@prisma/adapter-libsql'
+import { PrismaLibSQL } from '@prisma/adapter-libsql'
 import { createClient } from '@libsql/client'
 import { syncRemoteSchema } from '@/lib/schemaSyncer'
 import { getEncryptionStatus, getRawFieldValues, migrateToEncryption } from '@/lib/encryption-migration'
@@ -148,7 +148,7 @@ export async function migrateToTarget(url: string, authToken?: string): Promise<
     }
     
     const targetPrisma = new PrismaClient({ 
-      adapter: new PrismaLibSql(adapterConfig)
+      adapter: new PrismaLibSQL(adapterConfig)
     })
 
     // Fetch all data from source
