@@ -37,7 +37,9 @@ export default async function SetupPage() {
   } catch (error) {
     // Database might not be initialized or connection failed
     dbError = error instanceof Error ? error.message : 'Unknown database error'
-    console.error('[Setup] Database error:', dbError)
+    if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production' && process.env.NEXT_PHASE !== 'phase-production-build') {
+      console.error('[Setup] Database error:', dbError)
+    }
   }
 
   // If already set up, redirect to login

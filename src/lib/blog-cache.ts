@@ -62,7 +62,9 @@ export const getCachedBlogListingPosts = unstable_cache(
 
       return posts;
     } catch (e) {
-      console.error('Failed to fetch blog listing posts, likely due to missing DB at build time:', e);
+      if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production' && process.env.NEXT_PHASE !== 'phase-production-build') {
+        console.error('Failed to fetch blog listing posts, likely due to missing DB at build time:', e);
+      }
       return [];
     }
   },

@@ -6,7 +6,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { getExcerpt, getFirstImage } from '@/lib/renderContent'
 
@@ -29,6 +29,15 @@ interface RelatedPostsProps {
 export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
   const [posts, setPosts] = useState<RelatedPost[]>([])
   const [loading, setLoading] = useState(true)
+
+  const processedPosts = useMemo(() => {
+    return posts.map(post => {
+      const excerpt = getExcerpt(post.content, post.contentFormat, 120)
+      const coverImage = getFirstImage(post.content, post.contentFormat)
+      const primaryTag = post.tags[0]
+      return { ...post, excerpt, coverImage, primaryTag }
+    })
+  }, [posts])
 
   useEffect(() => {
     fetchRelatedPosts()
@@ -80,10 +89,8 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
       </div>
 
       <div className="related-posts-grid">
-        {posts.map((post) => {
-          const excerpt = getExcerpt(post.content, post.contentFormat, 120)
-          const coverImage = getFirstImage(post.content, post.contentFormat)
-          const primaryTag = post.tags[0]
+        {processedPosts.map((post) => {
+          const { excerpt, coverImage, primaryTag } = post;
 
           return (
             <Link 
