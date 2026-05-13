@@ -6,6 +6,8 @@
 
 import { getSuggestionItems } from './SlashMenu';
 import { Editor, Range } from '@tiptap/core';
+/** @vitest-environment jsdom */
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 describe('getSuggestionItems', () => {

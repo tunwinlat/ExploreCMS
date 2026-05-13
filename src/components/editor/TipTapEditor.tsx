@@ -173,20 +173,20 @@ export default function TipTapEditor({ initialContent = '', onChange, editable =
       
       {editor && (
         <div className="editor-toolbar fade-in-up">
-          <button type="button" aria-label="Bold" aria-pressed={editor.isActive('bold')} title="Bold" onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive('bold') ? 'active' : ''}>B</button>
-          <button type="button" aria-label="Italic" aria-pressed={editor.isActive('italic')} title="Italic" onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive('italic') ? 'active' : ''}>I</button>
-          <button type="button" aria-label="Strike" aria-pressed={editor.isActive('strike')} title="Strike" onClick={() => editor.chain().focus().toggleStrike().run()} className={editor.isActive('strike') ? 'active' : ''}>S</button>
+          <button type="button" aria-label="Bold" aria-pressed={editor.isActive('bold')} title="Bold" onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive('bold') ? 'active' : ''}><span aria-hidden="true">B</span></button>
+          <button type="button" aria-label="Italic" aria-pressed={editor.isActive('italic')} title="Italic" onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive('italic') ? 'active' : ''}><span aria-hidden="true">I</span></button>
+          <button type="button" aria-label="Strike" aria-pressed={editor.isActive('strike')} title="Strike" onClick={() => editor.chain().focus().toggleStrike().run()} className={editor.isActive('strike') ? 'active' : ''}><span aria-hidden="true">S</span></button>
           <div className="divider" style={{ width: '1px', background: 'var(--border-color)', margin: '0 0.5rem' }}></div>
-          <button type="button" aria-label="Add Link" aria-pressed={editor.isActive('link')} title="Add Link" onClick={setLink} className={editor.isActive('link') ? 'active' : ''}>🔗</button>
+          <button type="button" aria-label="Add Link" aria-pressed={editor.isActive('link')} title="Add Link" onClick={setLink} className={editor.isActive('link') ? 'active' : ''}><span aria-hidden="true">🔗</span></button>
           <div className="divider" style={{ width: '1px', background: 'var(--border-color)', margin: '0 0.5rem' }}></div>
-          <button type="button" aria-label="Align Left" aria-pressed={editor.isActive({ textAlign: 'left' })} title="Align Left" onClick={() => editor.chain().focus().setTextAlign('left').run()} className={editor.isActive({ textAlign: 'left' }) ? 'active' : ''}>⬅</button>
-          <button type="button" aria-label="Align Center" aria-pressed={editor.isActive({ textAlign: 'center' })} title="Align Center" onClick={() => editor.chain().focus().setTextAlign('center').run()} className={editor.isActive({ textAlign: 'center' }) ? 'active' : ''}>↔</button>
-          <button type="button" aria-label="Align Right" aria-pressed={editor.isActive({ textAlign: 'right' })} title="Align Right" onClick={() => editor.chain().focus().setTextAlign('right').run()} className={editor.isActive({ textAlign: 'right' }) ? 'active' : ''}>➡</button>
+          <button type="button" aria-label="Align Left" aria-pressed={editor.isActive({ textAlign: 'left' })} title="Align Left" onClick={() => editor.chain().focus().setTextAlign('left').run()} className={editor.isActive({ textAlign: 'left' }) ? 'active' : ''}><span aria-hidden="true">⬅</span></button>
+          <button type="button" aria-label="Align Center" aria-pressed={editor.isActive({ textAlign: 'center' })} title="Align Center" onClick={() => editor.chain().focus().setTextAlign('center').run()} className={editor.isActive({ textAlign: 'center' }) ? 'active' : ''}><span aria-hidden="true">↔</span></button>
+          <button type="button" aria-label="Align Right" aria-pressed={editor.isActive({ textAlign: 'right' })} title="Align Right" onClick={() => editor.chain().focus().setTextAlign('right').run()} className={editor.isActive({ textAlign: 'right' }) ? 'active' : ''}><span aria-hidden="true">➡</span></button>
           
           <div style={{ flex: 1 }}></div>
 
           <button type="button" aria-label={uploading ? 'Uploading Image' : 'Add Image'} title="Add Image" onClick={addImageClick} disabled={uploading}>
-            {uploading ? 'Uploading...' : '🖼️ Add Image'}
+            <span aria-hidden="true">{uploading ? 'Uploading...' : '🖼️ Add Image'}</span>
           </button>
         </div>
       )}
