@@ -10,6 +10,7 @@ import { useState, useTransition } from 'react'
 import Image from 'next/image'
 import { addPhoto, deletePhoto, updateAlbumCover } from './photoActions'
 import { useToast } from '@/components/admin/Toast'
+import ConfirmDialog from '@/components/admin/ConfirmDialog'
 
 interface Photo {
   id: string
@@ -40,6 +41,9 @@ export default function PhotoManager({ albumId, initialPhotos }: PhotoManagerPro
   const [takenAt, setTakenAt] = useState('')
   const [featured, setFeatured] = useState(false)
   const [showForm, setShowForm] = useState(false)
+
+  const [photoToDelete, setPhotoToDelete] = useState<string | null>(null)
+  const [isDeletingPhoto, setIsDeletingPhoto] = useState(false)
 
   async function handleAddPhoto() {
     if (!url.trim()) return
@@ -74,14 +78,24 @@ export default function PhotoManager({ albumId, initialPhotos }: PhotoManagerPro
     })
   }
 
-  async function handleDelete(photoId: string) {
-    if (!confirm('Delete this photo?')) return
-    const result = await deletePhoto(photoId, albumId)
-    if (result?.error) {
-      showToast(result.error, 'error')
-    } else {
-      setPhotos(photos.filter(p => p.id !== photoId))
-      showToast('Photo deleted', 'success')
+  function handleDelete(photoId: string) {
+    setPhotoToDelete(photoId)
+  }
+
+  async function confirmDeletePhoto() {
+    if (!photoToDelete) return
+    setIsDeletingPhoto(true)
+    try {
+      const result = await deletePhoto(photoToDelete, albumId)
+      if (result?.error) {
+        showToast(result.error, 'error')
+      } else {
+        setPhotos(photos.filter(p => p.id !== photoToDelete))
+        showToast('Photo deleted', 'success')
+      }
+    } finally {
+      setIsDeletingPhoto(false)
+      setPhotoToDelete(null)
     }
   }
 
@@ -274,6 +288,18 @@ export default function PhotoManager({ albumId, initialPhotos }: PhotoManagerPro
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!photoToDelete}
+        title="Delete Photo"
+        message="Are you sure you want to delete this photo? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={confirmDeletePhoto}
+        onCancel={() => setPhotoToDelete(null)}
+        loading={isDeletingPhoto}
+      />
     </div>
   )
 }
