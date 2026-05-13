@@ -4,6 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+/**
+ * @vitest-environment jsdom
+ */
 import { getSuggestionItems } from './SlashMenu';
 import { Editor, Range } from '@tiptap/core';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';

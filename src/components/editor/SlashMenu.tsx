@@ -64,7 +64,7 @@ const CommandList = forwardRef((props: CommandListProps, ref) => {
             onClick={() => props.command(item)}
             onMouseEnter={() => setSelectedIndex(index)}
           >
-            <div className="slash-menu-icon">{item.icon}</div>
+            <div className="slash-menu-icon" aria-hidden="true">{item.icon}</div>
             <div className="slash-menu-text">
               <span className="slash-menu-title">{item.title}</span>
               <span className="slash-menu-desc">{item.description}</span>

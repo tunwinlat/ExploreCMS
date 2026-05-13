@@ -13,3 +13,6 @@
 ## 2024-05-18 - CSS-Driven Dropdown Menu Accessibility
 **Learning:** Dropdown menus driven purely by CSS `:hover` states are completely inaccessible to keyboard users and screen readers, trapping navigation or preventing access to sub-items.
 **Action:** When implementing CSS-driven dropdown menus, ensure keyboard accessibility by adding `:focus-within` selectors to the container alongside `:hover`, and manage the trigger button's `aria-expanded` attribute dynamically via React state (`onFocus`, `onBlur`, `onMouseEnter`, `onMouseLeave`).
+## 2024-05-03 - Decorative Visual Symbols in ARIA-Labelled Buttons
+**Learning:** Adding semantic state attributes like `aria-label` or `aria-pressed` to interactive components (e.g., icon-only buttons) is good, but any accompanying purely visual text symbols (such as checkmarks, emojis, or '✕') must be wrapped in `<span aria-hidden="true">` to prevent redundant or confusing screen reader announcements.
+**Action:** When adding or verifying `aria-label`s on buttons, always check if the visual contents are decorative and explicitly hide them from screen readers using `aria-hidden="true"`.

@@ -1,7 +1,7 @@
-import { mock, spyOn, describe, it, expect } from 'bun:test'
+import { describe, it, expect, vi } from 'vitest'
 
 // Mocking everything needed before importing craftSync
-mock('next/headers', () => ({
+vi.mock('next/headers', () => ({
   cookies: () => ({
     get: () => {},
     set: () => {},
@@ -9,12 +9,12 @@ mock('next/headers', () => ({
   }),
 }))
 
-mock('uuid', () => ({
+vi.mock('uuid', () => ({
   v4: () => 'test-uuid',
 }))
 
 // Mock @prisma/client
-mock('@prisma/client', () => ({
+vi.mock('@prisma/client', () => ({
   PrismaClient: class {
     user = { findFirst: async () => ({ id: 'owner-id' }) }
     siteSettings = { findUnique: async () => ({ bunnyStorageEnabled: false }), update: async () => ({}) }
@@ -31,8 +31,12 @@ mock('@prisma/client', () => ({
   }
 }))
 
-mock('@prisma/adapter-libsql', () => ({
+vi.mock('@prisma/adapter-libsql', () => ({
   PrismaLibSql: class {}
+}))
+
+vi.mock('next/cache', () => ({
+  revalidateTag: vi.fn(),
 }))
 
 // We'll import these after mocks are set up
@@ -56,8 +60,8 @@ describe('craftImportSync performance optimization', () => {
     ]
     mockPostDb.post.findMany = async () => linkedPosts
 
-    const deleteSpy = spyOn(mockPostDb.post, 'delete')
-    const deleteManySpy = spyOn(mockPostDb.post, 'deleteMany').mockImplementation(async () => ({ count: 3 }))
+    const deleteSpy = vi.spyOn(mockPostDb.post, 'delete')
+    const deleteManySpy = vi.spyOn(mockPostDb.post, 'deleteMany').mockImplementation(async () => ({ count: 3 }))
 
     // 3. Run craftImportSync in fullSync mode
     const result = await craftImportSync(mockCraftClient, 'folder-id', false, true)
