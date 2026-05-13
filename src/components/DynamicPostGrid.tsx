@@ -6,7 +6,7 @@
 
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { getExcerpt, getFirstImage } from '@/lib/renderContent'
 
@@ -167,14 +167,27 @@ export default function DynamicPostGrid({
     }
   }, [fetchNextPage, hasMore])
 
-  const filteredPosts = posts.filter(post => {
-    if (activeFilter.type === 'latest') return true;
-    if (activeFilter.type === 'featured') return post.isFeatured;
-    if (activeFilter.type === 'tag' && activeFilter.target) {
-      return post.tags.some(t => t.slug === activeFilter.target);
-    }
-    return true;
-  })
+  const processedPosts = useMemo(() => {
+    return posts
+      .filter(post => {
+        if (activeFilter.type === 'latest') return true;
+        if (activeFilter.type === 'featured') return post.isFeatured;
+        if (activeFilter.type === 'tag' && activeFilter.target) {
+          return post.tags.some(t => t.slug === activeFilter.target);
+        }
+        return true;
+      })
+      .map(post => {
+        const contentFormat = (post as any).contentFormat;
+        const coverImage = getFirstImage(post.content, contentFormat);
+        const excerpt = getExcerpt(post.content, contentFormat, 120);
+        return {
+          ...post,
+          coverImage,
+          excerpt,
+        };
+      });
+  }, [posts, activeFilter.type, activeFilter.target]);
 
   return (
     <div>
@@ -216,13 +229,11 @@ export default function DynamicPostGrid({
         gap: '2rem',
         alignItems: 'start'
       }}>
-        {filteredPosts.length === 0 ? (
+        {processedPosts.length === 0 ? (
           <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-secondary)' }}>No posts found for this view.</p>
         ) : (
-          filteredPosts.map(post => {
-            const contentFormat = (post as any).contentFormat
-            const coverImage = getFirstImage(post.content, contentFormat)
-            const excerpt = getExcerpt(post.content, contentFormat, 120)
+          processedPosts.map(post => {
+            const { coverImage, excerpt } = post;
 
             return (
               <Link key={post.id} href={`/post/${post.slug}`} style={{ textDecoration: 'none' }}>
