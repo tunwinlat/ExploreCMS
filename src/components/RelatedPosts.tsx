@@ -6,7 +6,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { getExcerpt, getFirstImage } from '@/lib/renderContent'
 
@@ -64,6 +64,14 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
     )
   }
 
+  const processedPosts = useMemo(() => {
+    return posts.map(post => {
+      const excerpt = getExcerpt(post.content, post.contentFormat, 120)
+      const coverImage = getFirstImage(post.content, post.contentFormat)
+      return { ...post, excerpt, coverImage }
+    })
+  }, [posts])
+
   if (posts.length === 0) return null
 
   return (
@@ -80,9 +88,7 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
       </div>
 
       <div className="related-posts-grid">
-        {posts.map((post) => {
-          const excerpt = getExcerpt(post.content, post.contentFormat, 120)
-          const coverImage = getFirstImage(post.content, post.contentFormat)
+        {processedPosts.map((post) => {
           const primaryTag = post.tags[0]
 
           return (
@@ -92,9 +98,9 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
               className="related-post-card"
             >
               <div className="related-post-image-wrapper">
-                {coverImage ? (
+                {post.coverImage ? (
                   <img 
-                    src={coverImage} 
+                    src={post.coverImage}
                     alt="" 
                     className="related-post-image"
                   />
@@ -121,7 +127,7 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
                 </h4>
                 
                 <p className="related-post-excerpt">
-                  {excerpt}
+                  {post.excerpt}
                 </p>
               </div>
             </Link>

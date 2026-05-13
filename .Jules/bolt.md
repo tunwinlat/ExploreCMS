@@ -56,3 +56,7 @@
 ## 2026-06-12 - Optimizing Post Database Lookups via Select Fields
 **Learning:** In database lookup functions such as fetching a post by slug in tracking API endpoints (`/api/views/route.ts`), fetching the entire record when only the `id` is required incurs unnecessary memory and network overhead.
 **Action:** Always append `select: { id: true }` to `prisma.model.findUnique` queries when retrieving records purely to determine existence or explicitly requiring only specific column identifiers. Avoid over-fetching data.
+
+## 2024-05-18 - Memoize content parsing in React render loops
+**Learning:** In list views or grids (e.g., `DynamicPostGrid`), computing post metadata via regex (like extracting excerpts or first images from full content strings) directly in the `map()` loop causes O(N) expensive string operations on every re-render. Since `DynamicPostGrid` renders heavily on tab clicks or dropdown hovers, this results in significant main-thread blocking and UI lag.
+**Action:** Always wrap heavy data-transformation logic inside a `useMemo` hook that transforms the array once and caches the processed objects, so subsequent renders only map over the pre-computed fields.

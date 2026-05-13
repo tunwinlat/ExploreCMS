@@ -22,6 +22,8 @@ export const getCachedProjects = unstable_cache(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return projects.map((p: any) => ({
         ...p,
+        createdAt: typeof p.createdAt === 'string' ? p.createdAt : (p.createdAt ? p.createdAt.toISOString() : null),
+        updatedAt: typeof p.updatedAt === 'string' ? p.updatedAt : (p.updatedAt ? p.updatedAt.toISOString() : null),
         techTags: (() => { try { return JSON.parse(p.techTags || '[]') } catch { return [] } })(),
       }));
     } catch { return []; }

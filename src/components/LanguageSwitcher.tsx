@@ -59,7 +59,10 @@ export function LanguageSwitcher({
   }
 
   return (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
+    <div
+      style={{ position: 'relative', display: 'inline-block' }}
+      onKeyDown={(e) => { if (e.key === 'Escape') setIsOpen(false) }}
+    >
       <button 
         onClick={() => setIsOpen(!isOpen)}
         disabled={isPending}
@@ -80,7 +83,10 @@ export function LanguageSwitcher({
           height: compact ? '36px' : 'auto',
           justifyContent: 'center'
         }}
+        aria-haspopup="menu"
         aria-expanded={isOpen}
+        aria-haspopup="menu"
+        aria-controls={isOpen ? "language-switcher-menu" : undefined}
         aria-label={compact ? 'Switch language' : 'Available in multiple languages'}
         title={compact ? 'Switch language' : 'Available in multiple languages'}
       >
@@ -116,7 +122,10 @@ export function LanguageSwitcher({
             }}
             onClick={() => setIsOpen(false)}
           />
-          <div style={{
+          <div
+            id="language-switcher-menu"
+            role="menu"
+            style={{
             position: 'absolute',
             top: 'calc(100% + 0.5rem)',
             left: '50%',
@@ -137,6 +146,7 @@ export function LanguageSwitcher({
                 return (
                   <div 
                     key={lang.language}
+                    role="menuitem"
                     style={{
                       padding: '0.75rem 1rem',
                       display: 'flex',
@@ -159,6 +169,7 @@ export function LanguageSwitcher({
               return (
                 <button
                   key={lang.language}
+                  role="menuitem"
                   onClick={() => handleLanguageClick(lang.slug, lang.language)}
                   onMouseEnter={() => handleMouseEnter(lang.slug)}
                   disabled={isPending}

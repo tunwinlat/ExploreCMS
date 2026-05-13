@@ -106,7 +106,9 @@ describe('POST /api/upload', () => {
     vi.mocked(existsSync).mockReturnValue(false) // simulate dir not exists
 
     const formData = new FormData()
-    const file = new File(['test content'], 'test.png', { type: 'image/png' })
+    // Provide a valid PNG magic byte signature so validation passes
+    const validPngBuffer = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d])
+    const file = new File([validPngBuffer], 'test.png', { type: 'image/png' })
     formData.append('file', file)
 
     const req = {

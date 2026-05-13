@@ -43,7 +43,7 @@ export async function saveAlbum(formData: FormData) {
         data: { title, description, coverImage, featured, published, order: orderVal, slug },
       })
     } else {
-      let existing = await (prisma as any).photoAlbum.findUnique({ where: { slug } })
+      const existing = await (prisma as any).photoAlbum.findUnique({ where: { slug } })
       if (existing) slug = `${slug}-${Date.now()}`
       await (prisma as any).photoAlbum.create({
         data: { title, description, coverImage, featured, published, order: orderVal, slug },

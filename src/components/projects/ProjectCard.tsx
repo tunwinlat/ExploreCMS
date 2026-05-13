@@ -27,9 +27,9 @@ function getSafeUrl(url: string | null | undefined): string | undefined {
   try {
     const parsed = new URL(url)
     if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-      return url
+      return parsed.toString()
     }
-  } catch (e) {
+  } catch {
     // Invalid URL
   }
   return undefined

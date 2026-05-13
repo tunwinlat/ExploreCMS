@@ -29,8 +29,8 @@ const getProject = unstable_cache(
       if (!project || !project.published) return null;
       return {
         ...project,
-        createdAt: typeof project.createdAt === 'string' ? project.createdAt : project.createdAt?.toISOString(),
-        updatedAt: typeof project.updatedAt === 'string' ? project.updatedAt : project.updatedAt?.toISOString(),
+        createdAt: typeof project.createdAt === 'string' ? project.createdAt : (project.createdAt ? project.createdAt.toISOString() : null),
+        updatedAt: typeof project.updatedAt === 'string' ? project.updatedAt : (project.updatedAt ? project.updatedAt.toISOString() : null),
         techTags: (() => { try { return JSON.parse(project.techTags || '[]') } catch { return [] } })(),
       };
     } catch { return null; }
@@ -44,10 +44,11 @@ function getSafeUrl(url: string | null | undefined): string | undefined {
   try {
     const parsed = new URL(url)
     if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-      return url
+      return parsed.toString()
     }
-  } catch (e) {
-    // Invalid URL
+  } catch {
+    // Check if it's a valid relative path if absolute parsing fails
+    if (url.startsWith('/')) return url
   }
   return undefined
 }

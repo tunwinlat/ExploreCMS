@@ -16,14 +16,19 @@ function generateSlug(title: string) {
 }
 
 // Security enhancement: Prevent Stored XSS by validating URLs to ensure they use safe protocols
-function isValidUrl(url: string | null): boolean {
-  if (!url) return true
+function normalizeUrl(url: string | null): string | null {
+  if (!url) return null
   try {
-    const parsed = new URL(url, 'http://localhost')
-    if (url.startsWith('/')) return true
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+    // Attempt to parse strictly without a base URL to ensure it's absolute
+    const parsed = new URL(url)
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return parsed.toString()
+    }
+    return null
   } catch {
-    return false
+    // If parsing without a base fails, check if it's a valid relative path
+    if (url.startsWith('/')) return url
+    return null
   }
 }
 
@@ -39,15 +44,20 @@ export async function saveProject(formData: FormData) {
   const status = (formData.get('status') as string) || 'completed'
   const featured = formData.get('featured') === 'true'
   const published = formData.get('published') === 'true'
-  const githubUrl = (formData.get('githubUrl') as string) || null
-  const liveUrl = (formData.get('liveUrl') as string) || null
+
+  const githubUrlInput = (formData.get('githubUrl') as string) || null
+  const liveUrlInput = (formData.get('liveUrl') as string) || null
+
+  const githubUrl = githubUrlInput ? normalizeUrl(githubUrlInput) : null
+  const liveUrl = liveUrlInput ? normalizeUrl(liveUrlInput) : null
+
   const techTagsRaw = (formData.get('techTags') as string) || '[]'
   const orderVal = parseInt((formData.get('order') as string) || '0', 10)
   const slugInput = formData.get('slug') as string | null
 
   if (!title) return { error: 'Title is required' }
 
-  if (!isValidUrl(githubUrl) || !isValidUrl(liveUrl)) {
+  if ((githubUrlInput && !githubUrl) || (liveUrlInput && !liveUrl)) {
     return { error: 'Invalid URL format. Please use http:// or https://' }
   }
 
@@ -67,7 +77,7 @@ export async function saveProject(formData: FormData) {
         data: { title, tagline, content, coverImage, status, featured, published, githubUrl, liveUrl, techTags, order: orderVal, slug },
       })
     } else {
-      let existing = await (prisma as any).project.findUnique({ where: { slug } })
+      const existing = await (prisma as any).project.findUnique({ where: { slug } })
       if (existing) slug = `${slug}-${Date.now()}`
 
       await (prisma as any).project.create({
