@@ -1,0 +1,3 @@
+## 2024-05-18 - Memoize content parsing in React render loops
+**Learning:** In list views or grids (e.g., `DynamicPostGrid`), computing post metadata via regex (like extracting excerpts or first images from full content strings) directly in the `map()` loop causes O(N) expensive string operations on every re-render. Since `DynamicPostGrid` renders heavily on tab clicks or dropdown hovers, this results in significant main-thread blocking and UI lag.
+**Action:** Always wrap heavy data-transformation logic inside a `useMemo` hook that transforms the array once and caches the processed objects, so subsequent renders only map over the pre-computed fields.
