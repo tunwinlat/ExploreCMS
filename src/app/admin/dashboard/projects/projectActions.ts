@@ -15,15 +15,20 @@ function generateSlug(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
 }
 
-// Security enhancement: Prevent Stored XSS by validating URLs to ensure they use safe protocols
-function isValidUrl(url: string | null): boolean {
-  if (!url) return true
+// Security enhancement: Prevent Stored XSS by strictly validating and normalizing URLs
+function normalizeUrl(url: string | null): string | null {
+  if (!url) return null
   try {
-    const parsed = new URL(url, 'http://localhost')
-    if (url.startsWith('/')) return true
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+    // Strictly parse absolute URLs without a dummy base
+    const parsed = new URL(url)
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return parsed.toString()
+    }
+    return null // Reject non-http/https absolute URLs (e.g. javascript:)
   } catch {
-    return false
+    // If it fails to parse as absolute, check if it's a valid relative path
+    if (url.startsWith('/')) return url
+    return null
   }
 }
 
@@ -47,7 +52,10 @@ export async function saveProject(formData: FormData) {
 
   if (!title) return { error: 'Title is required' }
 
-  if (!isValidUrl(githubUrl) || !isValidUrl(liveUrl)) {
+  const normalizedGithubUrl = githubUrl ? normalizeUrl(githubUrl) : null
+  const normalizedLiveUrl = liveUrl ? normalizeUrl(liveUrl) : null
+
+  if ((githubUrl && !normalizedGithubUrl) || (liveUrl && !normalizedLiveUrl)) {
     return { error: 'Invalid URL format. Please use http:// or https://' }
   }
 
@@ -64,14 +72,14 @@ export async function saveProject(formData: FormData) {
 
       await (prisma as any).project.update({
         where: { id },
-        data: { title, tagline, content, coverImage, status, featured, published, githubUrl, liveUrl, techTags, order: orderVal, slug },
+        data: { title, tagline, content, coverImage, status, featured, published, githubUrl: normalizedGithubUrl, liveUrl: normalizedLiveUrl, techTags, order: orderVal, slug },
       })
     } else {
       let existing = await (prisma as any).project.findUnique({ where: { slug } })
       if (existing) slug = `${slug}-${Date.now()}`
 
       await (prisma as any).project.create({
-        data: { title, tagline, content, coverImage, status, featured, published, githubUrl, liveUrl, techTags, order: orderVal, slug },
+        data: { title, tagline, content, coverImage, status, featured, published, githubUrl: normalizedGithubUrl, liveUrl: normalizedLiveUrl, techTags, order: orderVal, slug },
       })
     }
 
