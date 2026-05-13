@@ -14,11 +14,11 @@ import { ViewTracker } from "@/components/ViewTracker";
 import { renderPostContent } from "@/lib/renderContent";
 import { getSettings } from "@/lib/settings-cache";
 
-import { unstable_cache } from "next/cache";
+import { cache } from "react";
 
 export const dynamic = 'force-dynamic';
 
-const getProject = unstable_cache(
+const getProject = cache(
   async (slug: string) => {
     if (!process.env.DATABASE_URL) return null;
     try {
@@ -35,8 +35,8 @@ const getProject = unstable_cache(
       };
     } catch { return null; }
   },
-  ['project-detail'],
-  { revalidate: 60 }
+
+
 );
 
 function getSafeUrl(url: string | null | undefined): string | undefined {

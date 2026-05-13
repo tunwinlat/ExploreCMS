@@ -13,11 +13,11 @@ import { PhotoGrid } from "@/components/photos/PhotoGrid";
 import { ViewTracker } from "@/components/ViewTracker";
 import { getSettings } from "@/lib/settings-cache";
 
-import { unstable_cache } from "next/cache";
+import { cache } from "react";
 
 export const dynamic = 'force-dynamic';
 
-const getAlbum = unstable_cache(
+const getAlbum = cache(
   async (slug: string) => {
     if (!process.env.DATABASE_URL) return null;
     try {
@@ -37,8 +37,8 @@ const getAlbum = unstable_cache(
       };
     } catch { return null; }
   },
-  ['album-detail'],
-  { revalidate: 60 }
+
+
 );
 
 export default async function AlbumPage({ params }: { params: Promise<{ albumSlug: string }> }) {
