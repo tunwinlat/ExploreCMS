@@ -24,7 +24,7 @@ function validateUrl(urlStr?: string | null) {
     if (url.protocol !== 'http:' && url.protocol !== 'https:') {
       return null
     }
-    return urlStr
+    return url.toString()
   } catch {
     return null
   }

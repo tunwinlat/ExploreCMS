@@ -47,7 +47,8 @@ function getSafeUrl(url: string | null | undefined): string | undefined {
       return parsed.toString()
     }
   } catch {
-    // Invalid URL
+    // Check if it's a valid relative path if absolute parsing fails
+    if (url.startsWith('/')) return url
   }
   return undefined
 }
