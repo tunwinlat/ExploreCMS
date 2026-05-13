@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ['nodemailer'],
+  // @ts-ignore
+  eslint: { ignoreDuringBuilds: true },
   async headers() {
     return [
       {

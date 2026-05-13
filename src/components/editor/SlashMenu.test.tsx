@@ -1,3 +1,7 @@
+/**
+ * @vitest-environment jsdom
+ */
+
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -166,6 +170,10 @@ describe('getSuggestionItems', () => {
       const items = getSuggestionItems({ query: 'Image' });
 
       const dispatchEventSpy = vi.spyOn(document, 'dispatchEvent').mockImplementation(() => true);
+
+      // Mock URL to prevent ReferenceError since jsdom might not provide it
+      const originalURL = global.URL;
+      global.URL = vi.fn().mockImplementation(() => ({})) as any;
 
       items[0].command({ editor: mockEditor, range: mockRange });
 
