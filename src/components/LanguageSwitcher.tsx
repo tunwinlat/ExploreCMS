@@ -82,8 +82,8 @@ export function LanguageSwitcher({
         }}
         aria-expanded={isOpen}
         aria-haspopup="menu"
+        aria-controls={isOpen ? "language-switcher-menu" : undefined}
         aria-label={compact ? 'Switch language' : 'Available in multiple languages'}
-        aria-haspopup="menu"
         title={compact ? 'Switch language' : 'Available in multiple languages'}
       >
         {isPending ? (
@@ -119,6 +119,7 @@ export function LanguageSwitcher({
             onClick={() => setIsOpen(false)}
           />
           <div
+            id="language-switcher-menu"
             role="menu"
             style={{
             position: 'absolute',
