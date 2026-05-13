@@ -59,7 +59,10 @@ export function LanguageSwitcher({
   }
 
   return (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
+    <div
+      style={{ position: 'relative', display: 'inline-block' }}
+      onKeyDown={(e) => { if (e.key === 'Escape') setIsOpen(false) }}
+    >
       <button 
         onClick={() => setIsOpen(!isOpen)}
         disabled={isPending}

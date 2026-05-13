@@ -141,7 +141,7 @@ export async function POST(req: Request) {
         // Return CDN URL
         const cdnUrl = `${settings.bunnyStorageUrl}/uploads/${filename}`
         return NextResponse.json({ url: cdnUrl })
-      } catch (storageError: any) {
+      } catch (storageError: unknown) {
         console.error('Bunny Storage upload failed:', storageError)
         // Fall back to local upload
         console.log('Falling back to local storage...')
