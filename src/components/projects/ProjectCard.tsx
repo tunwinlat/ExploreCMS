@@ -25,9 +25,10 @@ export interface ProjectCardData {
 function getSafeUrl(url: string | null | undefined): string | undefined {
   if (!url) return undefined
   try {
+    if (url.startsWith('/')) return url
     const parsed = new URL(url)
     if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-      return url
+      return parsed.toString()
     }
   } catch (e) {
     // Invalid URL

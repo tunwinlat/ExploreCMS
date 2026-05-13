@@ -16,14 +16,17 @@ function generateSlug(title: string) {
 }
 
 // Security enhancement: Prevent Stored XSS by validating URLs to ensure they use safe protocols
-function isValidUrl(url: string | null): boolean {
-  if (!url) return true
+function normalizeUrl(url: string | null): string | null {
+  if (!url) return null
   try {
-    const parsed = new URL(url, 'http://localhost')
-    if (url.startsWith('/')) return true
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+    if (url.startsWith('/')) return url
+    const parsed = new URL(url)
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return parsed.toString()
+    }
+    return null
   } catch {
-    return false
+    return null
   }
 }
 
@@ -47,7 +50,10 @@ export async function saveProject(formData: FormData) {
 
   if (!title) return { error: 'Title is required' }
 
-  if (!isValidUrl(githubUrl) || !isValidUrl(liveUrl)) {
+  const safeGithubUrl = githubUrl ? normalizeUrl(githubUrl) : null
+  const safeLiveUrl = liveUrl ? normalizeUrl(liveUrl) : null
+
+  if ((githubUrl && !safeGithubUrl) || (liveUrl && !safeLiveUrl)) {
     return { error: 'Invalid URL format. Please use http:// or https://' }
   }
 
@@ -64,14 +70,14 @@ export async function saveProject(formData: FormData) {
 
       await (prisma as any).project.update({
         where: { id },
-        data: { title, tagline, content, coverImage, status, featured, published, githubUrl, liveUrl, techTags, order: orderVal, slug },
+        data: { title, tagline, content, coverImage, status, featured, published, githubUrl: safeGithubUrl, liveUrl: safeLiveUrl, techTags, order: orderVal, slug },
       })
     } else {
-      let existing = await (prisma as any).project.findUnique({ where: { slug } })
+      const existing = await (prisma as any).project.findUnique({ where: { slug } })
       if (existing) slug = `${slug}-${Date.now()}`
 
       await (prisma as any).project.create({
-        data: { title, tagline, content, coverImage, status, featured, published, githubUrl, liveUrl, techTags, order: orderVal, slug },
+        data: { title, tagline, content, coverImage, status, featured, published, githubUrl: safeGithubUrl, liveUrl: safeLiveUrl, techTags, order: orderVal, slug },
       })
     }
 
