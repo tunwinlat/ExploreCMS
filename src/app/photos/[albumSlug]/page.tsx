@@ -32,8 +32,8 @@ const getAlbum = unstable_cache(
       if (!album || !album.published) return null;
       return {
         ...album,
-        createdAt: typeof album.createdAt === 'string' ? album.createdAt : album.createdAt?.toISOString(),
-        updatedAt: typeof album.updatedAt === 'string' ? album.updatedAt : album.updatedAt?.toISOString(),
+        createdAt: typeof album.createdAt === 'string' ? album.createdAt : (album.createdAt ? album.createdAt.toISOString() : null),
+        updatedAt: typeof album.updatedAt === 'string' ? album.updatedAt : (album.updatedAt ? album.updatedAt.toISOString() : null),
       };
     } catch { return null; }
   },

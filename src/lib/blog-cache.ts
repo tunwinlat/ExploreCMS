@@ -60,7 +60,11 @@ export const getCachedBlogListingPosts = unstable_cache(
         }
       });
 
-      return posts;
+      // Ensure Dates are converted to ISO strings to avoid JSON stringify serialization issues
+      return posts.map(p => ({
+        ...p,
+        createdAt: typeof p.createdAt === 'string' ? p.createdAt : (p.createdAt ? (p.createdAt as unknown as Date).toISOString() : null) as unknown as Date,
+      }));
     } catch (e) {
       console.error('Failed to fetch blog listing posts, likely due to missing DB at build time:', e);
       return [];
