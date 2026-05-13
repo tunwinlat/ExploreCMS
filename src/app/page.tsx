@@ -120,3 +120,5 @@ export default async function Home() {
     </div>
   );
 }
+
+export const runtime = 'edge';

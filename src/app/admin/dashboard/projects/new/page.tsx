@@ -21,3 +21,5 @@ export default async function NewProjectPage() {
     </div>
   )
 }
+
+export const runtime = 'edge';

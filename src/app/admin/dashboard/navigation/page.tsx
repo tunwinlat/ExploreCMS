@@ -46,3 +46,5 @@ export default async function NavigationPage() {
     </div>
   )
 }
+
+export const runtime = 'edge';

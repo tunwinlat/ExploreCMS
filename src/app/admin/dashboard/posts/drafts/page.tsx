@@ -78,3 +78,5 @@ export default async function DraftPostsPage() {
     </div>
   )
 }
+
+export const runtime = 'edge';

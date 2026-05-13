@@ -35,3 +35,5 @@ export default async function IntegrationsPage() {
     </div>
   )
 }
+
+export const runtime = 'edge';

@@ -225,3 +225,5 @@ export default async function PhotosPage() {
     </div>
   );
 }
+
+export const runtime = 'edge';

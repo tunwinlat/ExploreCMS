@@ -41,3 +41,5 @@ export default async function ComponentsPage() {
     </div>
   )
 }
+
+export const runtime = 'edge';

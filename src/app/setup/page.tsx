@@ -131,3 +131,5 @@ export default async function SetupPage() {
     </div>
   )
 }
+
+export const runtime = 'edge';

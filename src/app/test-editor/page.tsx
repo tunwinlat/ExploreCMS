@@ -10,3 +10,5 @@ export default function TestEditorPage() {
         </div>
     )
 }
+
+export const runtime = 'edge';
