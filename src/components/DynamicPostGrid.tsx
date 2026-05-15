@@ -49,6 +49,11 @@ function DropdownNav({ item, activeFilter, setActiveFilter }: {
           setIsOpen(false);
         }
       }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          setIsOpen(false);
+        }
+      }}
     >
       <button
         className="btn glass"
