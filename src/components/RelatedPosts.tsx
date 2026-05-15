@@ -49,6 +49,14 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
     }
   }
 
+  const processedPosts = useMemo(() => {
+    return posts.map(post => {
+      const excerpt = getExcerpt(post.content, post.contentFormat, 120)
+      const coverImage = getFirstImage(post.content, post.contentFormat)
+      return { ...post, excerpt, coverImage }
+    })
+  }, [posts])
+
   if (loading) {
     return (
       <section className="related-posts">
@@ -63,14 +71,6 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
       </section>
     )
   }
-
-  const processedPosts = useMemo(() => {
-    return posts.map(post => {
-      const excerpt = getExcerpt(post.content, post.contentFormat, 120)
-      const coverImage = getFirstImage(post.content, post.contentFormat)
-      return { ...post, excerpt, coverImage }
-    })
-  }, [posts])
 
   if (posts.length === 0) return null
 
@@ -99,9 +99,11 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
             >
               <div className="related-post-image-wrapper">
                 {post.coverImage ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
                   <img 
                     src={post.coverImage}
                     alt="" 
+                    loading="lazy"
                     className="related-post-image"
                   />
                 ) : (
