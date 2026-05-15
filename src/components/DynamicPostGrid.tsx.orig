@@ -44,6 +44,11 @@ function DropdownNav({ item, activeFilter, setActiveFilter }: {
           setIsOpen(false);
         }
       }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          setIsOpen(false);
+        }
+      }}
     >
       <button
         className="btn glass"
@@ -167,7 +172,7 @@ export default function DynamicPostGrid({
     }
   }, [fetchNextPage, hasMore])
 
-  // ⚡ Bolt: Memoize post processing (expensive regex for images/excerpts) and filtering
+  // ⚡ Bolt: Memoize post processing (expensive regex for images/excerpts) and filtering (moved hook before early returns)
   const processedFilteredPosts = useMemo(() => {
     return posts
       .filter(post => {
