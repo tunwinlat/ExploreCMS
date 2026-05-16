@@ -20,7 +20,7 @@ const getSecret = () => {
   return new TextEncoder().encode(secret)
 }
 
-export default async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname
 
   if (path.startsWith('/admin/dashboard')) {
