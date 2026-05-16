@@ -182,7 +182,7 @@ export default function DynamicPostGrid({
         return true;
       })
       .map(post => {
-        const contentFormat = (post as any).contentFormat
+        const contentFormat = (post as unknown as { contentFormat: string }).contentFormat
         return {
           ...post,
           coverImage: getFirstImage(post.content, contentFormat),
@@ -213,7 +213,7 @@ export default function DynamicPostGrid({
           return (
             <button
               key={item.id}
-              onClick={() => setActiveFilter({ type: item.type as any, target: item.tagSlug })}
+              onClick={() => setActiveFilter({ type: item.type as 'latest'|'featured'|'tag', target: item.tagSlug })}
               aria-pressed={isActive}
               className={`btn ${isActive ? 'btn-primary' : 'glass'}`}
               style={{ transition: 'all var(--transition-normal)', padding: '0.5rem 1.25rem' }}
