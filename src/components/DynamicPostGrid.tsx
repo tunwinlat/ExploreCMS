@@ -44,16 +44,19 @@ function DropdownNav({ item, activeFilter, setActiveFilter }: {
           setIsOpen(false);
         }
       }}
+      onKeyDown={(e) => { if (e.key === 'Escape') setIsOpen(false); }}
     >
       <button
         className="btn glass"
         aria-haspopup="menu"
         aria-expanded={isOpen}
+        aria-controls={isOpen ? `dropdown-menu-${item.id}` : undefined}
         style={{ padding: '0.5rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
       >
         {item.label} <span style={{ fontSize: '0.8rem' }} aria-hidden="true">▼</span>
       </button>
       <div
+        id={`dropdown-menu-${item.id}`}
         className="dropdown-menu glass"
         role="menu"
         style={{
@@ -179,7 +182,7 @@ export default function DynamicPostGrid({
         return true;
       })
       .map(post => {
-        const contentFormat = (post as any).contentFormat
+        const contentFormat = (post as unknown as { contentFormat: string }).contentFormat
         return {
           ...post,
           coverImage: getFirstImage(post.content, contentFormat),
@@ -210,7 +213,7 @@ export default function DynamicPostGrid({
           return (
             <button
               key={item.id}
-              onClick={() => setActiveFilter({ type: item.type as any, target: item.tagSlug })}
+              onClick={() => setActiveFilter({ type: item.type as 'latest'|'featured'|'tag', target: item.tagSlug })}
               aria-pressed={isActive}
               className={`btn ${isActive ? 'btn-primary' : 'glass'}`}
               style={{ transition: 'all var(--transition-normal)', padding: '0.5rem 1.25rem' }}
