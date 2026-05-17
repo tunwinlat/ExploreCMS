@@ -1,0 +1,3 @@
+## 2025-05-17 - Add Lazy Loading to Post Grid Images
+**Learning:** Adding `loading="lazy"` to standard `<img>` tags in dynamic grid components (like `DynamicPostGrid` and `RelatedPosts`) prevents the browser from loading images below the fold, which directly speeds up the initial page load time. Native lazy loading is a safe and highly effective optimization that works around `next/image` domain whitelist restrictions.
+**Action:** When creating or optimizing any grid or list component that renders multiple images, always include `loading="lazy"` on the `<img>` tags by default, unless the image is guaranteed to be "above the fold" on initial load.
