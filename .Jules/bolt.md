@@ -60,3 +60,6 @@
 ## 2024-05-18 - Memoize content parsing in React render loops
 **Learning:** In list views or grids (e.g., `DynamicPostGrid`), computing post metadata via regex (like extracting excerpts or first images from full content strings) directly in the `map()` loop causes O(N) expensive string operations on every re-render. Since `DynamicPostGrid` renders heavily on tab clicks or dropdown hovers, this results in significant main-thread blocking and UI lag.
 **Action:** Always wrap heavy data-transformation logic inside a `useMemo` hook that transforms the array once and caches the processed objects, so subsequent renders only map over the pre-computed fields.
+## 2025-05-19 - Added native lazy loading to below-the-fold dynamic images
+**Learning:** When using standard `<img>` tags in React for images rendered dynamically (like cover images in `DynamicPostGrid` or `RelatedPosts`) that appear outside the initial viewport, native `loading="lazy"` attribute is highly effective. The `next/image` component cannot be easily used for unpredictable external image sources without allowing external domains in `next.config.js`.
+**Action:** Always add `loading="lazy"` to standard `<img>` tags for dynamically injected images that are positioned below the fold to defer offscreen image loading and significantly improve the initial Largest Contentful Paint (LCP) performance.
