@@ -66,7 +66,7 @@ export function ComponentTabs({ enabledComponents, defaultComponent }: Component
   }
 
   return (
-    <nav aria-label="Main Navigation" className="component-tabs-scroll">
+    <div className="component-tabs-scroll">
     <div className="component-tabs" style={{
       display: 'inline-flex',
       alignItems: 'center',
@@ -84,7 +84,6 @@ export function ComponentTabs({ enabledComponents, defaultComponent }: Component
             key={comp.id}
             href={comp.id === defaultComponent ? '/' : comp.path}
             prefetch={true}
-            aria-current={active ? 'page' : undefined}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -109,6 +108,6 @@ export function ComponentTabs({ enabledComponents, defaultComponent }: Component
         )
       })}
     </div>
-    </nav>
+    </div>
   )
 }
