@@ -91,7 +91,7 @@ function DropdownNav({ item, activeFilter, setActiveFilter }: {
               setActiveFilter({ type: 'tag', target: child.tagSlug });
               setIsOpen(false);
             }}
-            aria-pressed={activeFilter.target === child.tagSlug}
+            aria-current={activeFilter.target === child.tagSlug ? 'true' : 'false'}
             style={{
               padding: '0.75rem 1rem',
               background: activeFilter.target === child.tagSlug ? 'var(--accent-color)' : 'transparent',
@@ -255,7 +255,8 @@ export default function DynamicPostGrid({
                 }}>
                   {post.coverImage && (
                     <div style={{ width: '100%', height: '240px', overflow: 'hidden', borderBottom: '1px solid var(--border-color)' }}>
-                      <img src={post.coverImage} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} className="card-img" />
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={post.coverImage} alt={post.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} className="card-img" />
                     </div>
                   )}
                   
