@@ -32,6 +32,8 @@ function DropdownNav({ item, activeFilter, setActiveFilter }: {
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
+  const menuId = `dropdown-menu-${item.id}`
+
   return (
     <div
       className="dropdown-container"
@@ -44,16 +46,23 @@ function DropdownNav({ item, activeFilter, setActiveFilter }: {
           setIsOpen(false);
         }
       }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          setIsOpen(false);
+        }
+      }}
     >
       <button
         className="btn glass"
         aria-haspopup="menu"
         aria-expanded={isOpen}
+        aria-controls={isOpen ? menuId : undefined}
         style={{ padding: '0.5rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
       >
         {item.label} <span style={{ fontSize: '0.8rem' }} aria-hidden="true">▼</span>
       </button>
       <div
+        id={menuId}
         className="dropdown-menu glass"
         role="menu"
         style={{
