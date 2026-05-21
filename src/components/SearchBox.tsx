@@ -105,6 +105,16 @@ export function SearchBox() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, processedResults, selectedIndex, router])
 
+  // Scroll selected item into view safely without triggering on every render
+  useEffect(() => {
+    if (selectedIndex >= 0) {
+      const element = document.getElementById(`search-result-${selectedIndex}`)
+      if (element) {
+        element.scrollIntoView({ block: 'nearest' })
+      }
+    }
+  }, [selectedIndex])
+
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -364,6 +374,7 @@ export function SearchBox() {
                     return (
                       <Link
                         key={post.id}
+                        id={`search-result-${index}`}
                         href={`/post/${post.slug}`}
                         onClick={() => setIsOpen(false)}
                         style={{
@@ -377,11 +388,6 @@ export function SearchBox() {
                         }}
                         className="search-result-item"
                         aria-selected={isSelected}
-                        ref={el => {
-                          if (isSelected && el) {
-                            el.scrollIntoView({ block: 'nearest' })
-                          }
-                        }}
                       >
                         <h4
                           style={{
