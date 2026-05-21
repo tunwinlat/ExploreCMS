@@ -27,12 +27,14 @@ export function SearchBox() {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
   // Debounced search
   const searchPosts = useCallback(async (searchQuery: string) => {
+    setSelectedIndex(-1)
     if (!searchQuery.trim() || searchQuery.trim().length < 2) {
       setResults([])
       setHasSearched(false)
@@ -62,6 +64,13 @@ export function SearchBox() {
     return () => clearTimeout(timeoutId)
   }, [query, searchPosts])
 
+  const processedResults = useMemo(() => {
+    return results.map(post => {
+      const excerpt = getExcerpt(post.content, (post as any).contentFormat, 150)
+      return { ...post, excerpt }
+    })
+  }, [results])
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -75,11 +84,25 @@ export function SearchBox() {
       if (e.key === 'Escape') {
         setIsOpen(false)
       }
+
+      if (!isOpen) return
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setSelectedIndex(prev => (prev < processedResults.length - 1 ? prev + 1 : prev))
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setSelectedIndex(prev => (prev > -1 ? prev - 1 : -1))
+      } else if (e.key === 'Enter' && selectedIndex >= 0 && processedResults[selectedIndex]) {
+        e.preventDefault()
+        router.push(`/post/${processedResults[selectedIndex].slug}`)
+        setIsOpen(false)
+      }
     }
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [isOpen, processedResults, selectedIndex, router])
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -133,13 +156,6 @@ export function SearchBox() {
       </>
     )
   }
-
-  const processedResults = useMemo(() => {
-    return results.map(post => {
-      const excerpt = getExcerpt(post.content, (post as any).contentFormat, 150)
-      return { ...post, excerpt }
-    })
-  }, [results])
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
@@ -342,7 +358,8 @@ export function SearchBox() {
                   <div style={{ padding: '0.75rem 1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>
                     {processedResults.length} result{processedResults.length !== 1 ? 's' : ''} found
                   </div>
-                  {processedResults.map((post) => {
+                  {processedResults.map((post, index) => {
+                    const isSelected = index === selectedIndex
                     return (
                       <Link
                         key={post.id}
@@ -353,9 +370,17 @@ export function SearchBox() {
                           padding: '1rem 1.25rem',
                           borderBottom: '1px solid var(--border-color)',
                           transition: 'background 0.2s ease',
-                          textDecoration: 'none'
+                          textDecoration: 'none',
+                          background: isSelected ? 'var(--bg-color)' : 'transparent',
+                          borderLeft: isSelected ? '3px solid var(--accent-color)' : '3px solid transparent',
                         }}
                         className="search-result-item"
+                        aria-selected={isSelected}
+                        ref={el => {
+                          if (isSelected && el) {
+                            el.scrollIntoView({ block: 'nearest' })
+                          }
+                        }}
                       >
                         <h4
                           style={{
