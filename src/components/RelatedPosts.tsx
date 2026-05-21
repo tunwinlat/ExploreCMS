@@ -31,23 +31,31 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const fetchRelatedPosts = async () => {
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/related?slug=${encodeURIComponent(currentSlug)}&limit=3`)
+        const data = await res.json()
+        if (data.posts) {
+          setPosts(data.posts)
+        }
+      } catch (err) {
+        console.error('Failed to fetch related posts:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
     fetchRelatedPosts()
   }, [currentSlug])
 
-  const fetchRelatedPosts = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/related?slug=${encodeURIComponent(currentSlug)}&limit=3`)
-      const data = await res.json()
-      if (data.posts) {
-        setPosts(data.posts)
-      }
-    } catch (err) {
-      console.error('Failed to fetch related posts:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const processedPosts = useMemo(() => {
+    return posts.map(post => {
+      const excerpt = getExcerpt(post.content, post.contentFormat, 120)
+      const coverImage = getFirstImage(post.content, post.contentFormat)
+      return { ...post, excerpt, coverImage }
+    })
+  }, [posts])
 
   if (loading) {
     return (
@@ -63,14 +71,6 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
       </section>
     )
   }
-
-  const processedPosts = useMemo(() => {
-    return posts.map(post => {
-      const excerpt = getExcerpt(post.content, post.contentFormat, 120)
-      const coverImage = getFirstImage(post.content, post.contentFormat)
-      return { ...post, excerpt, coverImage }
-    })
-  }, [posts])
 
   if (posts.length === 0) return null
 
@@ -102,6 +102,7 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
                   <img 
                     src={post.coverImage}
                     alt="" 
+                    loading="lazy"
                     className="related-post-image"
                   />
                 ) : (
