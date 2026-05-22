@@ -1,0 +1,3 @@
+## 2024-05-22 - Menu Accessibility Improvements
+**Learning:** Dropdown menus built from standard elements often lack standard ARIA controls mapping and keyboard event listeners (like Escape-to-close) even if visual states work. `aria-pressed` is invalid on `role="menuitem"`, it should be `aria-current="page"` (or "true") depending on the context.
+**Action:** When evaluating custom dropdown components, explicitly check for `aria-controls` bindings between the trigger and the menu container (`id`), verify `keydown` listeners for Escape handling exist, and ensure proper ARIA states are used on items.
