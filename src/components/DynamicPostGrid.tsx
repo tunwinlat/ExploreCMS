@@ -245,7 +245,8 @@ export default function DynamicPostGrid({
                 }}>
                   {post.coverImage && (
                     <div style={{ width: '100%', height: '240px', overflow: 'hidden', borderBottom: '1px solid var(--border-color)' }}>
-                      <img src={post.coverImage} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} className="card-img" />
+                      {/* ⚡ Bolt: added loading="lazy" to defer loading offscreen cover images */}
+                      <img src={post.coverImage} alt={post.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} className="card-img" />
                     </div>
                   )}
                   

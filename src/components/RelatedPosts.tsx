@@ -99,9 +99,11 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
             >
               <div className="related-post-image-wrapper">
                 {post.coverImage ? (
+                  /* ⚡ Bolt: added loading="lazy" to defer loading offscreen related post images */
                   <img 
                     src={post.coverImage}
                     alt="" 
+                    loading="lazy"
                     className="related-post-image"
                   />
                 ) : (
