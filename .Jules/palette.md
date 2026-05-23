@@ -17,3 +17,7 @@
 ## 2024-05-18 - CSS-Driven Dropdown Menu Accessibility
 **Learning:** Dropdown menus driven purely by CSS `:hover` states are completely inaccessible to keyboard users and screen readers, trapping navigation or preventing access to sub-items.
 **Action:** When implementing CSS-driven dropdown menus, ensure keyboard accessibility by adding `:focus-within` selectors to the container alongside `:hover`, and manage the trigger button's `aria-expanded` attribute dynamically via React state (`onFocus`, `onBlur`, `onMouseEnter`, `onMouseLeave`).
+## 2024-05-23 - SearchBox Keyboard Navigation Selection Reset
+
+**Learning:** When implementing keyboard navigation for dropdowns or modals, ensure to gracefully reset the selection index when the result set changes or when the modal closes/re-opens, to avoid out-of-bounds indices or sticky selection from previous searches.
+**Action:** Always include a `useEffect` hook that depends on the search results array or the open/close state of the modal to reset the selected index to its initial state (e.g., `-1`).

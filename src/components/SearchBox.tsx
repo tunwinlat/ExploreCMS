@@ -27,6 +27,7 @@ export function SearchBox() {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -46,6 +47,7 @@ export function SearchBox() {
       const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=8`)
       const data = await res.json()
       setResults(data.posts || [])
+      setSelectedIndex(-1)
     } catch (err) {
       console.error('Search error:', err)
       setResults([])
@@ -69,6 +71,7 @@ export function SearchBox() {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
         setIsOpen(true)
+        setSelectedIndex(-1)
         setTimeout(() => inputRef.current?.focus(), 100)
       }
       // Escape to close
@@ -97,14 +100,30 @@ export function SearchBox() {
 
   const openSearch = useCallback(() => {
     setIsOpen(true)
+    setSelectedIndex(-1)
     setTimeout(() => inputRef.current?.focus(), 100)
   }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (query.trim()) {
+    if (selectedIndex >= 0 && selectedIndex < processedResults.length) {
+      router.push(`/post/${processedResults[selectedIndex].slug}`)
+      setIsOpen(false)
+    } else if (query.trim()) {
       router.push(`/search?q=${encodeURIComponent(query)}`)
       setIsOpen(false)
+    }
+  }
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (processedResults.length === 0) return
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSelectedIndex(prev => (prev < processedResults.length - 1 ? prev + 1 : prev))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSelectedIndex(prev => (prev > 0 ? prev - 1 : -1))
     }
   }
 
@@ -134,8 +153,10 @@ export function SearchBox() {
     )
   }
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const processedResults = useMemo(() => {
     return results.map(post => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const excerpt = getExcerpt(post.content, (post as any).contentFormat, 150)
       return { ...post, excerpt }
     })
@@ -247,6 +268,7 @@ export function SearchBox() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={handleInputKeyDown}
                   placeholder="Search posts by title or content..."
                   aria-label="Search posts"
                   style={{
@@ -342,20 +364,24 @@ export function SearchBox() {
                   <div style={{ padding: '0.75rem 1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>
                     {processedResults.length} result{processedResults.length !== 1 ? 's' : ''} found
                   </div>
-                  {processedResults.map((post) => {
+                  {processedResults.map((post, index) => {
+                    const isSelected = index === selectedIndex
                     return (
                       <Link
                         key={post.id}
                         href={`/post/${post.slug}`}
                         onClick={() => setIsOpen(false)}
+                        aria-selected={isSelected}
                         style={{
                           display: 'block',
                           padding: '1rem 1.25rem',
                           borderBottom: '1px solid var(--border-color)',
                           transition: 'background 0.2s ease',
-                          textDecoration: 'none'
+                          textDecoration: 'none',
+                          background: isSelected ? 'var(--bg-color)' : 'transparent',
                         }}
                         className="search-result-item"
+                        onMouseEnter={() => setSelectedIndex(index)}
                       >
                         <h4
                           style={{
