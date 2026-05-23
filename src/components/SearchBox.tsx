@@ -153,7 +153,6 @@ export function SearchBox() {
     )
   }
 
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const processedResults = useMemo(() => {
     return results.map(post => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
