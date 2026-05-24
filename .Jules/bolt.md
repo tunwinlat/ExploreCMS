@@ -60,3 +60,7 @@
 ## 2024-05-18 - Memoize content parsing in React render loops
 **Learning:** In list views or grids (e.g., `DynamicPostGrid`), computing post metadata via regex (like extracting excerpts or first images from full content strings) directly in the `map()` loop causes O(N) expensive string operations on every re-render. Since `DynamicPostGrid` renders heavily on tab clicks or dropdown hovers, this results in significant main-thread blocking and UI lag.
 **Action:** Always wrap heavy data-transformation logic inside a `useMemo` hook that transforms the array once and caches the processed objects, so subsequent renders only map over the pre-computed fields.
+
+## 2026-05-24 - Adding loading lazy attribute to native images
+**Learning:** When using native `<img>` tags (instead of Next.js `<Image>` component) for user-generated content or remote images, adding `loading="lazy"` natively on the tag is essential to ensure below-the-fold images don't block the main thread or degrade the Initial Page Load time and LCP (Largest Contentful Paint).
+**Action:** Always add `loading="lazy"` to native `<img>` elements used for dynamically loaded or below-the-fold content, particularly when the Next.js `<Image>` component cannot be used due to unpredictable external domains.
