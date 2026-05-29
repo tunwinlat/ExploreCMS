@@ -1,0 +1,3 @@
+## 2024-05-29 - Native Lazy Loading for External Images
+**Learning:** The codebase explicitly avoids the Next.js `<Image>` component for user-generated content (like post cover images) to prevent domain whitelisting issues with unpredictable external sources. However, falling back to a standard `<img>` tag without `loading="lazy"` creates performance bottlenecks on pages with many images below the fold (like DynamicPostGrid and RelatedPosts).
+**Action:** When working with dynamically extracted or user-provided image URLs where Next.js `<Image>` cannot be used, always manually add `loading="lazy"` to standard HTML `<img>` tags for images rendered below the fold to preserve fast initial page loads.
