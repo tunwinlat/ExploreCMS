@@ -95,3 +95,4 @@ export default async function ResetPasswordPage({
     </div>
   )
 }
+export const runtime = 'edge'

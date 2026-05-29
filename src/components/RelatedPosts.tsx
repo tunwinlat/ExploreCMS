@@ -31,31 +31,23 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchRelatedPosts = async () => {
-      setLoading(true)
-      try {
-        const res = await fetch(`/api/related?slug=${encodeURIComponent(currentSlug)}&limit=3`)
-        const data = await res.json()
-        if (data.posts) {
-          setPosts(data.posts)
-        }
-      } catch (err) {
-        console.error('Failed to fetch related posts:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchRelatedPosts()
   }, [currentSlug])
 
-  const processedPosts = useMemo(() => {
-    return posts.map(post => {
-      const excerpt = getExcerpt(post.content, post.contentFormat, 120)
-      const coverImage = getFirstImage(post.content, post.contentFormat)
-      return { ...post, excerpt, coverImage }
-    })
-  }, [posts])
+  const fetchRelatedPosts = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/related?slug=${encodeURIComponent(currentSlug)}&limit=3`)
+      const data = await res.json()
+      if (data.posts) {
+        setPosts(data.posts)
+      }
+    } catch (err) {
+      console.error('Failed to fetch related posts:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -71,6 +63,14 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
       </section>
     )
   }
+
+  const processedPosts = useMemo(() => {
+    return posts.map(post => {
+      const excerpt = getExcerpt(post.content, post.contentFormat, 120)
+      const coverImage = getFirstImage(post.content, post.contentFormat)
+      return { ...post, excerpt, coverImage }
+    })
+  }, [posts])
 
   if (posts.length === 0) return null
 
@@ -99,15 +99,11 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
             >
               <div className="related-post-image-wrapper">
                 {post.coverImage ? (
-                  <>
-                    {/* ⚡ Bolt: Add native lazy loading to external cover images below the fold to improve initial page load performance without relying on next/image */}
-                    <img
-                      loading="lazy"
-                      src={post.coverImage}
-                      alt=""
-                      className="related-post-image"
-                    />
-                  </>
+                  <img
+                    src={post.coverImage}
+                    alt=""
+                    className="related-post-image"
+                  />
                 ) : (
                   <div className="related-post-image-placeholder">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

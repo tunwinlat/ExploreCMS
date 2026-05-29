@@ -142,3 +142,4 @@ export default async function PublishedPostsPage() {
     </div>
   )
 }
+export const runtime = 'edge'

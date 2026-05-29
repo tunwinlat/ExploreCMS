@@ -38,3 +38,4 @@ export default async function NewPostPage({ searchParams }: { searchParams: Prom
     />
   )
 }
+export const runtime = 'edge'

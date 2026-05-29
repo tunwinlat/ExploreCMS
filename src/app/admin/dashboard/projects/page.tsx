@@ -217,3 +217,4 @@ export default async function ProjectsAdminPage() {
     </div>
   )
 }
+export const runtime = 'edge'

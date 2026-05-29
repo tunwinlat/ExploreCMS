@@ -69,3 +69,4 @@ export default async function AlbumManagePage({ params }: { params: Promise<{ al
     </div>
   )
 }
+export const runtime = 'edge'

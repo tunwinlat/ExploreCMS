@@ -42,3 +42,4 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
     </div>
   )
 }
+export const runtime = 'edge'

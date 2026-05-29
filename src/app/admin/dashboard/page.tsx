@@ -98,3 +98,4 @@ export default async function DashboardPage() {
     </div>
   )
 }
+export const runtime = 'edge'

@@ -60,3 +60,6 @@
 ## 2024-05-18 - Memoize content parsing in React render loops
 **Learning:** In list views or grids (e.g., `DynamicPostGrid`), computing post metadata via regex (like extracting excerpts or first images from full content strings) directly in the `map()` loop causes O(N) expensive string operations on every re-render. Since `DynamicPostGrid` renders heavily on tab clicks or dropdown hovers, this results in significant main-thread blocking and UI lag.
 **Action:** Always wrap heavy data-transformation logic inside a `useMemo` hook that transforms the array once and caches the processed objects, so subsequent renders only map over the pre-computed fields.
+## 2026-05-29 - Edge Runtime configuration for non-static routes
+**Learning:** When deploying a Next.js application to Cloudflare Pages/Workers, it runs in the Edge Runtime. If a route isn't completely static (e.g., uses dynamic functions, API endpoints, or database queries), the Cloudflare adapter requires that you explicitly declare the Edge Runtime for that route. If any non-static route uses the default Node.js runtime instead, the `@cloudflare/next-on-pages` build will fail.
+**Action:** Ensure every single API route and dynamic/server-rendered page explicitly exports `export const runtime = 'edge'` in order to correctly compile for Cloudflare.
