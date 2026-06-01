@@ -17,3 +17,6 @@
 ## 2024-05-18 - CSS-Driven Dropdown Menu Accessibility
 **Learning:** Dropdown menus driven purely by CSS `:hover` states are completely inaccessible to keyboard users and screen readers, trapping navigation or preventing access to sub-items.
 **Action:** When implementing CSS-driven dropdown menus, ensure keyboard accessibility by adding `:focus-within` selectors to the container alongside `:hover`, and manage the trigger button's `aria-expanded` attribute dynamically via React state (`onFocus`, `onBlur`, `onMouseEnter`, `onMouseLeave`).
+## 2024-05-24 - Dropdown Menu Roles
+**Learning:** The ESLint rule `jsx-a11y/role-supports-aria-props` prevents the use of the `aria-pressed` attribute on elements designated with `role="menuitem"`.
+**Action:** To indicate the active state of a dropdown menu item representing a selection, use `role="menuitemradio"` (or `menuitemcheckbox`) along with the `aria-checked` attribute instead of `aria-pressed`.
