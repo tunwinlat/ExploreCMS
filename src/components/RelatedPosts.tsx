@@ -99,6 +99,7 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
               <div className="related-post-image-wrapper">
                 {post.coverImage ? (
                   // ⚡ Bolt: Lazy load images rendered below the fold in post grids to improve initial page load performance
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img 
                     src={post.coverImage}
                     alt="" 

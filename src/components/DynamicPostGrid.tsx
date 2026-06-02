@@ -246,6 +246,7 @@ export default function DynamicPostGrid({
                   {post.coverImage && (
                     <div style={{ width: '100%', height: '240px', overflow: 'hidden', borderBottom: '1px solid var(--border-color)' }}>
                       {/* ⚡ Bolt: Lazy load images rendered below the fold in post grids to improve initial page load performance */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={post.coverImage} alt={post.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} className="card-img" />
                     </div>
                   )}
