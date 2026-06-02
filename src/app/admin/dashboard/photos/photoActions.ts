@@ -123,7 +123,7 @@ export async function addPhoto(formData: FormData) {
   }
 }
 
-export async function deletePhoto(photoId: string, albumId: string) {
+export async function deletePhoto(photoId: string, _albumId: string) {
   const session = await verifySession()
   if (!session) throw new Error('Unauthorized')
 
