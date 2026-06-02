@@ -10,26 +10,10 @@ import { prisma } from '@/lib/db'
 import { verifySession } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { normalizeUrl } from '@/lib/urlUtils'
 
 function generateSlug(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
-}
-
-// Security enhancement: Prevent Stored XSS by validating URLs to ensure they use safe protocols
-function normalizeUrl(url: string | null): string | null {
-  if (!url) return null
-  try {
-    // Attempt to parse strictly without a base URL to ensure it's absolute
-    const parsed = new URL(url)
-    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-      return parsed.toString()
-    }
-    return null
-  } catch {
-    // If parsing without a base fails, check if it's a valid relative path
-    if (url.startsWith('/')) return url
-    return null
-  }
 }
 
 export async function saveProject(formData: FormData) {
@@ -40,7 +24,8 @@ export async function saveProject(formData: FormData) {
   const title = formData.get('title') as string
   const tagline = (formData.get('tagline') as string) || ''
   const content = (formData.get('content') as string) || ''
-  const coverImage = (formData.get('coverImage') as string) || null
+  const coverImageInput = (formData.get('coverImage') as string) || null
+  const coverImage = coverImageInput ? normalizeUrl(coverImageInput) : null
   const status = (formData.get('status') as string) || 'completed'
   const featured = formData.get('featured') === 'true'
   const published = formData.get('published') === 'true'
@@ -57,7 +42,7 @@ export async function saveProject(formData: FormData) {
 
   if (!title) return { error: 'Title is required' }
 
-  if ((githubUrlInput && !githubUrl) || (liveUrlInput && !liveUrl)) {
+  if ((githubUrlInput && !githubUrl) || (liveUrlInput && !liveUrl) || (coverImageInput && !coverImage)) {
     return { error: 'Invalid URL format. Please use http:// or https://' }
   }
 
@@ -114,6 +99,11 @@ export async function addProjectImage(projectId: string, url: string, caption: s
   const session = await verifySession()
   if (!session) throw new Error('Unauthorized')
 
+  const normalizedUrl = normalizeUrl(url)
+  if (!normalizedUrl) {
+    return { error: 'Invalid URL format. Please use http:// or https://' }
+  }
+
   try {
     const maxOrder = await (prisma as any).projectImage.findFirst({
       where: { projectId },
@@ -121,7 +111,7 @@ export async function addProjectImage(projectId: string, url: string, caption: s
       select: { order: true },
     })
     const order = (maxOrder?.order ?? -1) + 1
-    await (prisma as any).projectImage.create({ data: { projectId, url, caption, order } })
+    await (prisma as any).projectImage.create({ data: { projectId, url: normalizedUrl, caption, order } })
     revalidatePath('/admin/dashboard/projects')
     return { success: true }
   } catch {
