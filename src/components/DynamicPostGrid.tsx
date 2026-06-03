@@ -46,7 +46,7 @@ function DropdownNav({ item, activeFilter, setActiveFilter }: {
           setIsOpen(false);
         }
       }}
-      onKeyDown={(e) => {
+      onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
         if (e.key === 'Escape') {
           setIsOpen(false);
           const trigger = e.currentTarget.querySelector('button');
