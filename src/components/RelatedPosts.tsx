@@ -31,23 +31,23 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const fetchRelatedPosts = async () => {
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/related?slug=${encodeURIComponent(currentSlug)}&limit=3`)
+        const data = await res.json()
+        if (data.posts) {
+          setPosts(data.posts)
+        }
+      } catch (err) {
+        console.error('Failed to fetch related posts:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
     fetchRelatedPosts()
   }, [currentSlug])
-
-  const fetchRelatedPosts = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/related?slug=${encodeURIComponent(currentSlug)}&limit=3`)
-      const data = await res.json()
-      if (data.posts) {
-        setPosts(data.posts)
-      }
-    } catch (err) {
-      console.error('Failed to fetch related posts:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   if (loading) {
     return (
@@ -99,7 +99,9 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
             >
               <div className="related-post-image-wrapper">
                 {post.coverImage ? (
+                  /* ⚡ Bolt: Native lazy loading defers images below the fold, significantly improving initial page load time and bandwidth */
                   <img 
+                    loading="lazy"
                     src={post.coverImage}
                     alt="" 
                     className="related-post-image"
