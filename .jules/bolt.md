@@ -1,1 +1,3 @@
-## 2026-06-04 - Native Lazy Loading over Next/Image for Dynamic Content\n**Learning:** Next.js `<Image>` components will crash if they encounter an unpredictable, unconfigured external image URL (common when parsing generic post cover images). \n**Action:** When adding lazy loading to user-generated or dynamic imagery rendered below the fold, always rely on the native HTML `loading="lazy"` attribute on standard `<img>` tags instead of trying to migrate to next/image.
+## 2026-06-04 - Native Lazy Loading over Next/Image for Dynamic Content
+**Learning:** Next.js `<Image>` components will crash if they encounter an unpredictable, unconfigured external image URL (common when parsing generic post cover images).
+**Action:** When adding lazy loading to user-generated or dynamic imagery rendered below the fold, always rely on the native HTML `loading="lazy"` attribute on standard `<img>` tags instead of trying to migrate to next/image.
