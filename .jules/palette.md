@@ -1,0 +1,3 @@
+## $(date +%Y-%m-%d) - Added active state focus highlighting to search results via keyboard navigation
+**Learning:** Adding active state selection highlighting for custom modal dialog elements enhances keyboard accessibility (ArrowDown, ArrowUp). `useEffect` to scroll a selected active element when updating `selectedIndex` during search results rendering prevents looping updates of the selected index since the list can be long.
+**Action:** When creating custom selection lists, always consider keyboard events and updating scroll using standard browser APIs instead of keeping the active selection logic tied to a render ref to avoid cascading renders.

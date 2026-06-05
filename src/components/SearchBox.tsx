@@ -27,6 +27,7 @@ export function SearchBox() {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -35,6 +36,7 @@ export function SearchBox() {
   const searchPosts = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim() || searchQuery.trim().length < 2) {
       setResults([])
+      setSelectedIndex(-1)
       setHasSearched(false)
       return
     }
@@ -46,9 +48,11 @@ export function SearchBox() {
       const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=8`)
       const data = await res.json()
       setResults(data.posts || [])
+      setSelectedIndex(-1)
     } catch (err) {
       console.error('Search error:', err)
       setResults([])
+      setSelectedIndex(-1)
     } finally {
       setLoading(false)
     }
@@ -71,15 +75,30 @@ export function SearchBox() {
         setIsOpen(true)
         setTimeout(() => inputRef.current?.focus(), 100)
       }
-      // Escape to close
+
+      if (!isOpen) return
+
       if (e.key === 'Escape') {
         setIsOpen(false)
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setSelectedIndex(prev => (prev < results.length - 1 ? prev + 1 : prev))
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setSelectedIndex(prev => (prev > 0 ? prev - 1 : -1))
+      } else if (e.key === 'Enter' && selectedIndex >= 0) {
+        e.preventDefault()
+        const selectedPost = results[selectedIndex]
+        if (selectedPost) {
+          router.push(`/post/${selectedPost.slug}`)
+          setIsOpen(false)
+        }
       }
     }
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [isOpen, results, selectedIndex, router])
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -140,6 +159,15 @@ export function SearchBox() {
       return { ...post, excerpt }
     })
   }, [results])
+
+  // Reset selected index when results change
+  // (removed due to set-state-in-effect, instead we update index during rendering or other effects)
+
+  useEffect(() => {
+    if (selectedIndex >= 0) {
+      document.getElementById(`search-result-${selectedIndex}`)?.scrollIntoView({ block: 'nearest' })
+    }
+  }, [selectedIndex])
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
@@ -342,18 +370,22 @@ export function SearchBox() {
                   <div style={{ padding: '0.75rem 1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>
                     {processedResults.length} result{processedResults.length !== 1 ? 's' : ''} found
                   </div>
-                  {processedResults.map((post) => {
+                  {processedResults.map((post, index) => {
                     return (
                       <Link
                         key={post.id}
+                        id={`search-result-${index}`}
                         href={`/post/${post.slug}`}
                         onClick={() => setIsOpen(false)}
+                        onMouseEnter={() => setSelectedIndex(index)}
                         style={{
                           display: 'block',
                           padding: '1rem 1.25rem',
                           borderBottom: '1px solid var(--border-color)',
-                          transition: 'background 0.2s ease',
-                          textDecoration: 'none'
+                          transition: 'background 0.1s ease',
+                          textDecoration: 'none',
+                          background: index === selectedIndex ? 'var(--bg-color-secondary)' : 'transparent',
+                          borderLeft: index === selectedIndex ? '3px solid var(--accent-color)' : '3px solid transparent',
                         }}
                         className="search-result-item"
                       >
