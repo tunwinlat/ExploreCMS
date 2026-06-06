@@ -1,0 +1,3 @@
+## 2025-06-06 - Search Results Keyboard Navigation Cascading Render
+**Learning:** Adding keyboard navigation state to a search component can introduce cascading renders if the selection reset logic is placed directly inside a `useEffect` hook watching the results array (triggering `react-hooks/set-state-in-effect`).
+**Action:** Always verify if state resets can be achieved by deriving state during render or inside the handler that updates the dependencies, rather than blindly ignoring the `eslint-disable-next-line react-hooks/set-state-in-effect` warning which could lead to performance issues.
