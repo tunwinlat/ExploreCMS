@@ -99,11 +99,15 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
             >
               <div className="related-post-image-wrapper">
                 {post.coverImage ? (
-                  <img 
-                    src={post.coverImage}
-                    alt="" 
-                    className="related-post-image"
-                  />
+                  <>
+                    {/* ⚡ Bolt: Native lazy loading defers offscreen images, improving performance and lowering memory footprint. */}
+                    <img
+                      src={post.coverImage}
+                      alt=""
+                      loading="lazy"
+                      className="related-post-image"
+                    />
+                  </>
                 ) : (
                   <div className="related-post-image-placeholder">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
