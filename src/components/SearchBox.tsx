@@ -16,6 +16,7 @@ interface SearchPost {
   title: string
   slug: string
   content: string
+  contentFormat?: string
   createdAt: string
   author: { username: string; firstName: string | null }
   tags: { name: string; slug: string }[]
@@ -138,7 +139,7 @@ export function SearchBox() {
 
   const processedResults = useMemo(() => {
     return results.map(post => {
-      const excerpt = getExcerpt(post.content, (post as any).contentFormat, 150)
+      const excerpt = getExcerpt(post.content, post.contentFormat || 'html', 150)
       return { ...post, excerpt }
     })
   }, [results])
