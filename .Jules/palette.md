@@ -17,3 +17,6 @@
 ## 2024-05-18 - CSS-Driven Dropdown Menu Accessibility
 **Learning:** Dropdown menus driven purely by CSS `:hover` states are completely inaccessible to keyboard users and screen readers, trapping navigation or preventing access to sub-items.
 **Action:** When implementing CSS-driven dropdown menus, ensure keyboard accessibility by adding `:focus-within` selectors to the container alongside `:hover`, and manage the trigger button's `aria-expanded` attribute dynamically via React state (`onFocus`, `onBlur`, `onMouseEnter`, `onMouseLeave`).
+## 2026-06-08 - Adding keyboard navigation
+**Learning:** When adding visual hints for keyboard shortcuts in UI components (like ↑↓ for navigation or ↵ to select), ensure the corresponding keydown event listeners and state management are actually implemented to avoid breaking user expectations.
+**Action:** Always implement the backend keyboard state before adding frontend visual keyboard hints.
