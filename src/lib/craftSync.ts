@@ -13,6 +13,7 @@ import { createWriteStream, mkdirSync, existsSync } from 'fs'
 import { join } from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import { decrypt } from '@/lib/crypto'
+import { isValidImageSignature } from '@/lib/upload'
 
 // Concurrency guard
 let syncInProgress = false
@@ -105,16 +106,21 @@ function uploadToLocalStorage(buffer: Buffer, filename: string): string {
   return `/uploads/${filename}`
 }
 
-function guessExtension(contentType: string, url: string): string {
+function guessExtension(contentType: string, url: string): string | null {
   const mimeMap: Record<string, string> = {
     'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png',
     'image/gif': 'gif', 'image/webp': 'webp',
+    'image/avif': 'avif', 'image/x-icon': 'ico', 'image/vnd.microsoft.icon': 'ico',
+    'image/pjpeg': 'jpg', 'image/x-png': 'png'
   }
   if (mimeMap[contentType]) return mimeMap[contentType]
-  // Try from URL
-  const match = url.match(/\.(jpe?g|png|gif|webp)(\?|$)/i)
-  if (match) return match[1].toLowerCase()
-  return 'jpg' // fallback
+
+  if (contentType === 'application/octet-stream' || !contentType) {
+    const match = url.match(/\.(jpe?g|png|gif|webp|avif|ico)(\?|$)/i)
+    if (match) return match[1].toLowerCase()
+  }
+
+  return null
 }
 
 async function downloadAndUploadImage(imageUrl: string, storageConfig: StorageConfig): Promise<string | null> {
@@ -122,9 +128,22 @@ async function downloadAndUploadImage(imageUrl: string, storageConfig: StorageCo
     const response = await fetch(imageUrl)
     if (!response.ok) return null
 
-    const contentType = response.headers.get('content-type') || 'image/jpeg'
-    const buffer = Buffer.from(await response.arrayBuffer())
+    const rawContentType = response.headers.get('content-type') || 'image/jpeg'
+    const contentType = rawContentType.split(';')[0].trim().toLowerCase()
+
     const ext = guessExtension(contentType, imageUrl)
+    if (!ext) {
+      console.warn(`[CraftSync] Rejected image with unauthorized content-type: ${contentType}`)
+      return null
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer())
+
+    if (!isValidImageSignature(buffer, contentType)) {
+      console.warn(`[CraftSync] Rejected image due to invalid magic bytes for ${contentType}`)
+      return null
+    }
+
     const filename = `${uuidv4()}.${ext}`
 
     if (storageConfig.bunnyStorageEnabled && storageConfig.bunnyStorageApiKey) {
