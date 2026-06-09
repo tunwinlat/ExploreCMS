@@ -25,6 +25,7 @@ export function SearchBox() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchPost[]>([])
   const [isOpen, setIsOpen] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -35,17 +36,20 @@ export function SearchBox() {
   const searchPosts = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim() || searchQuery.trim().length < 2) {
       setResults([])
+      setSelectedIndex(-1)
       setHasSearched(false)
       return
     }
 
     setLoading(true)
     setHasSearched(true)
+    setSelectedIndex(-1)
 
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=8`)
       const data = await res.json()
       setResults(data.posts || [])
+      setSelectedIndex(-1)
     } catch (err) {
       console.error('Search error:', err)
       setResults([])
@@ -65,6 +69,22 @@ export function SearchBox() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isOpen) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault()
+          setSelectedIndex(prev => Math.min(prev + 1, results.length - 1))
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault()
+          setSelectedIndex(prev => Math.max(prev - 1, -1))
+        } else if (e.key === 'Enter' && selectedIndex >= 0) {
+          e.preventDefault()
+          const post = results[selectedIndex]
+          if (post) {
+            router.push(`/post/${post.slug}`)
+            setIsOpen(false)
+          }
+        }
+      }
       // Cmd/Ctrl + K to open search
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
@@ -79,7 +99,7 @@ export function SearchBox() {
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [isOpen, results, selectedIndex, router])
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -90,6 +110,15 @@ export function SearchBox() {
     }
     return () => { document.body.style.overflow = '' }
   }, [isOpen])
+
+  useEffect(() => {
+    if (selectedIndex >= 0 && isOpen) {
+      const el = document.getElementById(`search-result-${selectedIndex}`)
+      if (el) {
+        el.scrollIntoView({ block: 'nearest' })
+      }
+    }
+  }, [selectedIndex, isOpen])
 
   const closeSearch = useCallback(() => {
     setIsOpen(false)
@@ -342,10 +371,13 @@ export function SearchBox() {
                   <div style={{ padding: '0.75rem 1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>
                     {processedResults.length} result{processedResults.length !== 1 ? 's' : ''} found
                   </div>
-                  {processedResults.map((post) => {
+                  {processedResults.map((post, index) => {
+                    const isSelected = selectedIndex === index
                     return (
                       <Link
                         key={post.id}
+                        id={`search-result-${index}`}
+                        aria-selected={isSelected}
                         href={`/post/${post.slug}`}
                         onClick={() => setIsOpen(false)}
                         style={{
@@ -353,7 +385,8 @@ export function SearchBox() {
                           padding: '1rem 1.25rem',
                           borderBottom: '1px solid var(--border-color)',
                           transition: 'background 0.2s ease',
-                          textDecoration: 'none'
+                          textDecoration: 'none',
+                          background: isSelected ? 'var(--bg-color-secondary)' : undefined
                         }}
                         className="search-result-item"
                       >

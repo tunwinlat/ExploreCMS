@@ -1,0 +1,3 @@
+## 2024-06-09 - Search Keyboard Navigation
+**Learning:** Adding complex keyboard interactions inside a modal component (like a dropdown list) requires tracking both the visibility state (`isOpen`) and the data dependency array (`results`) in the event listener's dependencies to prevent stale closures. Also, scrolling to elements using unique IDs with `scrollIntoView` works best when synchronized safely using a separate `useEffect` rather than inline event handlers to prevent rendering jank.
+**Action:** Next time I build a custom keyboard-navigable list, I will decouple the state changes from the scroll behavior by relying on side-effect synchronization (using a `useEffect` that listens to `selectedIndex`), ensuring smoother interaction.
