@@ -30,10 +30,6 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
   const [posts, setPosts] = useState<RelatedPost[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchRelatedPosts()
-  }, [currentSlug])
-
   const fetchRelatedPosts = async () => {
     setLoading(true)
     try {
@@ -49,6 +45,20 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
     }
   }
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchRelatedPosts()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSlug])
+
+  const processedPosts = useMemo(() => {
+    return posts.map(post => {
+      const excerpt = getExcerpt(post.content, post.contentFormat, 120)
+      const coverImage = getFirstImage(post.content, post.contentFormat)
+      return { ...post, excerpt, coverImage }
+    })
+  }, [posts])
+
   if (loading) {
     return (
       <section className="related-posts">
@@ -63,14 +73,6 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
       </section>
     )
   }
-
-  const processedPosts = useMemo(() => {
-    return posts.map(post => {
-      const excerpt = getExcerpt(post.content, post.contentFormat, 120)
-      const coverImage = getFirstImage(post.content, post.contentFormat)
-      return { ...post, excerpt, coverImage }
-    })
-  }, [posts])
 
   if (posts.length === 0) return null
 
@@ -99,11 +101,15 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
             >
               <div className="related-post-image-wrapper">
                 {post.coverImage ? (
-                  <img 
-                    src={post.coverImage}
-                    alt="" 
-                    className="related-post-image"
-                  />
+                  <>
+                    {/* ⚡ Bolt: Native lazy loading to improve initial render time by deferring off-screen images */}
+                    <img
+                      src={post.coverImage}
+                      alt=""
+                      loading="lazy"
+                      className="related-post-image"
+                    />
+                  </>
                 ) : (
                   <div className="related-post-image-placeholder">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
