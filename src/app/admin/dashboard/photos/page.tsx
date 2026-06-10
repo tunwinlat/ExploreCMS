@@ -183,3 +183,5 @@ export default async function PhotosAdminPage() {
     </div>
   )
 }
+
+export const runtime = 'edge';

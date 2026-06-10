@@ -495,3 +495,5 @@ function getLanguageColor(language: string): string {
   }
   return colors[language] || '#6366F1'
 }
+
+export const runtime = 'edge';

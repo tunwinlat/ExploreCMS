@@ -45,3 +45,5 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
 
   return <PostEditor post={post} availableTags={availableTags} readOnly={isReadOnly} craftPostId={isReadOnly ? post.id : undefined} siblingTranslations={siblingTranslations as any} />
 }
+
+export const runtime = 'edge';

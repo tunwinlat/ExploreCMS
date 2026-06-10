@@ -11,7 +11,7 @@ import { getPostDb } from '@/lib/bunnyDb'
 import { verifySession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { revalidatePath, revalidateTag } from 'next/cache'
-import { after } from 'next/server'
+// import { after } from 'next/server'
 import { pushPostToCraft, getCraftSyncMode, deletePostFromCraft } from '@/lib/craftSync'
 
 function generateSlug(title: string) {
@@ -128,7 +128,7 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
   if (published) {
     const postIdForCraft = id || (await postDb.post.findUnique({ where: { slug } }))?.id
     if (postIdForCraft) {
-      after(async () => {
+      Promise.resolve().then(async () => {
         try {
           await pushPostToCraft(postIdForCraft)
         } catch {
