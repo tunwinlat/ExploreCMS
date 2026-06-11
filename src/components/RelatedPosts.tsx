@@ -99,7 +99,7 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
             >
               <div className="related-post-image-wrapper">
                 {post.coverImage ? (
-                  <img 
+                  <img loading="lazy"
                     src={post.coverImage}
                     alt="" 
                     className="related-post-image"
