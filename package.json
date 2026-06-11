@@ -12,7 +12,6 @@
   "dependencies": {
     "@libsql/client": "^0.17.3",
     "@prisma/adapter-libsql": "^6.19.3",
-    "@prisma/client": "^6.19.3",
     "@tippyjs/react": "^4.2.6",
     "@tiptap/core": "^3.23.4",
     "@tiptap/extension-bubble-menu": "^3.23.4",
@@ -46,6 +45,7 @@
     "ws": "^8.20.1"
   },
   "devDependencies": {
+    "@prisma/client": "6.19.3",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",

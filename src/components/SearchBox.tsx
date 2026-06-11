@@ -17,6 +17,7 @@ interface SearchPost {
   slug: string
   content: string
   createdAt: string
+  contentFormat?: string
   author: { username: string; firstName: string | null }
   tags: { name: string; slug: string }[]
 }
@@ -27,6 +28,7 @@ export function SearchBox() {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -36,6 +38,7 @@ export function SearchBox() {
     if (!searchQuery.trim() || searchQuery.trim().length < 2) {
       setResults([])
       setHasSearched(false)
+      setSelectedIndex(-1)
       return
     }
 
@@ -46,9 +49,11 @@ export function SearchBox() {
       const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=8`)
       const data = await res.json()
       setResults(data.posts || [])
+      setSelectedIndex(-1)
     } catch (err) {
       console.error('Search error:', err)
       setResults([])
+      setSelectedIndex(-1)
     } finally {
       setLoading(false)
     }
@@ -75,11 +80,39 @@ export function SearchBox() {
       if (e.key === 'Escape') {
         setIsOpen(false)
       }
+
+      // Navigation
+      if (isOpen && results.length > 0) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault()
+          setSelectedIndex(prev => (prev < results.length - 1 ? prev + 1 : prev))
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault()
+          setSelectedIndex(prev => (prev > 0 ? prev - 1 : 0))
+        } else if (e.key === 'Enter' && selectedIndex >= 0) {
+          e.preventDefault()
+          const selected = results[selectedIndex]
+          if (selected) {
+            router.push(`/post/${selected.slug}`)
+            setIsOpen(false)
+          }
+        }
+      }
     }
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [isOpen, results, selectedIndex, router])
+
+  // Scroll into view
+  useEffect(() => {
+    if (selectedIndex >= 0) {
+      const el = document.getElementById(`search-result-${selectedIndex}`)
+      if (el) {
+        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+      }
+    }
+  }, [selectedIndex])
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -136,7 +169,7 @@ export function SearchBox() {
 
   const processedResults = useMemo(() => {
     return results.map(post => {
-      const excerpt = getExcerpt(post.content, (post as any).contentFormat, 150)
+      const excerpt = getExcerpt(post.content, post.contentFormat, 150)
       return { ...post, excerpt }
     })
   }, [results])
@@ -324,6 +357,7 @@ export function SearchBox() {
               style={{ maxHeight: '60vh', overflowY: 'auto', borderTop: '1px solid var(--border-color)' }}
               aria-live="polite"
               aria-atomic="true"
+              role="listbox"
             >
               {loading ? (
                 <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }} role="status" aria-label="Searching...">
@@ -342,10 +376,12 @@ export function SearchBox() {
                   <div style={{ padding: '0.75rem 1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>
                     {processedResults.length} result{processedResults.length !== 1 ? 's' : ''} found
                   </div>
-                  {processedResults.map((post) => {
+                  {processedResults.map((post, index) => {
+                    const isSelected = index === selectedIndex;
                     return (
                       <Link
                         key={post.id}
+                        id={`search-result-${index}`}
                         href={`/post/${post.slug}`}
                         onClick={() => setIsOpen(false)}
                         style={{
@@ -353,9 +389,12 @@ export function SearchBox() {
                           padding: '1rem 1.25rem',
                           borderBottom: '1px solid var(--border-color)',
                           transition: 'background 0.2s ease',
-                          textDecoration: 'none'
+                          textDecoration: 'none',
+                          background: isSelected ? 'var(--bg-color-secondary)' : undefined
                         }}
                         className="search-result-item"
+                        role="option"
+                        aria-selected={isSelected}
                       >
                         <h4
                           style={{
