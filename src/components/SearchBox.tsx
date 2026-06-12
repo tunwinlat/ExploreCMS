@@ -27,6 +27,7 @@ export function SearchBox() {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -94,6 +95,33 @@ export function SearchBox() {
   const closeSearch = useCallback(() => {
     setIsOpen(false)
   }, [])
+
+  const handleModalKeyDown = (e: React.KeyboardEvent) => {
+    // Only intercept if we are focused on the input or the modal itself to avoid breaking tab navigation
+    if (document.activeElement !== inputRef.current && document.activeElement?.className !== 'search-modal') return;
+    if (processedResults.length === 0) return
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSelectedIndex(prev => (prev < processedResults.length - 1 ? prev + 1 : prev))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSelectedIndex(prev => (prev > 0 ? prev - 1 : 0))
+    } else if (e.key === 'Enter' && selectedIndex >= 0) {
+      e.preventDefault()
+      router.push(`/post/${processedResults[selectedIndex].slug}`)
+      setIsOpen(false)
+    }
+  }
+
+  useEffect(() => {
+    if (selectedIndex >= 0) {
+      const el = document.getElementById(`search-result-${selectedIndex}`)
+      if (el) {
+        el.scrollIntoView({ block: 'nearest' })
+      }
+    }
+  }, [selectedIndex])
 
   const openSearch = useCallback(() => {
     setIsOpen(true)
@@ -189,6 +217,7 @@ export function SearchBox() {
         <div
           className="search-modal"
           role="dialog"
+          onKeyDown={handleModalKeyDown}
           aria-modal="true"
           aria-label="Search posts"
           onClick={closeSearch}
@@ -246,7 +275,7 @@ export function SearchBox() {
                   ref={inputRef}
                   type="text"
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => { setQuery(e.target.value); setSelectedIndex(-1); }}
                   placeholder="Search posts by title or content..."
                   aria-label="Search posts"
                   style={{
@@ -342,20 +371,24 @@ export function SearchBox() {
                   <div style={{ padding: '0.75rem 1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>
                     {processedResults.length} result{processedResults.length !== 1 ? 's' : ''} found
                   </div>
-                  {processedResults.map((post) => {
+                  {processedResults.map((post, index) => {
                     return (
                       <Link
                         key={post.id}
                         href={`/post/${post.slug}`}
                         onClick={() => setIsOpen(false)}
+
+                        className="search-result-item"
+                        id={`search-result-${index}`}
+                        onMouseEnter={() => setSelectedIndex(index)}
                         style={{
                           display: 'block',
                           padding: '1rem 1.25rem',
                           borderBottom: '1px solid var(--border-color)',
                           transition: 'background 0.2s ease',
-                          textDecoration: 'none'
+                          textDecoration: 'none',
+                          background: selectedIndex === index ? 'var(--bg-color)' : undefined
                         }}
-                        className="search-result-item"
                       >
                         <h4
                           style={{
