@@ -64,7 +64,7 @@ async function getStorageConfig(): Promise<StorageConfig> {
 }
 
 async function uploadToBunnyStorage(
-  buffer: Buffer,
+  buffer: Buffer | Uint8Array,
   filename: string,
   contentType: string,
   config: StorageConfig
@@ -94,7 +94,7 @@ async function uploadToBunnyStorage(
   return `${config.bunnyStorageUrl}/uploads/${filename}`
 }
 
-function uploadToLocalStorage(buffer: Buffer, filename: string): string {
+function uploadToLocalStorage(buffer: Buffer | Uint8Array, filename: string): string {
   const uploadDir = join(process.cwd(), 'public', 'uploads')
   if (!existsSync(uploadDir)) {
     mkdirSync(uploadDir, { recursive: true })

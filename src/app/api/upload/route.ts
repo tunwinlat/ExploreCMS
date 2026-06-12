@@ -33,7 +33,7 @@ class BunnyStorageClient {
       : `${region}.storage.bunnycdn.com`
   }
 
-  async uploadFile(path: string, buffer: Buffer, contentType?: string): Promise<string> {
+  async uploadFile(path: string, buffer: Buffer | Uint8Array, contentType?: string): Promise<string> {
     const url = `https://${this.baseUrl}/${this.storageZoneName}/${path}`
     
     const response = await fetch(url, {
