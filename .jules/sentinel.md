@@ -1,0 +1,4 @@
+## 2024-06-12 - Prevent Stored XSS via MIME spoofing on external downloads
+**Vulnerability:** When downloading images from an external URL during Craft sync (`src/lib/craftSync.ts`), the application used the `Content-Type` header or the URL extension to guess the file extension. It fell back to `jpg` and saved the file without checking the actual file contents (magic bytes).
+**Learning:** This lack of content verification allows an attacker to host a malicious file (like HTML or JS) with a `.png` URL or spoofed `Content-Type` header, causing the backend to download and serve the payload as a trusted asset, leading to Stored XSS.
+**Prevention:** External downloads must validate the file's content by matching magic bytes against the allowed image MIME types. If the content signature doesn't match, the file should be rejected entirely without relying on default fallback extensions.

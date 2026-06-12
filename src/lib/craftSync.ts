@@ -13,6 +13,7 @@ import { createWriteStream, mkdirSync, existsSync } from 'fs'
 import { join } from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import { decrypt } from '@/lib/crypto'
+import { isValidImageSignature } from '@/lib/upload'
 
 // Concurrency guard
 let syncInProgress = false
@@ -105,7 +106,7 @@ function uploadToLocalStorage(buffer: Buffer, filename: string): string {
   return `/uploads/${filename}`
 }
 
-function guessExtension(contentType: string, url: string): string {
+function guessExtension(contentType: string, url: string): string | null {
   const mimeMap: Record<string, string> = {
     'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png',
     'image/gif': 'gif', 'image/webp': 'webp',
@@ -114,7 +115,7 @@ function guessExtension(contentType: string, url: string): string {
   // Try from URL
   const match = url.match(/\.(jpe?g|png|gif|webp)(\?|$)/i)
   if (match) return match[1].toLowerCase()
-  return 'jpg' // fallback
+  return null // No default fallback to prevent MIME spoofing bypass
 }
 
 async function downloadAndUploadImage(imageUrl: string, storageConfig: StorageConfig): Promise<string | null> {
@@ -124,7 +125,14 @@ async function downloadAndUploadImage(imageUrl: string, storageConfig: StorageCo
 
     const contentType = response.headers.get('content-type') || 'image/jpeg'
     const buffer = Buffer.from(await response.arrayBuffer())
+
+    // SECURITY FIX: Prevent Stored XSS via MIME spoofing from external downloads
     const ext = guessExtension(contentType, imageUrl)
+    if (!ext || !isValidImageSignature(buffer, contentType)) {
+      console.warn('[CraftSync] Invalid image signature or extension for:', imageUrl)
+      return null
+    }
+
     const filename = `${uuidv4()}.${ext}`
 
     if (storageConfig.bunnyStorageEnabled && storageConfig.bunnyStorageApiKey) {
