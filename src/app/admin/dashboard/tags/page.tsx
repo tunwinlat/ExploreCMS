@@ -39,5 +39,3 @@ export default async function TagsPage() {
     </div>
   )
 }
-
-export const runtime = 'edge';

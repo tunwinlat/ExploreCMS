@@ -34,5 +34,3 @@ export default async function UsersPage() {
     </div>
   )
 }
-
-export const runtime = 'edge';

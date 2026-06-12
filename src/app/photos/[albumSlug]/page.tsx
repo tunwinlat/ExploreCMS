@@ -126,5 +126,3 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumSlu
     </div>
   );
 }
-
-export const runtime = 'edge';

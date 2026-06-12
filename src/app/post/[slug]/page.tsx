@@ -241,5 +241,3 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     </div>
   )
 }
-
-export const runtime = 'edge';

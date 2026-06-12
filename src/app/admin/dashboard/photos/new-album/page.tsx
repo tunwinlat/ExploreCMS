@@ -21,5 +21,3 @@ export default async function NewAlbumPage() {
     </div>
   )
 }
-
-export const runtime = 'edge';

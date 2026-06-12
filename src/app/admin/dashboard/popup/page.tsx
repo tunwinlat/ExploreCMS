@@ -30,5 +30,3 @@ export default async function PopupPage() {
     </div>
   )
 }
-
-export const runtime = 'edge';

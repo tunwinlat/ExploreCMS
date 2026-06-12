@@ -36,5 +36,3 @@ export default async function SettingsPage() {
     </div>
   )
 }
-
-export const runtime = 'edge';
