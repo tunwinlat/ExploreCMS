@@ -113,7 +113,7 @@ export async function POST(req: Request) {
     }
 
     const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
+    const buffer = new Uint8Array(bytes)
 
     // SECURITY FIX: Prevent MIME spoofing by verifying magic bytes
     if (!isValidImageSignature(buffer, mimeType)) {

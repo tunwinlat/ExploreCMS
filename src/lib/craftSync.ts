@@ -124,7 +124,7 @@ async function downloadAndUploadImage(imageUrl: string, storageConfig: StorageCo
     if (!response.ok) return null
 
     const contentType = response.headers.get('content-type') || 'image/jpeg'
-    const buffer = Buffer.from(await response.arrayBuffer())
+    const buffer = new Uint8Array(await response.arrayBuffer())
 
     // SECURITY FIX: Prevent Stored XSS via MIME spoofing from external downloads
     const ext = guessExtension(contentType, imageUrl)
