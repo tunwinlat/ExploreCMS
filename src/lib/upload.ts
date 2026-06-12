@@ -1,4 +1,4 @@
-export function isValidImageSignature(buffer: Buffer, mimeType: string): boolean {
+export function isValidImageSignature(buffer: Buffer | Uint8Array, mimeType: string): boolean {
   if (buffer.length < 12) return false
 
   if (mimeType === 'image/jpeg' || mimeType === 'image/jpg') {
