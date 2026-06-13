@@ -27,6 +27,7 @@ export function SearchBox() {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -36,6 +37,7 @@ export function SearchBox() {
     if (!searchQuery.trim() || searchQuery.trim().length < 2) {
       setResults([])
       setHasSearched(false)
+      setSelectedIndex(-1)
       return
     }
 
@@ -46,9 +48,11 @@ export function SearchBox() {
       const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=8`)
       const data = await res.json()
       setResults(data.posts || [])
+      setSelectedIndex(-1)
     } catch (err) {
       console.error('Search error:', err)
       setResults([])
+      setSelectedIndex(-1)
     } finally {
       setLoading(false)
     }
@@ -61,6 +65,14 @@ export function SearchBox() {
 
     return () => clearTimeout(timeoutId)
   }, [query, searchPosts])
+
+  const processedResults = useMemo(() => {
+    return results.map(post => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const excerpt = getExcerpt(post.content, (post as any).contentFormat, 150)
+      return { ...post, excerpt }
+    })
+  }, [results])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -75,11 +87,25 @@ export function SearchBox() {
       if (e.key === 'Escape') {
         setIsOpen(false)
       }
+
+      if (!isOpen) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIndex(prev => Math.min(prev + 1, processedResults.length - 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex(prev => Math.max(prev - 1, -1));
+      } else if (e.key === 'Enter' && selectedIndex >= 0 && selectedIndex < processedResults.length) {
+        e.preventDefault();
+        router.push(`/post/${processedResults[selectedIndex].slug}`);
+        setIsOpen(false);
+      }
     }
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [isOpen, processedResults, router, selectedIndex])
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -93,6 +119,7 @@ export function SearchBox() {
 
   const closeSearch = useCallback(() => {
     setIsOpen(false)
+    setSelectedIndex(-1)
   }, [])
 
   const openSearch = useCallback(() => {
@@ -134,12 +161,7 @@ export function SearchBox() {
     )
   }
 
-  const processedResults = useMemo(() => {
-    return results.map(post => {
-      const excerpt = getExcerpt(post.content, (post as any).contentFormat, 150)
-      return { ...post, excerpt }
-    })
-  }, [results])
+
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
@@ -342,7 +364,7 @@ export function SearchBox() {
                   <div style={{ padding: '0.75rem 1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>
                     {processedResults.length} result{processedResults.length !== 1 ? 's' : ''} found
                   </div>
-                  {processedResults.map((post) => {
+                  {processedResults.map((post, index) => {
                     return (
                       <Link
                         key={post.id}
@@ -353,9 +375,10 @@ export function SearchBox() {
                           padding: '1rem 1.25rem',
                           borderBottom: '1px solid var(--border-color)',
                           transition: 'background 0.2s ease',
-                          textDecoration: 'none'
+                          textDecoration: 'none',
+
                         }}
-                        className="search-result-item"
+                        className={`search-result-item ${index === selectedIndex ? 'selected' : ''}`}
                       >
                         <h4
                           style={{

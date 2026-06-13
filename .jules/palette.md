@@ -1,0 +1,3 @@
+## 2024-06-13 - Add keyboard navigation support to SearchBox
+**Learning:** Adding keyboard shortcuts (like `↑↓` and `↵`) requires careful management of state and focus. When applying visual cues (like an active background) for keyboard selection states on elements that already use CSS `:hover` states with `!important` rules, inline styles often lack the specificity or cleanly override the CSS.
+**Action:** Always toggle semantic classes (like `.selected`) and add them to the existing `:hover` CSS rules instead of attempting to use inline styles for keyboard focus states, to ensure the UI behaves consistently and predictably.
