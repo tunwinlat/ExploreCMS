@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,7 +7,7 @@
 
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { getExcerpt, getFirstImage } from '@/lib/renderContent'
 
@@ -30,11 +31,7 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
   const [posts, setPosts] = useState<RelatedPost[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchRelatedPosts()
-  }, [currentSlug])
-
-  const fetchRelatedPosts = async () => {
+  const fetchRelatedPosts = useCallback(async () => {
     setLoading(true)
     try {
       const res = await fetch(`/api/related?slug=${encodeURIComponent(currentSlug)}&limit=3`)
@@ -47,7 +44,21 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentSlug])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchRelatedPosts()
+  }, [fetchRelatedPosts])
+
+
+  const processedPosts = useMemo(() => {
+    return posts.map(post => {
+      const excerpt = getExcerpt(post.content, post.contentFormat, 120)
+      const coverImage = getFirstImage(post.content, post.contentFormat)
+      return { ...post, excerpt, coverImage }
+    })
+  }, [posts])
 
   if (loading) {
     return (
@@ -63,14 +74,6 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
       </section>
     )
   }
-
-  const processedPosts = useMemo(() => {
-    return posts.map(post => {
-      const excerpt = getExcerpt(post.content, post.contentFormat, 120)
-      const coverImage = getFirstImage(post.content, post.contentFormat)
-      return { ...post, excerpt, coverImage }
-    })
-  }, [posts])
 
   if (posts.length === 0) return null
 
@@ -99,10 +102,12 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
             >
               <div className="related-post-image-wrapper">
                 {post.coverImage ? (
+
                   <img 
                     src={post.coverImage}
                     alt="" 
                     className="related-post-image"
+                    loading="lazy"
                   />
                 ) : (
                   <div className="related-post-image-placeholder">
