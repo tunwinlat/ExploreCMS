@@ -6,6 +6,7 @@
 
 'use client'
 
+import { normalizeUrl } from '@/lib/urlUtils'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -20,19 +21,6 @@ export interface ProjectCardData {
   githubUrl?: string | null
   liveUrl?: string | null
   techTags: string[]
-}
-
-function getSafeUrl(url: string | null | undefined): string | undefined {
-  if (!url) return undefined
-  try {
-    const parsed = new URL(url)
-    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-      return parsed.toString()
-    }
-  } catch {
-    // Invalid URL
-  }
-  return undefined
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
@@ -62,8 +50,8 @@ function ExternalLinkIcon() {
 export function ProjectCard({ project }: { project: ProjectCardData }) {
   const status = STATUS_COLORS[project.status] || STATUS_COLORS.completed
 
-  const safeGithubUrl = getSafeUrl(project.githubUrl)
-  const safeLiveUrl = getSafeUrl(project.liveUrl)
+  const safeGithubUrl = normalizeUrl(project.githubUrl)
+  const safeLiveUrl = normalizeUrl(project.liveUrl)
 
   return (
     <div

@@ -4,6 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+import { normalizeUrl } from '@/lib/urlUtils'
 import { prisma } from "@/lib/db";
 import { SiteHeader } from "@/components/SiteHeader";
 import { parseComponentConfig, COMPONENTS } from "@/lib/components-config";
@@ -39,20 +40,6 @@ const getProject = unstable_cache(
   { revalidate: 60 }
 );
 
-function getSafeUrl(url: string | null | undefined): string | undefined {
-  if (!url) return undefined
-  try {
-    const parsed = new URL(url)
-    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-      return parsed.toString()
-    }
-  } catch {
-    // Check if it's a valid relative path if absolute parsing fails
-    if (url.startsWith('/')) return url
-  }
-  return undefined
-}
-
 const STATUS_COLORS: Record<string, { text: string; label: string }> = {
   completed:   { text: '#22c55e', label: 'Completed' },
   in_progress: { text: 'var(--accent-color)', label: 'In Progress' },
@@ -72,8 +59,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const enabledMeta = COMPONENTS.filter(c => enabledComponents.includes(c.id));
   const status = STATUS_COLORS[project.status] || STATUS_COLORS.completed;
 
-  const safeGithubUrl = getSafeUrl(project.githubUrl)
-  const safeLiveUrl = getSafeUrl(project.liveUrl)
+  const safeGithubUrl = normalizeUrl(project.githubUrl)
+  const safeLiveUrl = normalizeUrl(project.liveUrl)
 
   return (
     <div className="main-content fade-in-up">
