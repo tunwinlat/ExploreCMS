@@ -138,7 +138,7 @@ export async function fetchGitHubRepos() {
       where: { githubRepoId: { not: null } },
       select: { githubRepoId: true },
     })
-    const importedIds = new Set(existingProjects.map(p => p.githubRepoId))
+    const importedIds = new Set(existingProjects.map((p: any) => p.githubRepoId))
 
     return {
       repos: repos.map((repo: GitHubRepo) => ({
@@ -197,7 +197,7 @@ export async function importGitHubRepos(repoFullNames: string[]) {
         try {
           const [owner, repoName] = fullName.split('/')
 
-          // Get repo details and readme
+          // Get repo details and readme sequentially to avoid redundant requests
           const repo = await client.getRepo(owner, repoName)
           const readme = await client.getReadme(owner, repoName, repo.default_branch)
 
@@ -368,7 +368,7 @@ export async function syncAllGitHubProjects() {
     for (let i = 0; i < projects.length; i += chunkSize) {
       const chunk = projects.slice(i, i + chunkSize)
 
-      const chunkPromises = chunk.map(async (project) => {
+      const chunkPromises = chunk.map(async (project: any) => {
         try {
           if (!project.githubRepoFullName) {
             return { success: false, name: 'Unknown', error: 'No repo full name' }
