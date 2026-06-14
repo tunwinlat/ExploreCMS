@@ -43,7 +43,7 @@ export async function deletePostById(id: string) {
     revalidatePath('/admin/dashboard')
     revalidatePath('/')
     revalidatePath('/blog')
-    revalidateTag('blog-posts')
+    revalidateTag('blog-posts', 'default')
     
     return { success: true }
   } catch (error) {
