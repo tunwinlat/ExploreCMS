@@ -185,55 +185,70 @@ export async function importGitHubRepos(repoFullNames: string[]) {
     const client = new GitHubClient(token)
     const db = await getPostDb()
 
-    const results = []
+    const results: any[] = []
     const now = new Date().toISOString()
 
-    for (const fullName of repoFullNames) {
-      try {
-        const [owner, repoName] = fullName.split('/')
-        
-        // Get repo details
-        const repo = await client.getRepo(owner, repoName)
-        
-        // Get README content
-        const readme = await client.getReadme(owner, repoName, repo.default_branch)
-        
-        // Generate slug
-        let slug = generateSlug(repo.name)
-        const existing = await db.project.findUnique({ where: { slug } })
-        if (existing) {
-          slug = `${slug}-${Date.now()}`
+    // Process in chunks to parallelize API calls without hitting limits immediately
+    const chunkSize = 5
+    for (let i = 0; i < repoFullNames.length; i += chunkSize) {
+      const chunk = repoFullNames.slice(i, i + chunkSize)
+
+      const chunkPromises = chunk.map(async (fullName) => {
+        try {
+          const [owner, repoName] = fullName.split('/')
+
+          // Get repo details and readme
+          const repo = await client.getRepo(owner, repoName)
+          const readme = await client.getReadme(owner, repoName, repo.default_branch)
+
+          // Generate slug
+          let slug = generateSlug(repo.name)
+          const existing = await db.project.findUnique({ where: { slug } })
+          if (existing) {
+            slug = `${slug}-${Date.now()}`
+          }
+
+          // Generate cover image
+          const coverImage = generateRepoCoverImage(repo.name, repo.language)
+
+          // Create project
+          const project = await db.project.create({
+            data: {
+              title: repo.name,
+              slug,
+              tagline: repo.description || '',
+              content: readme || '',
+              contentFormat: 'markdown',
+              coverImage,
+              githubUrl: validateUrl(repo.html_url),
+              liveUrl: validateUrl(repo.homepage || ''),
+              techTags: JSON.stringify(repo.topics.length > 0 ? repo.topics : repo.language ? [repo.language] : []),
+              status: repo.archived ? 'archived' : 'completed',
+              published: true,
+              githubRepoId: String(repo.id),
+              githubRepoFullName: repo.full_name,
+              githubSyncEnabled: true,
+              githubLastSyncAt: now,
+              githubDefaultBranch: repo.default_branch,
+            },
+          })
+
+          return { success: true, name: repo.name, id: project.id }
+        } catch (err: unknown) {
+          return { success: false, name: fullName, error: (err as Error).message }
         }
+      })
 
-        // Generate cover image
-        const coverImage = generateRepoCoverImage(repo.name, repo.language)
+      const chunkResults = await Promise.allSettled(chunkPromises)
 
-        // Create project
-        const project = await db.project.create({
-          data: {
-            title: repo.name,
-            slug,
-            tagline: repo.description || '',
-            content: readme || '',
-            contentFormat: 'markdown',
-            coverImage,
-            githubUrl: validateUrl(repo.html_url),
-            liveUrl: validateUrl(repo.homepage || ''),
-            techTags: JSON.stringify(repo.topics.length > 0 ? repo.topics : repo.language ? [repo.language] : []),
-            status: repo.archived ? 'archived' : 'completed',
-            published: true,
-            githubRepoId: String(repo.id),
-            githubRepoFullName: repo.full_name,
-            githubSyncEnabled: true,
-            githubLastSyncAt: now,
-            githubDefaultBranch: repo.default_branch,
-          },
-        })
-
-        results.push({ success: true, name: repo.name, id: project.id })
-      } catch (err: unknown) {
-        results.push({ success: false, name: fullName, error: (err as Error).message })
-      }
+      chunkResults.forEach((result: any) => {
+        if (result.status === 'fulfilled') {
+          results.push(result.value)
+        } else {
+          // Should rarely hit this since errors are caught in the map
+          results.push({ success: false, name: 'Unknown', error: result.reason?.message || 'Unknown error' })
+        }
+      })
     }
 
     // Update last sync time
@@ -345,35 +360,55 @@ export async function syncAllGitHubProjects() {
 
     const token = decrypt(settings.githubAccessToken) || settings.githubAccessToken
     const client = new GitHubClient(token)
-    const results = []
+    const results: any[] = []
     const now = new Date().toISOString()
 
-    for (const project of projects) {
-      try {
-        if (!project.githubRepoFullName) continue
+    // Process in chunks to parallelize API calls without hitting limits immediately
+    const chunkSize = 5
+    for (let i = 0; i < projects.length; i += chunkSize) {
+      const chunk = projects.slice(i, i + chunkSize)
 
-        const [owner, repoName] = project.githubRepoFullName.split('/')
-        const repo = await client.getRepo(owner, repoName)
-        const readme = await client.getReadme(owner, repoName, repo.default_branch)
+      const chunkPromises = chunk.map(async (project) => {
+        try {
+          if (!project.githubRepoFullName) {
+            return { success: false, name: 'Unknown', error: 'No repo full name' }
+          }
 
-        await db.project.update({
-          where: { id: project.id },
-          data: {
-            title: repo.name,
-            tagline: repo.description || project.tagline,
-            content: readme || project.content,
-            githubUrl: validateUrl(repo.html_url),
-            liveUrl: validateUrl(repo.homepage || project.liveUrl),
-            techTags: JSON.stringify(repo.topics.length > 0 ? repo.topics : repo.language ? [repo.language] : JSON.parse(project.techTags || '[]')),
-            status: repo.archived ? 'archived' : project.status,
-            githubLastSyncAt: now,
-          },
-        })
+          const [owner, repoName] = project.githubRepoFullName.split('/')
+          const repo = await client.getRepo(owner, repoName)
+          const readme = await client.getReadme(owner, repoName, repo.default_branch)
 
-        results.push({ success: true, name: repo.name })
-      } catch (err: unknown) {
-        results.push({ success: false, name: project.githubRepoFullName, error: (err as Error).message })
-      }
+          await db.project.update({
+            where: { id: project.id },
+            data: {
+              title: repo.name,
+              tagline: repo.description || project.tagline,
+              content: readme || project.content,
+              githubUrl: validateUrl(repo.html_url),
+              liveUrl: validateUrl(repo.homepage || project.liveUrl),
+              techTags: JSON.stringify(repo.topics.length > 0 ? repo.topics : repo.language ? [repo.language] : JSON.parse(project.techTags || '[]')),
+              status: repo.archived ? 'archived' : project.status,
+              githubLastSyncAt: now,
+            },
+          })
+
+          return { success: true, name: repo.name }
+        } catch (err: unknown) {
+          return { success: false, name: project.githubRepoFullName, error: (err as Error).message }
+        }
+      })
+
+      const chunkResults = await Promise.allSettled(chunkPromises)
+
+      chunkResults.forEach((result: any) => {
+        if (result.status === 'fulfilled') {
+          if (result.value.error !== 'No repo full name') {
+            results.push(result.value)
+          }
+        } else {
+          results.push({ success: false, name: 'Unknown', error: result.reason?.message || 'Unknown error' })
+        }
+      })
     }
 
     await prisma.siteSettings.update({
