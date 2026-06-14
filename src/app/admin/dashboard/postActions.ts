@@ -122,7 +122,7 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
   revalidatePath('/')
   revalidatePath('/blog')
   revalidatePath('/admin/dashboard')
-  revalidateTag('blog-posts', 'default')
+  revalidateTag('blog-posts')
 
   // Push to Craft in backup/full-sync mode (runs after response)
   if (published) {
@@ -176,6 +176,6 @@ export async function deletePost(id: string) {
   revalidatePath('/')
   revalidatePath('/blog')
   revalidatePath('/admin/dashboard')
-  revalidateTag('blog-posts', 'default')
+  revalidateTag('blog-posts')
   redirect('/admin/dashboard')
 }

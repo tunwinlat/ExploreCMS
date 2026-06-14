@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['nodemailer'],
+  serverExternalPackages: ['nodemailer', '@libsql/client', 'libsql', '@prisma/adapter-libsql'],
   // @ts-ignore
   eslint: { ignoreDuringBuilds: true },
   async headers() {

@@ -127,5 +127,5 @@ export const getBlogPageData = cache(async () => {
  */
 export async function invalidateBlogCache() {
   const { revalidateTag } = await import('next/cache');
-  revalidateTag('blog-posts', 'default');
+  revalidateTag('blog-posts');
 }

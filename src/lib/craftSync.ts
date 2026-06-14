@@ -556,7 +556,7 @@ export async function craftImportSync(
 
   // Invalidate blog cache if any posts were imported or updated
   if (result.imported > 0 || result.updated > 0 || result.deleted > 0) {
-    revalidateTag('blog-posts', 'default')
+    revalidateTag('blog-posts')
   }
 
   return result
@@ -784,7 +784,7 @@ export async function runCraftSync(
 
     // Invalidate blog cache if any posts were modified during sync
     if (result.imported > 0 || result.updated > 0 || result.deleted > 0 || result.backedUp > 0) {
-      revalidateTag('blog-posts', 'default')
+      revalidateTag('blog-posts')
     }
 
     lastSyncTime = Date.now()
