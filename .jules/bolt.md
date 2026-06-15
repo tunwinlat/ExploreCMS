@@ -1,0 +1,3 @@
+## 2025-06-15 - Bulk Sync Performance Optimization
+**Learning:** Sequential processing in loops for bulk sync operations involving external APIs (like `client.getRepo` and `client.getReadme`) and database writes causes a performance bottleneck and can trigger rate limits on large datasets, but naive `Promise.all` can overwhelm external APIs or cause dependent API issues.
+**Action:** Use concurrent chunks (e.g., `size 5`) with `Promise.allSettled()` for bulk operations involving external APIs and database calls. This parallelizes requests safely without overwhelming limits while still providing significant performance improvements.

@@ -188,51 +188,64 @@ export async function importGitHubRepos(repoFullNames: string[]) {
     const results = []
     const now = new Date().toISOString()
 
-    for (const fullName of repoFullNames) {
-      try {
-        const [owner, repoName] = fullName.split('/')
-        
-        // Get repo details
-        const repo = await client.getRepo(owner, repoName)
-        
-        // Get README content
-        const readme = await client.getReadme(owner, repoName, repo.default_branch)
-        
-        // Generate slug
-        let slug = generateSlug(repo.name)
-        const existing = await db.project.findUnique({ where: { slug } })
-        if (existing) {
-          slug = `${slug}-${Date.now()}`
+    // Process in chunks of 5 to avoid rate limits while improving performance
+    const chunkSize = 5;
+    for (let i = 0; i < repoFullNames.length; i += chunkSize) {
+      const chunk = repoFullNames.slice(i, i + chunkSize);
+
+      const chunkPromises = chunk.map(async (fullName) => {
+        try {
+          const [owner, repoName] = fullName.split('/')
+
+          // Dependent API requests need to be sequential within the mapped promise
+          const repo = await client.getRepo(owner, repoName)
+          const readme = await client.getReadme(owner, repoName, repo.default_branch)
+
+          // Generate slug
+          let slug = generateSlug(repo.name)
+          const existing = await db.project.findUnique({ where: { slug } })
+          if (existing) {
+            // Using timestamp is ok here as it's just appending to slug if it already exists in DB
+            slug = `${slug}-${Date.now()}`
+          }
+
+          const coverImage = generateRepoCoverImage(repo.name, repo.language)
+
+          const project = await db.project.create({
+            data: {
+              title: repo.name,
+              slug,
+              tagline: repo.description || '',
+              content: readme || '',
+              contentFormat: 'markdown',
+              coverImage,
+              githubUrl: validateUrl(repo.html_url),
+              liveUrl: validateUrl(repo.homepage || ''),
+              techTags: JSON.stringify(repo.topics.length > 0 ? repo.topics : repo.language ? [repo.language] : []),
+              status: repo.archived ? 'archived' : 'completed',
+              published: true,
+              githubRepoId: String(repo.id),
+              githubRepoFullName: repo.full_name,
+              githubSyncEnabled: true,
+              githubLastSyncAt: now,
+              githubDefaultBranch: repo.default_branch,
+            },
+          })
+
+          return { success: true, name: repo.name, id: project.id }
+        } catch (err: unknown) {
+          return { success: false, name: fullName, error: (err as Error).message }
         }
+      });
 
-        // Generate cover image
-        const coverImage = generateRepoCoverImage(repo.name, repo.language)
-
-        // Create project
-        const project = await db.project.create({
-          data: {
-            title: repo.name,
-            slug,
-            tagline: repo.description || '',
-            content: readme || '',
-            contentFormat: 'markdown',
-            coverImage,
-            githubUrl: validateUrl(repo.html_url),
-            liveUrl: validateUrl(repo.homepage || ''),
-            techTags: JSON.stringify(repo.topics.length > 0 ? repo.topics : repo.language ? [repo.language] : []),
-            status: repo.archived ? 'archived' : 'completed',
-            published: true,
-            githubRepoId: String(repo.id),
-            githubRepoFullName: repo.full_name,
-            githubSyncEnabled: true,
-            githubLastSyncAt: now,
-            githubDefaultBranch: repo.default_branch,
-          },
-        })
-
-        results.push({ success: true, name: repo.name, id: project.id })
-      } catch (err: unknown) {
-        results.push({ success: false, name: fullName, error: (err as Error).message })
+      const chunkResults = await Promise.allSettled(chunkPromises);
+      for (const result of chunkResults) {
+        if (result.status === 'fulfilled') {
+          results.push(result.value);
+        } else {
+          // Promise.allSettled handles rejections but we catch all in the map anyway
+          results.push({ success: false, name: 'Unknown', error: result.reason });
+        }
       }
     }
 
@@ -348,31 +361,52 @@ export async function syncAllGitHubProjects() {
     const results = []
     const now = new Date().toISOString()
 
-    for (const project of projects) {
-      try {
-        if (!project.githubRepoFullName) continue
+    // Process in chunks of 5 to avoid rate limits while improving performance
+    const chunkSize = 5;
+    for (let i = 0; i < projects.length; i += chunkSize) {
+      const chunk = projects.slice(i, i + chunkSize);
 
-        const [owner, repoName] = project.githubRepoFullName.split('/')
-        const repo = await client.getRepo(owner, repoName)
-        const readme = await client.getReadme(owner, repoName, repo.default_branch)
+      const chunkPromises = chunk.map(async (project) => {
+        try {
+          if (!project.githubRepoFullName) {
+            return { success: false, name: 'Unknown', error: 'Missing repo full name' }
+          }
 
-        await db.project.update({
-          where: { id: project.id },
-          data: {
-            title: repo.name,
-            tagline: repo.description || project.tagline,
-            content: readme || project.content,
-            githubUrl: validateUrl(repo.html_url),
-            liveUrl: validateUrl(repo.homepage || project.liveUrl),
-            techTags: JSON.stringify(repo.topics.length > 0 ? repo.topics : repo.language ? [repo.language] : JSON.parse(project.techTags || '[]')),
-            status: repo.archived ? 'archived' : project.status,
-            githubLastSyncAt: now,
-          },
-        })
+          const [owner, repoName] = project.githubRepoFullName.split('/')
 
-        results.push({ success: true, name: repo.name })
-      } catch (err: unknown) {
-        results.push({ success: false, name: project.githubRepoFullName, error: (err as Error).message })
+          // Dependent API requests need to be sequential
+          const repo = await client.getRepo(owner, repoName)
+          const readme = await client.getReadme(owner, repoName, repo.default_branch)
+
+          await db.project.update({
+            where: { id: project.id },
+            data: {
+              title: repo.name,
+              tagline: repo.description || project.tagline,
+              content: readme || project.content,
+              githubUrl: validateUrl(repo.html_url),
+              liveUrl: validateUrl(repo.homepage || project.liveUrl),
+              techTags: JSON.stringify(repo.topics.length > 0 ? repo.topics : repo.language ? [repo.language] : JSON.parse(project.techTags || '[]')),
+              status: repo.archived ? 'archived' : project.status,
+              githubLastSyncAt: now,
+            },
+          })
+
+          return { success: true, name: repo.name }
+        } catch (err: unknown) {
+          return { success: false, name: project.githubRepoFullName || 'Unknown', error: (err as Error).message }
+        }
+      });
+
+      const chunkResults = await Promise.allSettled(chunkPromises);
+      for (const result of chunkResults) {
+        if (result.status === 'fulfilled') {
+          // If the mapping returned early for missing repo full name, we might just skip adding to results to mimic original
+          if (result.value.error === 'Missing repo full name') continue;
+          results.push(result.value);
+        } else {
+          results.push({ success: false, name: 'Unknown', error: result.reason });
+        }
       }
     }
 
