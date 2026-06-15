@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -57,4 +58,3 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Search failed' }, { status: 500 })
   }
 }
-

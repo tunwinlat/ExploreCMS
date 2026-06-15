@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,4 +42,3 @@ export async function POST(req: NextRequest) {
   const result = await client.testConnection(true) // Check write access on explicit test
   return NextResponse.json(result)
 }
-
