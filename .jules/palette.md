@@ -1,0 +1,3 @@
+## 2024-06-15 - Implement keyboard navigation matching visual shortcuts
+**Learning:** Visual shortcuts mapped to `<kbd>` (like `↑↓` and `↵`) set up high user expectations for accessibility. Failing to actually implement the keyboard event listeners to match these hints creates a frustrating mismatch and breaks keyboard accessibility.
+**Action:** When adding or encountering visual hints for keyboard shortcuts, immediately check the event handlers (e.g. `onKeyDown`) to ensure they are connected and correctly manage state (like tracking an active index for a dropdown or search results) to match the expected behavior.
