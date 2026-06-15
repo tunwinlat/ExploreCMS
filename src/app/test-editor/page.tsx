@@ -1,5 +1,4 @@
 'use client'
-export const runtime = 'edge';
 
 import TipTapEditor from '@/components/editor/TipTapEditor'
 
