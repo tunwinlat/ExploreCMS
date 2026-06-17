@@ -27,9 +27,17 @@ export function SearchBox() {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+
+  const processedResults = useMemo(() => {
+    return results.map(post => {
+      const excerpt = getExcerpt(post.content, (post as any).contentFormat, 150)
+      return { ...post, excerpt }
+    })
+  }, [results])
 
   // Debounced search
   const searchPosts = useCallback(async (searchQuery: string) => {
@@ -102,6 +110,11 @@ export function SearchBox() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (selectedIndex >= 0 && processedResults[selectedIndex]) {
+      router.push(`/post/${processedResults[selectedIndex].slug}`)
+      setIsOpen(false)
+      return
+    }
     if (query.trim()) {
       router.push(`/search?q=${encodeURIComponent(query)}`)
       setIsOpen(false)
@@ -133,13 +146,6 @@ export function SearchBox() {
       </>
     )
   }
-
-  const processedResults = useMemo(() => {
-    return results.map(post => {
-      const excerpt = getExcerpt(post.content, (post as any).contentFormat, 150)
-      return { ...post, excerpt }
-    })
-  }, [results])
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
@@ -211,6 +217,23 @@ export function SearchBox() {
           <div
             className="search-container glass"
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (!isOpen) return;
+
+              const isTargetingInputOrContainer =
+                document.activeElement === inputRef.current ||
+                document.activeElement === e.currentTarget;
+
+              if (!isTargetingInputOrContainer) return;
+
+              if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setSelectedIndex(prev => prev < processedResults.length - 1 ? prev + 1 : prev);
+              } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setSelectedIndex(prev => prev > -1 ? prev - 1 : -1);
+              }
+            }}
             style={{
               width: '100%',
               maxWidth: '600px',
@@ -246,7 +269,10 @@ export function SearchBox() {
                   ref={inputRef}
                   type="text"
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => {
+                  setQuery(e.target.value);
+                  setSelectedIndex(-1);
+                }}
                   placeholder="Search posts by title or content..."
                   aria-label="Search posts"
                   style={{
@@ -342,7 +368,7 @@ export function SearchBox() {
                   <div style={{ padding: '0.75rem 1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>
                     {processedResults.length} result{processedResults.length !== 1 ? 's' : ''} found
                   </div>
-                  {processedResults.map((post) => {
+                  {processedResults.map((post, index) => {
                     return (
                       <Link
                         key={post.id}
@@ -355,7 +381,7 @@ export function SearchBox() {
                           transition: 'background 0.2s ease',
                           textDecoration: 'none'
                         }}
-                        className="search-result-item"
+                        className={`search-result-item ${index === selectedIndex ? 'selected' : ''}`}
                       >
                         <h4
                           style={{
