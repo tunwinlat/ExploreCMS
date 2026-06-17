@@ -34,7 +34,7 @@ export function SearchBox() {
 
   const processedResults = useMemo(() => {
     return results.map(post => {
-      const excerpt = getExcerpt(post.content, (post as any).contentFormat, 150)
+      const excerpt = getExcerpt(post.content, 'markdown', 150)
       return { ...post, excerpt }
     })
   }, [results])
