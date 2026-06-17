@@ -99,6 +99,7 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
             >
               <div className="related-post-image-wrapper">
                 {post.coverImage ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
                   <img 
                     src={post.coverImage}
                     alt="" 
