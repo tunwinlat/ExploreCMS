@@ -1,0 +1,3 @@
+## 2024-06-17 - Native lazy loading for dynamic images
+**Learning:** In Next.js, using the `next/image` `<Image>` component for dynamic user-generated images (like post cover images) causes runtime crashes unless external domains are whitelisted. Therefore, standard HTML `<img>` tags are used instead. However, these lack built-in performance optimizations, resulting in slower initial page loads due to images below the fold loading immediately.
+**Action:** Always add the native `loading="lazy"` attribute to standard `<img>` tags for images rendered below the fold (e.g., in grids, feeds, or related post sections) to improve initial page load times without needing to configure domain whitelists.
