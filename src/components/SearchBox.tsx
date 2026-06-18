@@ -27,6 +27,7 @@ export function SearchBox() {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -36,11 +37,13 @@ export function SearchBox() {
     if (!searchQuery.trim() || searchQuery.trim().length < 2) {
       setResults([])
       setHasSearched(false)
+      setSelectedIndex(-1)
       return
     }
 
     setLoading(true)
     setHasSearched(true)
+    setSelectedIndex(-1)
 
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=8`)
@@ -141,8 +144,19 @@ export function SearchBox() {
     })
   }, [results])
 
+
+  useEffect(() => {
+    if (selectedIndex >= 0) {
+      const element = document.getElementById(`search-result-${selectedIndex}`);
+      if (element) {
+        element.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [selectedIndex]);
+
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
+
       {/* Search Trigger Button */}
       <button
         onClick={openSearch}
@@ -247,6 +261,23 @@ export function SearchBox() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setSelectedIndex(prev =>
+                        prev < processedResults.length - 1 ? prev + 1 : prev
+                      );
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setSelectedIndex(prev => prev > 0 ? prev - 1 : prev);
+                    } else if (e.key === 'Enter') {
+                      if (selectedIndex >= 0 && processedResults[selectedIndex]) {
+                        e.preventDefault();
+                        router.push(`/post/${processedResults[selectedIndex].slug}`);
+                        setIsOpen(false);
+                      }
+                    }
+                  }}
                   placeholder="Search posts by title or content..."
                   aria-label="Search posts"
                   style={{
@@ -342,7 +373,7 @@ export function SearchBox() {
                   <div style={{ padding: '0.75rem 1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>
                     {processedResults.length} result{processedResults.length !== 1 ? 's' : ''} found
                   </div>
-                  {processedResults.map((post) => {
+                  {processedResults.map((post, index) => {
                     return (
                       <Link
                         key={post.id}
@@ -355,7 +386,8 @@ export function SearchBox() {
                           transition: 'background 0.2s ease',
                           textDecoration: 'none'
                         }}
-                        className="search-result-item"
+                        className={`search-result-item ${index === selectedIndex ? 'selected' : ''}`}
+                        id={`search-result-${index}`}
                       >
                         <h4
                           style={{
