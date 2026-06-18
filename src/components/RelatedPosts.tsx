@@ -100,12 +100,15 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
             >
               <div className="related-post-image-wrapper">
                 {post.coverImage ? (
-                  <img 
-                    src={post.coverImage}
-                    alt="" 
-                    loading="lazy"
-                    className="related-post-image"
-                  />
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={post.coverImage}
+                      alt=""
+                      loading="lazy"
+                      className="related-post-image"
+                    />
+                  </>
                 ) : (
                   <div className="related-post-image-placeholder">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
