@@ -30,10 +30,6 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
   const [posts, setPosts] = useState<RelatedPost[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchRelatedPosts()
-  }, [currentSlug])
-
   const fetchRelatedPosts = async () => {
     setLoading(true)
     try {
@@ -49,6 +45,19 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
     }
   }
 
+  useEffect(() => {
+    fetchRelatedPosts()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSlug])
+
+  const processedPosts = useMemo(() => {
+    return posts.map(post => {
+      const excerpt = getExcerpt(post.content, post.contentFormat, 120)
+      const coverImage = getFirstImage(post.content, post.contentFormat)
+      return { ...post, excerpt, coverImage }
+    })
+  }, [posts])
+
   if (loading) {
     return (
       <section className="related-posts">
@@ -63,14 +72,6 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
       </section>
     )
   }
-
-  const processedPosts = useMemo(() => {
-    return posts.map(post => {
-      const excerpt = getExcerpt(post.content, post.contentFormat, 120)
-      const coverImage = getFirstImage(post.content, post.contentFormat)
-      return { ...post, excerpt, coverImage }
-    })
-  }, [posts])
 
   if (posts.length === 0) return null
 
@@ -102,6 +103,7 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
                   <img 
                     src={post.coverImage}
                     alt="" 
+                    loading="lazy"
                     className="related-post-image"
                   />
                 ) : (
