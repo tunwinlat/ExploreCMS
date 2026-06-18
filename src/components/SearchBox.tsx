@@ -19,6 +19,7 @@ interface SearchPost {
   createdAt: string
   author: { username: string; firstName: string | null }
   tags: { name: string; slug: string }[]
+  contentFormat?: string
 }
 
 export function SearchBox() {
