@@ -19,6 +19,7 @@ interface SearchPost {
   createdAt: string
   author: { username: string; firstName: string | null }
   tags: { name: string; slug: string }[]
+  contentFormat?: 'html' | 'markdown' | 'craft'
 }
 
 export function SearchBox() {
@@ -27,6 +28,7 @@ export function SearchBox() {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -36,6 +38,7 @@ export function SearchBox() {
     if (!searchQuery.trim() || searchQuery.trim().length < 2) {
       setResults([])
       setHasSearched(false)
+      setSelectedIndex(-1)
       return
     }
 
@@ -46,6 +49,7 @@ export function SearchBox() {
       const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=8`)
       const data = await res.json()
       setResults(data.posts || [])
+      setSelectedIndex(-1)
     } catch (err) {
       console.error('Search error:', err)
       setResults([])
@@ -71,15 +75,49 @@ export function SearchBox() {
         setIsOpen(true)
         setTimeout(() => inputRef.current?.focus(), 100)
       }
+
+      if (!isOpen) return;
+
       // Escape to close
       if (e.key === 'Escape') {
         setIsOpen(false)
+      }
+
+      // Arrow keys navigation
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIndex(prev => {
+          const next = prev < results.length - 1 ? prev + 1 : prev;
+          const el = document.getElementById(`search-result-${next}`);
+          if (el) el.scrollIntoView({ block: 'nearest' });
+          return next;
+        });
+      }
+
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex(prev => {
+          const next = prev > 0 ? prev - 1 : 0;
+          const el = document.getElementById(`search-result-${next}`);
+          if (el) el.scrollIntoView({ block: 'nearest' });
+          return next;
+        });
+      }
+
+      // Enter to select
+      if (e.key === 'Enter' && selectedIndex >= 0) {
+        e.preventDefault();
+        const selectedPost = results[selectedIndex];
+        if (selectedPost) {
+          router.push(`/post/${selectedPost.slug}`);
+          setIsOpen(false);
+        }
       }
     }
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [isOpen, results, selectedIndex, router])
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -136,7 +174,7 @@ export function SearchBox() {
 
   const processedResults = useMemo(() => {
     return results.map(post => {
-      const excerpt = getExcerpt(post.content, (post as any).contentFormat, 150)
+      const excerpt = getExcerpt(post.content, post.contentFormat, 150)
       return { ...post, excerpt }
     })
   }, [results])
@@ -342,9 +380,10 @@ export function SearchBox() {
                   <div style={{ padding: '0.75rem 1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>
                     {processedResults.length} result{processedResults.length !== 1 ? 's' : ''} found
                   </div>
-                  {processedResults.map((post) => {
+                  {processedResults.map((post, index) => {
                     return (
                       <Link
+                        id={`search-result-${index}`}
                         key={post.id}
                         href={`/post/${post.slug}`}
                         onClick={() => setIsOpen(false)}
@@ -355,7 +394,8 @@ export function SearchBox() {
                           transition: 'background 0.2s ease',
                           textDecoration: 'none'
                         }}
-                        className="search-result-item"
+                        className={`search-result-item ${index === selectedIndex ? 'selected' : ''}`}
+                        onMouseEnter={() => setSelectedIndex(index)}
                       >
                         <h4
                           style={{
