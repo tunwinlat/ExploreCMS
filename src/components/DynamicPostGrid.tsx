@@ -144,6 +144,27 @@ export default function DynamicPostGrid({
     }
   }, [cursor, loading, hasMore])
 
+  // ⚡ Bolt: Memoize post processing (expensive regex for images/excerpts) and filtering
+  const processedFilteredPosts = useMemo(() => {
+    return posts
+      .filter(post => {
+        if (activeFilter.type === 'latest') return true;
+        if (activeFilter.type === 'featured') return post.isFeatured;
+        if (activeFilter.type === 'tag' && activeFilter.target) {
+          return post.tags.some(t => t.slug === activeFilter.target);
+        }
+        return true;
+      })
+      .map(post => {
+        const contentFormat = (post as any).contentFormat
+        return {
+          ...post,
+          coverImage: getFirstImage(post.content, contentFormat),
+          excerpt: getExcerpt(post.content, contentFormat, 120)
+        }
+      });
+  }, [posts, activeFilter]);
+
   useEffect(() => {
     if (!hasMore) return
 
@@ -166,27 +187,6 @@ export default function DynamicPostGrid({
       }
     }
   }, [fetchNextPage, hasMore])
-
-  // ⚡ Bolt: Memoize post processing (expensive regex for images/excerpts) and filtering
-  const processedFilteredPosts = useMemo(() => {
-    return posts
-      .filter(post => {
-        if (activeFilter.type === 'latest') return true;
-        if (activeFilter.type === 'featured') return post.isFeatured;
-        if (activeFilter.type === 'tag' && activeFilter.target) {
-          return post.tags.some(t => t.slug === activeFilter.target);
-        }
-        return true;
-      })
-      .map(post => {
-        const contentFormat = (post as any).contentFormat
-        return {
-          ...post,
-          coverImage: getFirstImage(post.content, contentFormat),
-          excerpt: getExcerpt(post.content, contentFormat, 120)
-        }
-      });
-  }, [posts, activeFilter]);
 
   return (
     <div>
@@ -245,7 +245,7 @@ export default function DynamicPostGrid({
                 }}>
                   {post.coverImage && (
                     <div style={{ width: '100%', height: '240px', overflow: 'hidden', borderBottom: '1px solid var(--border-color)' }}>
-                      <img src={post.coverImage} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} className="card-img" />
+                      <img src={post.coverImage} alt={post.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} className="card-img" />
                     </div>
                   )}
                   
