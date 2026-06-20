@@ -51,7 +51,7 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
 
   const processedPosts = useMemo(() => {
     return posts.map(post => {
-      const contentFormat = (post as any).contentFormat
+      const contentFormat = post.contentFormat || 'html'
       return {
         ...post,
         coverImage: getFirstImage(post.content, contentFormat),
