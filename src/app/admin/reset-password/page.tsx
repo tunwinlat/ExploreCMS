@@ -14,6 +14,8 @@ export const metadata = {
   description: 'Set a new password for your ExploreCMS account',
 }
 
+export const dynamic = 'force-dynamic'
+
 async function ResetPasswordContent({ token }: { token: string }) {
   const result = await validateResetToken(token)
 
