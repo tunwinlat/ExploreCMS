@@ -5,9 +5,9 @@
  */
 
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
 import { getPostDb } from '@/lib/bunnyDb'
 import { isPrimaryPost } from '@/lib/translationUtils'
+import { getExcerpt, getFirstImage } from '@/lib/renderContent'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -42,8 +42,20 @@ export async function GET(request: Request) {
       nextCursor = nextItem!.id
     }
 
+    // ⚡ Bolt: Pre-compute expensive fields server-side and remove heavy content payload
+    const optimizedPosts = posts.map(post => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const contentFormat = (post as any).contentFormat;
+      return {
+        ...post,
+        excerpt: post.content ? getExcerpt(post.content, contentFormat, 120) : '',
+        coverImage: post.content ? getFirstImage(post.content, contentFormat) : null,
+        content: undefined, // Drop massive string payload to save bandwidth
+      };
+    });
+
     return NextResponse.json({
-      posts,
+      posts: optimizedPosts,
       nextCursor
     })
   } catch (error) {
