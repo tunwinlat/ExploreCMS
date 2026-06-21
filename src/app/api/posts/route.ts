@@ -7,7 +7,32 @@
 import { NextResponse } from 'next/server'
 import { getPostDb } from '@/lib/bunnyDb'
 import { isPrimaryPost } from '@/lib/translationUtils'
-import { getExcerpt, getFirstImage } from '@/lib/renderContent'
+
+function getExcerpt(content: string, contentFormat?: string | null, maxLength = 200): string {
+  if (contentFormat === 'markdown') {
+    const plain = content
+      .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
+      .replace(/\[[^\]]*\]\([^)]+\)/g, (m) => m.replace(/\[([^\]]*)\]\([^)]+\)/, '$1'))
+      .replace(/#{1,6}\s*/g, '')
+      .replace(/[*_~`]+/g, '')
+      .replace(/>\s*/g, '')
+      .replace(/[-*+]\s+/g, '')
+      .replace(/\n+/g, ' ')
+      .trim();
+    return plain.substring(0, maxLength) + (plain.length > maxLength ? '...' : '');
+  }
+  const plain = content.replace(/<[^>]*>?/gm, '').trim();
+  return plain.substring(0, maxLength) + (plain.length > maxLength ? '...' : '');
+}
+
+function getFirstImage(content: string, contentFormat?: string | null): string | null {
+  if (contentFormat === 'markdown') {
+    const match = content.match(/!\[[^\]]*\]\(([^)]+)\)/);
+    return match ? match[1] : null;
+  }
+  const match = content.match(/<img[^>]+src="([^">]+)"/);
+  return match ? match[1] : null;
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
