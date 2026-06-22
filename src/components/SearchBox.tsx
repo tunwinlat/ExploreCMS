@@ -6,7 +6,7 @@
 
 'use client'
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { getExcerpt } from '@/lib/renderContent'
@@ -141,13 +141,6 @@ export function SearchBox() {
     )
   }
 
-  const processedResults = useMemo(() => {
-    return results.map(post => {
-      const excerpt = getExcerpt(post.content, post.contentFormat, 150)
-      return { ...post, excerpt }
-    })
-  }, [results])
-
   useEffect(() => {
     if (selectedIndex >= 0) {
       const element = document.getElementById(`search-result-${selectedIndex}`);
@@ -156,6 +149,11 @@ export function SearchBox() {
       }
     }
   }, [selectedIndex]);
+
+  const processedResults = results.map(post => {
+    const excerpt = getExcerpt(post.content, post.contentFormat, 150)
+    return { ...post, excerpt }
+  })
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
