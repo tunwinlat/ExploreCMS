@@ -225,15 +225,6 @@ export function SearchBox() {
           <div
             className="search-container glass"
             onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => {
-              if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                setSelectedIndex(prev => Math.min(prev + 1, processedResults.length - 1));
-              } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                setSelectedIndex(prev => Math.max(prev - 1, -1));
-              }
-            }}
             style={{
               width: '100%',
               maxWidth: '600px',
@@ -269,6 +260,15 @@ export function SearchBox() {
                   ref={inputRef}
                   type="text"
                   value={query}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setSelectedIndex(prev => Math.min(prev + 1, processedResults.length - 1));
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setSelectedIndex(prev => Math.max(prev - 1, -1));
+                    }
+                  }}
                   onChange={(e) => { setQuery(e.target.value); setSelectedIndex(-1); }}
                   placeholder="Search posts by title or content..."
                   aria-label="Search posts"
