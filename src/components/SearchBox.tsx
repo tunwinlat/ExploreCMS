@@ -16,6 +16,7 @@ interface SearchPost {
   title: string
   slug: string
   content: string
+  contentFormat?: 'html' | 'markdown'
   createdAt: string
   author: { username: string; firstName: string | null }
   tags: { name: string; slug: string }[]
@@ -27,6 +28,7 @@ export function SearchBox() {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -34,7 +36,8 @@ export function SearchBox() {
   // Debounced search
   const searchPosts = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim() || searchQuery.trim().length < 2) {
-      setResults([])
+      setResults([]);
+      setSelectedIndex(-1);
       setHasSearched(false)
       return
     }
@@ -45,14 +48,15 @@ export function SearchBox() {
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=8`)
       const data = await res.json()
-      setResults(data.posts || [])
+      setResults(data.posts || []);
+      setSelectedIndex(-1);
     } catch (err) {
       console.error('Search error:', err)
       setResults([])
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [setSelectedIndex])
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -102,7 +106,10 @@ export function SearchBox() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (query.trim()) {
+    if (selectedIndex >= 0 && selectedIndex < processedResults.length) {
+      router.push(`/post/${processedResults[selectedIndex].slug}`)
+      setIsOpen(false)
+    } else if (query.trim()) {
       router.push(`/search?q=${encodeURIComponent(query)}`)
       setIsOpen(false)
     }
@@ -136,10 +143,19 @@ export function SearchBox() {
 
   const processedResults = useMemo(() => {
     return results.map(post => {
-      const excerpt = getExcerpt(post.content, (post as any).contentFormat, 150)
+      const excerpt = getExcerpt(post.content, post.contentFormat, 150)
       return { ...post, excerpt }
     })
   }, [results])
+
+  useEffect(() => {
+    if (selectedIndex >= 0) {
+      const element = document.getElementById(`search-result-${selectedIndex}`);
+      if (element) {
+        element.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [selectedIndex]);
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
@@ -211,6 +227,15 @@ export function SearchBox() {
           <div
             className="search-container glass"
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setSelectedIndex(prev => Math.min(prev + 1, processedResults.length - 1));
+              } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setSelectedIndex(prev => Math.max(prev - 1, -1));
+              }
+            }}
             style={{
               width: '100%',
               maxWidth: '600px',
@@ -246,7 +271,7 @@ export function SearchBox() {
                   ref={inputRef}
                   type="text"
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => { setQuery(e.target.value); setSelectedIndex(-1); }}
                   placeholder="Search posts by title or content..."
                   aria-label="Search posts"
                   style={{
@@ -342,20 +367,23 @@ export function SearchBox() {
                   <div style={{ padding: '0.75rem 1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>
                     {processedResults.length} result{processedResults.length !== 1 ? 's' : ''} found
                   </div>
-                  {processedResults.map((post) => {
+                  {processedResults.map((post, index) => {
+                    const isSelected = index === selectedIndex;
                     return (
                       <Link
                         key={post.id}
+                        id={`search-result-${index}`}
                         href={`/post/${post.slug}`}
                         onClick={() => setIsOpen(false)}
+                        className={`search-result-item ${isSelected ? 'selected' : ''}`}
                         style={{
                           display: 'block',
                           padding: '1rem 1.25rem',
                           borderBottom: '1px solid var(--border-color)',
                           transition: 'background 0.2s ease',
-                          textDecoration: 'none'
+                          textDecoration: 'none',
+                          background: isSelected ? 'var(--bg-color-secondary)' : undefined
                         }}
-                        className="search-result-item"
                       >
                         <h4
                           style={{
