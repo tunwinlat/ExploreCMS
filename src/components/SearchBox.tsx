@@ -27,6 +27,7 @@ export function SearchBox() {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -34,7 +35,7 @@ export function SearchBox() {
   // Debounced search
   const searchPosts = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim() || searchQuery.trim().length < 2) {
-      setResults([])
+      setResults([]); setSelectedIndex(-1);
       setHasSearched(false)
       return
     }
@@ -45,7 +46,7 @@ export function SearchBox() {
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=8`)
       const data = await res.json()
-      setResults(data.posts || [])
+      setResults(data.posts || []); setSelectedIndex(-1);
     } catch (err) {
       console.error('Search error:', err)
       setResults([])
@@ -62,24 +63,56 @@ export function SearchBox() {
     return () => clearTimeout(timeoutId)
   }, [query, searchPosts])
 
+  const processedResults = useMemo(() => {
+    return results.map(post => {
+      const excerpt = getExcerpt(post.content, (post as { contentFormat?: string }).contentFormat || 'html', 150)
+      return { ...post, excerpt }
+    })
+  }, [results])
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Cmd/Ctrl + K to open search
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
-        setIsOpen(true)
+        setIsOpen(true); setSelectedIndex(-1);
         setTimeout(() => inputRef.current?.focus(), 100)
       }
+
+      if (!isOpen) return
+
       // Escape to close
       if (e.key === 'Escape') {
         setIsOpen(false)
+      }
+
+      // Keyboard Navigation
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setSelectedIndex(prev =>
+          prev < processedResults.length - 1 ? prev + 1 : prev
+        )
+      }
+
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setSelectedIndex(prev => (prev > 0 ? prev - 1 : 0))
+      }
+
+      if (e.key === 'Enter' && selectedIndex >= 0) {
+        e.preventDefault()
+        const selectedPost = processedResults[selectedIndex]
+        if (selectedPost) {
+          router.push(`/post/${selectedPost.slug}`)
+          setIsOpen(false)
+        }
       }
     }
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [isOpen, processedResults, selectedIndex, router])
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -134,12 +167,7 @@ export function SearchBox() {
     )
   }
 
-  const processedResults = useMemo(() => {
-    return results.map(post => {
-      const excerpt = getExcerpt(post.content, (post as any).contentFormat, 150)
-      return { ...post, excerpt }
-    })
-  }, [results])
+
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
@@ -263,7 +291,7 @@ export function SearchBox() {
                   <button
                     type="button"
                     aria-label="Clear search"
-                    onClick={() => { setQuery(''); inputRef.current?.focus() }}
+                    onClick={() => { setQuery(''); setSelectedIndex(-1); inputRef.current?.focus() }}
                     style={{
                       position: 'absolute',
                       right: '1rem',
@@ -342,7 +370,7 @@ export function SearchBox() {
                   <div style={{ padding: '0.75rem 1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>
                     {processedResults.length} result{processedResults.length !== 1 ? 's' : ''} found
                   </div>
-                  {processedResults.map((post) => {
+                  {processedResults.map((post, index) => {
                     return (
                       <Link
                         key={post.id}
@@ -355,7 +383,7 @@ export function SearchBox() {
                           transition: 'background 0.2s ease',
                           textDecoration: 'none'
                         }}
-                        className="search-result-item"
+                        className={`search-result-item ${selectedIndex === index ? 'selected' : ''}`}
                       >
                         <h4
                           style={{

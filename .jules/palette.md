@@ -1,0 +1,3 @@
+## 2025-06-23 - SearchBox Keyboard Navigation UI Disconnect
+**Learning:** Adding visual hints for keyboard shortcuts in UI components (like `↑↓` for navigation or `↵` to select) without implementing the corresponding event listeners creates a false promise. In a complex functional component with multiple hooks, `useMemo` ordering significantly impacts the ability to cleanly track and navigate mapped lists.
+**Action:** Always verify that visual shortcut hints map to actual code functionality. When adding stateful tracking to mapped lists, ensure the source array is memoized above the event handlers that track index offsets to prevent React Compiler or hooks order linting errors.
