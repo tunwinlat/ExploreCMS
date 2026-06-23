@@ -225,7 +225,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
           <label style={{ fontWeight: 400 }}>Site Favicon</label>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '0.5rem' }}>
             {faviconUrl && (
-              <img src={faviconUrl} alt="Favicon Preview" style={{ width: '48px', height: '48px', objectFit: 'contain', borderRadius: '8px', background: 'var(--bg-color)', padding: '4px' }} />
+              <img loading="lazy" src={faviconUrl} alt="Favicon Preview" style={{ width: '48px', height: '48px', objectFit: 'contain', borderRadius: '8px', background: 'var(--bg-color)', padding: '4px' }} />
             )}
 
             <div style={{ flex: 1 }}>
