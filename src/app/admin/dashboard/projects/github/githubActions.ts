@@ -185,7 +185,7 @@ export async function importGitHubRepos(repoFullNames: string[]) {
     const client = new GitHubClient(token)
     const db = await getPostDb()
 
-    const results: any[] = []
+    const results: Array<{success: boolean; name: string; id?: string; error?: string}> = []
     const now = new Date().toISOString()
 
     // Process in chunks to avoid rate limiting while still parallelizing
@@ -357,7 +357,7 @@ export async function syncAllGitHubProjects() {
 
     const token = decrypt(settings.githubAccessToken) || settings.githubAccessToken
     const client = new GitHubClient(token)
-    const results: any[] = []
+    const results: Array<{success: boolean; name: string; id?: string; error?: string}> = []
     const now = new Date().toISOString()
 
     const chunkSize = 5
