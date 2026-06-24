@@ -32,7 +32,6 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
 
   useEffect(() => {
     const fetchRelatedPosts = async () => {
-      setLoading(true)
       try {
         const res = await fetch(`/api/related?slug=${encodeURIComponent(currentSlug)}&limit=3`)
         const data = await res.json()
