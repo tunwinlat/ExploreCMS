@@ -224,11 +224,12 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
         // Calculate distance to mouse
         const dxMouse = particle.x - mouse.x
         const dyMouse = particle.y - mouse.y
-        const distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse)
+        const distMouseSq = dxMouse * dxMouse + dyMouse * dyMouse
         
         // Mouse repulsion (antigravity)
         particle.fleeing = false
-        if (mouse.isActive && distMouse < 180) {
+        if (mouse.isActive && distMouseSq < 32400) { // 180 * 180
+          const distMouse = Math.sqrt(distMouseSq)
           const force = (180 - distMouse) / 180
           const angle = Math.atan2(dyMouse, dxMouse)
           const repelForce = force * 8
@@ -249,10 +250,14 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
           if (i === j || particlesToRemove.has(other.id)) return
           
           const dx = other.x - particle.x
+          if (Math.abs(dx) > 150) return
           const dy = other.y - particle.y
-          const dist = Math.sqrt(dx * dx + dy * dy)
+          if (Math.abs(dy) > 150) return
           
-          if (dist < 10 || dist > 150) return
+          const distSq = dx * dx + dy * dy
+
+          if (distSq < 100 || distSq > 22500) return // 10^2 and 150^2
+          const dist = Math.sqrt(distSq)
           
           // Attraction force (stronger for larger particles)
           const minMass = Math.min(particle.mass, other.mass)
@@ -270,10 +275,14 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
           if (other.id === particle.id || !other.fleeing) return
           
           const dx = particle.x - other.x
+          if (Math.abs(dx) > 80) return
           const dy = particle.y - other.y
-          const dist = Math.sqrt(dx * dx + dy * dy)
+          if (Math.abs(dy) > 80) return
+
+          const distSq = dx * dx + dy * dy
           
-          if (dist < 80 && dist > 0) {
+          if (distSq < 6400 && distSq > 0) { // 80 * 80
+            const dist = Math.sqrt(distSq)
             const force = (80 - dist) / 80
             const angle = Math.atan2(dy, dx)
             particle.vx += Math.cos(angle) * force * 0.5
@@ -305,12 +314,15 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
           const p2 = particlesRef.current[j]
           if (particlesToRemove.has(p2.id)) continue
           
-          const dx = p2.x - p1.x
-          const dy = p2.y - p1.y
-          const dist = Math.sqrt(dx * dx + dy * dy)
           const minDist = p1.size + p2.size
+          const dx = p2.x - p1.x
+          if (Math.abs(dx) > minDist) continue
+          const dy = p2.y - p1.y
+          if (Math.abs(dy) > minDist) continue
+
+          const distSq = dx * dx + dy * dy
           
-          if (dist < minDist) {
+          if (distSq < minDist * minDist) {
             // Collision detected
             
             // If fleeing particle hits larger particle, explode
@@ -411,6 +423,7 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
       
       // Draw attraction lines between nearby particles
       const maxDistance = 80
+      const maxDistanceSq = maxDistance * maxDistance
       
       for (let i = 0; i < particlesRef.current.length; i++) {
         for (let j = i + 1; j < particlesRef.current.length; j++) {
@@ -418,10 +431,14 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
           const p2 = particlesRef.current[j]
           
           const dx = p2.x - p1.x
+          if (Math.abs(dx) > maxDistance) continue
           const dy = p2.y - p1.y
-          const dist = Math.sqrt(dx * dx + dy * dy)
+          if (Math.abs(dy) > maxDistance) continue
+
+          const distSq = dx * dx + dy * dy
           
-          if (dist < maxDistance) {
+          if (distSq < maxDistanceSq) {
+            const dist = Math.sqrt(distSq)
             const alpha = (1 - dist / maxDistance) * 0.15
             const connectionAlpha = isDark ? alpha : alpha * 0.5
             ctx.beginPath()
