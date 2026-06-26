@@ -224,7 +224,7 @@ export function SearchBox() {
           >
             {/* Search Input Row */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0' }}>
-              <form onSubmit={handleSubmit} style={{ flex: 1, position: 'relative' }} role="search" aria-owns="search-results-listbox">
+              <form onSubmit={handleSubmit} style={{ flex: 1, position: 'relative' }} role="search">
                 <svg
                   aria-hidden="true"
                   width="20"
@@ -361,8 +361,8 @@ export function SearchBox() {
                   {processedResults.map((post, index) => {
                     return (
                       <Link
-                        id={`search-result-${index}`}
                         key={post.id}
+                        id={`search-result-${index}`}
                         href={`/post/${post.slug}`}
                         role="option"
                         aria-selected={selectedIndex === index}
