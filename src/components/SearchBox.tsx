@@ -27,6 +27,7 @@ export function SearchBox() {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -93,10 +94,12 @@ export function SearchBox() {
 
   const closeSearch = useCallback(() => {
     setIsOpen(false)
+    setSelectedIndex(-1)
   }, [])
 
   const openSearch = useCallback(() => {
     setIsOpen(true)
+    setSelectedIndex(-1)
     setTimeout(() => inputRef.current?.focus(), 100)
   }, [])
 
@@ -221,7 +224,7 @@ export function SearchBox() {
           >
             {/* Search Input Row */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0' }}>
-              <form onSubmit={handleSubmit} style={{ flex: 1, position: 'relative' }} role="search">
+              <form onSubmit={handleSubmit} style={{ flex: 1, position: 'relative' }} role="search" aria-owns="search-results-listbox">
                 <svg
                   aria-hidden="true"
                   width="20"
@@ -244,9 +247,22 @@ export function SearchBox() {
                 </svg>
                 <input
                   ref={inputRef}
-                  type="text"
+                  type="text" role="combobox" aria-controls="search-results-listbox" aria-expanded={isOpen} aria-autocomplete="list" aria-activedescendant={selectedIndex >= 0 ? `search-result-${selectedIndex}` : undefined}
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => { setQuery(e.target.value); setSelectedIndex(-1); }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setSelectedIndex(prev => Math.min(prev + 1, processedResults.length - 1));
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setSelectedIndex(prev => Math.max(prev - 1, -1));
+                    } else if (e.key === 'Enter' && selectedIndex >= 0 && selectedIndex < processedResults.length) {
+                      e.preventDefault();
+                      router.push(`/post/${processedResults[selectedIndex].slug}`);
+                      setIsOpen(false);
+                    }
+                  }}
                   placeholder="Search posts by title or content..."
                   aria-label="Search posts"
                   style={{
@@ -263,7 +279,7 @@ export function SearchBox() {
                   <button
                     type="button"
                     aria-label="Clear search"
-                    onClick={() => { setQuery(''); inputRef.current?.focus() }}
+                    onClick={() => { setQuery(''); setSelectedIndex(-1); inputRef.current?.focus() }}
                     style={{
                       position: 'absolute',
                       right: '1rem',
@@ -338,22 +354,26 @@ export function SearchBox() {
                   <p>No posts found matching &ldquo;{query}&rdquo;</p>
                 </div>
               ) : processedResults.length > 0 ? (
-                <div>
+                <div id="search-results-listbox" role="listbox">
                   <div style={{ padding: '0.75rem 1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>
                     {processedResults.length} result{processedResults.length !== 1 ? 's' : ''} found
                   </div>
-                  {processedResults.map((post) => {
+                  {processedResults.map((post, index) => {
                     return (
                       <Link
+                        id={`search-result-${index}`}
                         key={post.id}
                         href={`/post/${post.slug}`}
+                        role="option"
+                        aria-selected={selectedIndex === index}
                         onClick={() => setIsOpen(false)}
                         style={{
                           display: 'block',
                           padding: '1rem 1.25rem',
                           borderBottom: '1px solid var(--border-color)',
                           transition: 'background 0.2s ease',
-                          textDecoration: 'none'
+                          textDecoration: 'none',
+                          background: selectedIndex === index ? 'var(--bg-color-secondary)' : undefined
                         }}
                         className="search-result-item"
                       >
