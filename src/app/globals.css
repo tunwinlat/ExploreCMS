@@ -266,6 +266,14 @@ h1, h2, h3, h4 {
   color: var(--accent-hover);
 }
 
+.search-result-item.selected {
+  background: var(--bg-color) !important;
+}
+
+.search-result-item.selected h4 {
+  color: var(--accent-hover);
+}
+
 /* ===== Related Posts ===== */
 .related-post-card:hover {
   transform: translateY(-4px);
