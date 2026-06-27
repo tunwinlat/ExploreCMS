@@ -5,7 +5,6 @@
  */
 
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
 import { getPostDb } from '@/lib/bunnyDb'
 import { isPrimaryPost } from '@/lib/translationUtils'
 import { getExcerpt, getFirstImage } from '@/lib/renderContent'
@@ -55,7 +54,8 @@ export async function GET(request: Request) {
     const safePosts = posts.map(p => {
       const coverImage = getFirstImage(p.content || '', p.contentFormat);
       const excerpt = getExcerpt(p.content || '', p.contentFormat, 120);
-      const { content, ...rest } = p;
+      const { content: _unused, ...rest } = p;
+      void _unused;
       return { ...rest, content: '', coverImage, excerpt };
     })
 
