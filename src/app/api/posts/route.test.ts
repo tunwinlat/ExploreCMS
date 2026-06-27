@@ -50,6 +50,9 @@ describe('GET /api/posts', () => {
     // Should return 9 posts (limit)
     expect(data.posts).toHaveLength(9);
     expect(data.posts[0].id).toBe('post-1');
+    expect(data.posts[0].content).toBe('');
+    expect(data.posts[0].coverImage).toBeDefined();
+    expect(data.posts[0].excerpt).toBeDefined();
     expect(data.posts[8].id).toBe('post-9');
     // nextCursor should be the ID of the 10th post
     expect(data.nextCursor).toBe('post-10');
@@ -59,7 +62,15 @@ describe('GET /api/posts', () => {
       where: { published: true },
       take: 50, // (limit + 1) * 5
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        content: true,
+        contentFormat: true,
+        isFeatured: true,
+        createdAt: true,
+        translationGroupId: true,
         author: {
           select: { username: true, firstName: true }
         },

@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getPostDb } from '@/lib/bunnyDb'
 import { isPrimaryPost } from '@/lib/translationUtils'
+import { getExcerpt, getFirstImage } from '@/lib/renderContent'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -24,7 +25,15 @@ export async function GET(request: Request) {
       take: fetchLimit,
       cursor: cursor ? { id: cursor } : undefined,
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        content: true,
+        contentFormat: true,
+        isFeatured: true,
+        createdAt: true,
+        translationGroupId: true,
         author: {
           select: { username: true, firstName: true }
         },
@@ -42,8 +51,16 @@ export async function GET(request: Request) {
       nextCursor = nextItem!.id
     }
 
+    // Add empty content string to match initial load behavior and prevent frontend regex crashes
+    const safePosts = posts.map(p => {
+      const coverImage = getFirstImage(p.content || '', p.contentFormat);
+      const excerpt = getExcerpt(p.content || '', p.contentFormat, 120);
+      const { content, ...rest } = p;
+      return { ...rest, content: '', coverImage, excerpt };
+    })
+
     return NextResponse.json({
-      posts,
+      posts: safePosts,
       nextCursor
     })
   } catch (error) {
