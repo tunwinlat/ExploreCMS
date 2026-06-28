@@ -1,0 +1,4 @@
+## 2024-10-27 - Cloudflare Edge Runtime Missing Configuration
+**Vulnerability:** Not a direct security vulnerability, but a deployment/availability failure where routes lacked the `export const runtime = 'edge'` declaration. Next.js applications targeted for Cloudflare Pages (via `@cloudflare/next-on-pages`) require all non-static routes (dynamic pages and API routes) to explicitly opt-in to the Edge runtime.
+**Learning:** `pnpm build` or `npm run build` succeeds locally because they default to Node.js environments. The failure only surfaces during the actual Cloudflare deployment build step (simulated locally via `npx @cloudflare/next-on-pages`).
+**Prevention:** Whenever adding new dynamic routes or APIs in a project deployed to Cloudflare Workers/Pages, ensure `export const runtime = 'edge'` is declared at the top of the route file.
