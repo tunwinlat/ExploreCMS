@@ -59,12 +59,24 @@ describe('GET /api/posts', () => {
       where: { published: true },
       take: 50, // (limit + 1) * 5
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        content: true,
+        contentFormat: true,
+        isFeatured: true,
+        createdAt: true,
+        translationGroupId: true,
         author: {
           select: { username: true, firstName: true }
         },
-        tags: true,
-        views: true
+        tags: {
+          select: { name: true, slug: true }
+        },
+        views: {
+          select: { uniqueViews: true }
+        }
       }
     }));
 

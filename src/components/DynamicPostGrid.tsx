@@ -21,7 +21,9 @@ type Post = {
   createdAt: string | Date 
   tags: { name: string, slug: string }[]
   views?: { uniqueViews: number }[]
-  content: string
+  content?: string
+  excerpt?: string
+  coverImage?: string | null
 }
 
 
@@ -114,6 +116,27 @@ export default function DynamicPostGrid({
   const [posts, setPosts] = useState<Post[]>(initialPosts)
   const [activeFilter, setActiveFilter] = useState<{type: 'latest'|'featured'|'tag', target?: string}>({type: 'latest'})
   
+  // ⚡ Bolt: Memoize post processing and filtering
+  const processedFilteredPosts = useMemo(() => {
+    return posts
+      .filter(post => {
+        if (activeFilter.type === 'latest') return true;
+        if (activeFilter.type === 'featured') return post.isFeatured;
+        if (activeFilter.type === 'tag' && activeFilter.target) {
+          return post.tags.some(t => t.slug === activeFilter.target);
+        }
+        return true;
+      })
+      .map(post => {
+        const contentFormat = (post as any).contentFormat
+        return {
+          ...post,
+          coverImage: post.coverImage !== undefined ? post.coverImage : (post.content ? getFirstImage(post.content, contentFormat) : null),
+          excerpt: post.excerpt !== undefined ? post.excerpt : (post.content ? getExcerpt(post.content, contentFormat, 120) : '')
+        }
+      });
+  }, [posts, activeFilter]);
+
   // Pagination State
   const [cursor, setCursor] = useState<string | undefined>(initialCursor)
   const [loading, setLoading] = useState(false)
@@ -167,26 +190,7 @@ export default function DynamicPostGrid({
     }
   }, [fetchNextPage, hasMore])
 
-  // ⚡ Bolt: Memoize post processing (expensive regex for images/excerpts) and filtering
-  const processedFilteredPosts = useMemo(() => {
-    return posts
-      .filter(post => {
-        if (activeFilter.type === 'latest') return true;
-        if (activeFilter.type === 'featured') return post.isFeatured;
-        if (activeFilter.type === 'tag' && activeFilter.target) {
-          return post.tags.some(t => t.slug === activeFilter.target);
-        }
-        return true;
-      })
-      .map(post => {
-        const contentFormat = (post as any).contentFormat
-        return {
-          ...post,
-          coverImage: getFirstImage(post.content, contentFormat),
-          excerpt: getExcerpt(post.content, contentFormat, 120)
-        }
-      });
-  }, [posts, activeFilter]);
+
 
   return (
     <div>

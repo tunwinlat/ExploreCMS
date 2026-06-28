@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getPostDb } from '@/lib/bunnyDb'
 import { isPrimaryPost } from '@/lib/translationUtils'
+import { getExcerpt, getFirstImage } from '@/lib/renderContent'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -24,12 +25,24 @@ export async function GET(request: Request) {
       take: fetchLimit,
       cursor: cursor ? { id: cursor } : undefined,
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        content: true,
+        contentFormat: true,
+        isFeatured: true,
+        createdAt: true,
+        translationGroupId: true,
         author: {
           select: { username: true, firstName: true }
         },
-        tags: true,
-        views: true
+        tags: {
+          select: { name: true, slug: true }
+        },
+        views: {
+          select: { uniqueViews: true }
+        }
       }
     })
 
@@ -42,8 +55,18 @@ export async function GET(request: Request) {
       nextCursor = nextItem!.id
     }
 
+    // Process posts on the server to reduce payload size
+    const processedPosts = posts.map(post => {
+      const { content, ...rest } = post;
+      return {
+        ...rest,
+        excerpt: content ? getExcerpt(content, post.contentFormat, 120) : '',
+        coverImage: content ? getFirstImage(content, post.contentFormat) : null
+      };
+    });
+
     return NextResponse.json({
-      posts,
+      posts: processedPosts,
       nextCursor
     })
   } catch (error) {
