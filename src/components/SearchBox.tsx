@@ -27,12 +27,14 @@ export function SearchBox() {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
   // Debounced search
   const searchPosts = useCallback(async (searchQuery: string) => {
+    setSelectedIndex(-1)
     if (!searchQuery.trim() || searchQuery.trim().length < 2) {
       setResults([])
       setHasSearched(false)
@@ -141,6 +143,15 @@ export function SearchBox() {
     })
   }, [results])
 
+  useEffect(() => {
+    if (selectedIndex >= 0) {
+      const element = document.getElementById(`search-result-${selectedIndex}`)
+      if (element) {
+        element.scrollIntoView({ block: 'nearest' })
+      }
+    }
+  }, [selectedIndex])
+
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
       {/* Search Trigger Button */}
@@ -244,6 +255,19 @@ export function SearchBox() {
                 </svg>
                 <input
                   ref={inputRef}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault()
+                      setSelectedIndex((prev) => (prev < processedResults.length - 1 ? prev + 1 : prev))
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault()
+                      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev))
+                    } else if (e.key === 'Enter' && selectedIndex >= 0 && selectedIndex < processedResults.length) {
+                      e.preventDefault()
+                      router.push(`/post/${processedResults[selectedIndex].slug}`)
+                      setIsOpen(false)
+                    }
+                  }}
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
@@ -342,9 +366,11 @@ export function SearchBox() {
                   <div style={{ padding: '0.75rem 1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>
                     {processedResults.length} result{processedResults.length !== 1 ? 's' : ''} found
                   </div>
-                  {processedResults.map((post) => {
+                  {processedResults.map((post, index) => {
+                    const isSelected = index === selectedIndex;
                     return (
                       <Link
+                        id={`search-result-${index}`}
                         key={post.id}
                         href={`/post/${post.slug}`}
                         onClick={() => setIsOpen(false)}
@@ -355,7 +381,8 @@ export function SearchBox() {
                           transition: 'background 0.2s ease',
                           textDecoration: 'none'
                         }}
-                        className="search-result-item"
+                        className={`search-result-item ${isSelected ? 'selected' : ''}`}
+                        aria-selected={isSelected}
                       >
                         <h4
                           style={{
