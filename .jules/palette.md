@@ -1,0 +1,3 @@
+## 2024-06-29 - Search Results Keyboard Navigation
+**Learning:** Adding keyboard navigation to search components (up/down/enter) significantly improves accessibility, but resetting the visual selected state (`selectedIndex`) inside a `useEffect` hook that tracks user input triggers a cascading render ESLint error (`react-hooks/set-state-in-effect`).
+**Action:** Always reset keyboard navigation state either directly in the event handler (e.g., `onChange` on the input) or within derived state rendering loops (e.g., `useMemo`) to prevent unnecessary cascading re-renders and conform to React best practices.
