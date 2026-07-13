@@ -7,32 +7,7 @@
 import { NextResponse } from 'next/server'
 import { getPostDb } from '@/lib/bunnyDb'
 import { isPrimaryPost } from '@/lib/translationUtils'
-
-function getExcerpt(content: string, contentFormat?: string | null, maxLength = 200): string {
-  if (contentFormat === 'markdown') {
-    const plain = content
-      .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
-      .replace(/\[[^\]]*\]\([^)]+\)/g, (m) => m.replace(/\[([^\]]*)\]\([^)]+\)/, '$1'))
-      .replace(/#{1,6}\s*/g, '')
-      .replace(/[*_~`]+/g, '')
-      .replace(/>\s*/g, '')
-      .replace(/[-*+]\s+/g, '')
-      .replace(/\n+/g, ' ')
-      .trim();
-    return plain.substring(0, maxLength) + (plain.length > maxLength ? '...' : '');
-  }
-  const plain = content.replace(/<[^>]*>?/gm, '').trim();
-  return plain.substring(0, maxLength) + (plain.length > maxLength ? '...' : '');
-}
-
-function getFirstImage(content: string, contentFormat?: string | null): string | null {
-  if (contentFormat === 'markdown') {
-    const match = content.match(/!\[[^\]]*\]\(([^)]+)\)/);
-    return match ? match[1] : null;
-  }
-  const match = content.match(/<img[^>]+src="([^">]+)"/);
-  return match ? match[1] : null;
-}
+import { getExcerpt, getFirstImage } from '@/lib/renderContent'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -49,7 +24,15 @@ export async function GET(request: Request) {
       take: fetchLimit,
       cursor: cursor ? { id: cursor } : undefined,
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        content: true,
+        contentFormat: true,
+        isFeatured: true,
+        createdAt: true,
+        translationGroupId: true,
         author: {
           select: { username: true, firstName: true }
         },
@@ -67,15 +50,13 @@ export async function GET(request: Request) {
       nextCursor = nextItem!.id
     }
 
-    // ⚡ Bolt: Pre-compute expensive fields server-side and remove heavy content payload
+    // Pre-compute expensive fields server-side and remove heavy content payload
     const optimizedPosts = posts.map(post => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const contentFormat = (post as any).contentFormat;
       return {
         ...post,
-        excerpt: post.content ? getExcerpt(post.content, contentFormat, 120) : '',
-        coverImage: post.content ? getFirstImage(post.content, contentFormat) : null,
-        content: undefined, // Drop massive string payload to save bandwidth
+        excerpt: getExcerpt(post.content || '', post.contentFormat, 120),
+        coverImage: getFirstImage(post.content || '', post.contentFormat),
+        content: '', // Drop massive string payload to save bandwidth
       };
     });
 
@@ -88,4 +69,3 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Failed to load posts' }, { status: 500 })
   }
 }
-
