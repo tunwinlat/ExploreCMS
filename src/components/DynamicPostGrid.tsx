@@ -21,7 +21,9 @@ type Post = {
   createdAt: string | Date 
   tags: { name: string, slug: string }[]
   views?: { uniqueViews: number }[]
-  content: string
+  content?: string
+  excerpt?: string
+  coverImage?: string | null
 }
 
 
@@ -189,8 +191,8 @@ export default function DynamicPostGrid({
         const contentFormat = (post as { contentFormat?: string }).contentFormat
         return {
           ...post,
-          coverImage: getFirstImage(post.content, contentFormat),
-          excerpt: getExcerpt(post.content, contentFormat, 120)
+          coverImage: post.coverImage !== undefined ? post.coverImage : (post.content ? getFirstImage(post.content, contentFormat) : null),
+          excerpt: post.excerpt !== undefined ? post.excerpt : (post.content ? getExcerpt(post.content, contentFormat, 120) : '')
         }
       });
   }, [posts, activeFilter]);
