@@ -8,7 +8,7 @@
  * Normalizes a URL and ensures it uses a safe protocol (http/https).
  * This prevents Stored XSS via javascript: or data: URIs in URL fields.
  */
-export function normalizeUrl(url: string | null): string | null {
+export function normalizeUrl(url: string | null | undefined): string | null {
   if (!url) return null
   try {
     // Attempt to parse strictly without a base URL to ensure it's absolute
@@ -22,4 +22,5 @@ export function normalizeUrl(url: string | null): string | null {
     if (url.startsWith('/')) return url
     return null
   }
+}
 }
