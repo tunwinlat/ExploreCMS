@@ -10,11 +10,7 @@ import { cookies } from 'next/headers'
 const getSecret = () => {
   const secret = process.env.JWT_SECRET
   if (!secret) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('JWT_SECRET environment variable is not set. This is a critical security risk.')
-    }
-    // Fallback for development/testing only
-    return new TextEncoder().encode('explore-cms-development-secret-only')
+    throw new Error('JWT_SECRET environment variable is not set. This is a critical security risk.')
   }
   return new TextEncoder().encode(secret)
 }
