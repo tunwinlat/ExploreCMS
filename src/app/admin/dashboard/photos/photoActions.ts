@@ -10,6 +10,7 @@ import { prisma } from '@/lib/db'
 import { verifySession } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { normalizeUrl } from '@/lib/urlUtils'
 
 function generateSlug(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
@@ -24,13 +25,15 @@ export async function saveAlbum(formData: FormData) {
   const id = formData.get('id') as string | null
   const title = formData.get('title') as string
   const description = (formData.get('description') as string) || ''
-  const coverImage = (formData.get('coverImage') as string) || null
+  const coverImageInput = (formData.get('coverImage') as string) || null
+  const coverImage = coverImageInput ? normalizeUrl(coverImageInput) : null
   const featured = formData.get('featured') === 'true'
   const published = formData.get('published') === 'true'
   const orderVal = parseInt((formData.get('order') as string) || '0', 10)
   const slugInput = formData.get('slug') as string | null
 
   if (!title) return { error: 'Title is required' }
+  if (coverImageInput && !coverImage) return { error: 'Invalid cover image URL' }
 
   let slug = slugInput ? generateSlug(slugInput) : generateSlug(title)
 
@@ -81,14 +84,15 @@ export async function addPhoto(formData: FormData) {
   if (!session) throw new Error('Unauthorized')
 
   const albumId = formData.get('albumId') as string
-  const url = formData.get('url') as string
+  const urlInput = formData.get('url') as string
+  const url = urlInput ? normalizeUrl(urlInput) : null
   const title = (formData.get('title') as string) || ''
   const description = (formData.get('description') as string) || ''
   const location = (formData.get('location') as string) || ''
   const takenAtStr = formData.get('takenAt') as string | null
   const featured = formData.get('featured') === 'true'
 
-  if (!url) return { error: 'Photo URL is required' }
+  if (!url) return { error: 'Valid Photo URL is required' }
 
   try {
     const maxOrder = await (prisma as any).photo.findFirst({
@@ -119,7 +123,7 @@ export async function addPhoto(formData: FormData) {
   }
 }
 
-export async function deletePhoto(photoId: string, albumId: string) {
+export async function deletePhoto(photoId: string, _albumId: string) {
   const session = await verifySession()
   if (!session) throw new Error('Unauthorized')
 
@@ -137,8 +141,11 @@ export async function updateAlbumCover(albumId: string, coverImage: string) {
   const session = await verifySession()
   if (!session) throw new Error('Unauthorized')
 
+  const normalizedUrl = normalizeUrl(coverImage)
+  if (!normalizedUrl) return { error: 'Invalid URL format' }
+
   try {
-    await (prisma as any).photoAlbum.update({ where: { id: albumId }, data: { coverImage } })
+    await (prisma as any).photoAlbum.update({ where: { id: albumId }, data: { coverImage: normalizedUrl } })
     revalidatePath('/photos')
     revalidatePath('/admin/dashboard/photos')
     return { success: true }
