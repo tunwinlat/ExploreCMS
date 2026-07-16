@@ -16,6 +16,7 @@ ExploreCMS is a beautifully styled, self-hosted minimalistic blogging platform e
 * **Popup Toast System**: Configure custom popup messages that appear to visitors on the homepage. Control display frequency (once per visitor or every visit).
 * **Photo Gallery**: Create and manage photo albums with drag-and-drop organization, lightbox viewing, and optional location metadata.
 * **Component System**: Enable or disable site sections (Blog, Projects, Photos) and configure which component serves as your homepage default.
+* **REST API**: Manage posts, projects and your photo gallery programmatically via a secured JSON API at `/api/v1`. Create multiple API keys with granular per-key permissions (read/create/update/delete per resource), optional expiry and one-click revocation — perfect for mobile apps, CI pipelines and external integrations. See [docs/api.md](docs/api.md) for the full reference.
 * **User Management**: Multi-user support with role-based access control (OWNER, ADMIN, COLLABORATOR). Manage permissions and user accounts from the admin panel.
 
 ### 🌐 Storage Integration
@@ -222,6 +223,25 @@ After deployment, visit your site URL. You'll be redirected to the setup wizard 
    - Configure sender name and email address
    - Click "Test Connection" to verify
    - Save settings
+
+## 🔑 REST API
+
+ExploreCMS exposes a secured JSON REST API at `/api/v1` so external apps can manage your content:
+
+* **Blog**: list, create, update and delete posts (including tags, publishing and featuring)
+* **Projects**: full CRUD for portfolio projects
+* **Gallery**: full CRUD for photo albums and individual photos
+
+**Authentication** uses API keys, created under **Admin** → **Management** → **API Keys** (owner only). Each key gets its own permission set in `resource:action` format (e.g. `posts:create`, `gallery:*`), so you can hand out exactly the access an integration needs. Keys can optionally expire and can be revoked at any time.
+
+```bash
+curl -X POST https://your-site.com/api/v1/posts \
+  -H "Authorization: Bearer ecms_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Hello API", "content": "# Hi", "published": true, "tags": ["api"]}'
+```
+
+See **[docs/api.md](docs/api.md)** for the complete endpoint reference, permission model and more examples.
 
 ## 🎨 Changing Themes
 
