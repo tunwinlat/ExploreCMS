@@ -21,15 +21,17 @@ export async function runSchemaMigrations(): Promise<void> {
   try {
     const client = createClient({ url, authToken: authToken || undefined });
 
-    // Fast path: check if the latest migration column already exists.
+    // Fast path: check if the latest migration artifact already exists.
     // This avoids running 30+ sequential ALTER TABLE statements on every cold start
     // for databases that are already fully up to date.
+    // IMPORTANT: whenever you add a new migration below, update this probe to check
+    // for the NEWEST table/column — otherwise existing deployments never receive it.
     try {
-      await client.execute({ sql: "SELECT dynamicPattern FROM \"SiteSettings\" WHERE 1=0", args: [] });
-      // Column exists → all migrations have been applied, nothing to do.
+      await client.execute({ sql: "SELECT id FROM \"ApiKey\" WHERE 1=0", args: [] });
+      // Latest artifact exists → all migrations have been applied, nothing to do.
       return;
     } catch {
-      // Column missing → proceed with migrations below.
+      // Artifact missing → proceed with migrations below.
     }
 
     // v2 → component system columns
@@ -83,6 +85,23 @@ export async function runSchemaMigrations(): Promise<void> {
       `ALTER TABLE "SiteSettings" ADD COLUMN "smtpPassword" TEXT`,
       // v7 → Dynamic particle background
       `ALTER TABLE "SiteSettings" ADD COLUMN "dynamicPattern" BOOLEAN NOT NULL DEFAULT true`,
+      // v8 → REST API keys
+      `CREATE TABLE "ApiKey" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "name" TEXT NOT NULL,
+        "keyHash" TEXT NOT NULL,
+        "prefix" TEXT NOT NULL,
+        "permissions" TEXT NOT NULL DEFAULT '[]',
+        "createdById" TEXT NOT NULL,
+        "lastUsedAt" DATETIME,
+        "expiresAt" DATETIME,
+        "revoked" BOOLEAN NOT NULL DEFAULT false,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL,
+        CONSTRAINT "ApiKey_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+      )`,
+      `CREATE UNIQUE INDEX "ApiKey_keyHash_key" ON "ApiKey"("keyHash")`,
+      `CREATE INDEX "ApiKey_createdById_idx" ON "ApiKey"("createdById")`,
       // New tables — CREATE IF NOT EXISTS is not supported by LibSQL, so we use CREATE TABLE and ignore "already exists"
       `CREATE TABLE "Project" (
         "id" TEXT NOT NULL PRIMARY KEY,
@@ -379,6 +398,24 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
           "updatedAt" DATETIME NOT NULL,
           CONSTRAINT "Photo_albumId_fkey" FOREIGN KEY ("albumId") REFERENCES "PhotoAlbum" ("id") ON DELETE CASCADE ON UPDATE CASCADE
       );
+
+      CREATE TABLE "ApiKey" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "name" TEXT NOT NULL,
+          "keyHash" TEXT NOT NULL,
+          "prefix" TEXT NOT NULL,
+          "permissions" TEXT NOT NULL DEFAULT '[]',
+          "createdById" TEXT NOT NULL,
+          "lastUsedAt" DATETIME,
+          "expiresAt" DATETIME,
+          "revoked" BOOLEAN NOT NULL DEFAULT false,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" DATETIME NOT NULL,
+          CONSTRAINT "ApiKey_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+      );
+
+      CREATE UNIQUE INDEX "ApiKey_keyHash_key" ON "ApiKey"("keyHash");
+      CREATE INDEX "ApiKey_createdById_idx" ON "ApiKey"("createdById");
     `;
 
     // Split and execute statements one by one (CREATE TABLE/INDEX are no-ops if already exist)

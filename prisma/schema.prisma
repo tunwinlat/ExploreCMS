@@ -29,6 +29,23 @@ model User {
   emailVerificationExpiry  DateTime?
   passwordResetToken       String?
   passwordResetExpiry      DateTime?
+
+  apiKeys ApiKey[]
+}
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  name        String // Human-readable label for the key
+  keyHash     String    @unique // SHA-256 hash of the key (plaintext is never stored)
+  prefix      String // First characters of the key for identification (e.g. "ecms_ab12cd34")
+  permissions String    @default("[]") // JSON array of "resource:action" strings
+  createdBy   User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdById String
+  lastUsedAt  DateTime?
+  expiresAt   DateTime? // Optional expiration date
+  revoked     Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Post {
