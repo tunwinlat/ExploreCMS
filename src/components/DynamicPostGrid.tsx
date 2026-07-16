@@ -194,7 +194,6 @@ export default function DynamicPostGrid({
           coverImage: post.coverImage !== undefined ? post.coverImage : getFirstImage(post.content || '', contentFormat),
           excerpt: post.excerpt !== undefined ? post.excerpt : getExcerpt(post.content || '', contentFormat, 120)
         }
-        }
       });
   }, [posts, activeFilter]);
 
