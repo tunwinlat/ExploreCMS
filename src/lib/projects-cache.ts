@@ -7,6 +7,17 @@
 import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/db';
 
+function parseTechTags(value: string): string[] {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed)
+      ? parsed.filter((tag): tag is string => typeof tag === 'string')
+      : [];
+  } catch {
+    return [];
+  }
+}
+
 /**
  * ⚡ Bolt: Cache projects list database query to avoid hitting DB on every request.
  */
@@ -14,17 +25,15 @@ export const getCachedProjects = unstable_cache(
   async () => {
     if (!process.env.DATABASE_URL) return [];
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const projects = await (prisma as any).project.findMany({
+      const projects = await prisma.project.findMany({
         where: { published: true },
         orderBy: [{ featured: 'desc' }, { order: 'asc' }, { createdAt: 'desc' }],
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return projects.map((p: any) => ({
+      return projects.map((p) => ({
         ...p,
-        createdAt: typeof p.createdAt === 'string' ? p.createdAt : (p.createdAt ? p.createdAt.toISOString() : null),
-        updatedAt: typeof p.updatedAt === 'string' ? p.updatedAt : (p.updatedAt ? p.updatedAt.toISOString() : null),
-        techTags: (() => { try { return JSON.parse(p.techTags || '[]') } catch { return [] } })(),
+        createdAt: p.createdAt.toISOString(),
+        updatedAt: p.updatedAt.toISOString(),
+        techTags: parseTechTags(p.techTags),
       }));
     } catch { return []; }
   },

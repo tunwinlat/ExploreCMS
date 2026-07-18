@@ -14,17 +14,15 @@ export const getCachedAlbums = unstable_cache(
   async () => {
     if (!process.env.DATABASE_URL) return [];
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const albums = await (prisma as any).photoAlbum.findMany({
+      const albums = await prisma.photoAlbum.findMany({
         where: { published: true },
         orderBy: [{ featured: 'desc' }, { order: 'asc' }, { createdAt: 'desc' }],
         include: { _count: { select: { photos: true } } },
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return albums.map((a: any) => ({
+      return albums.map((a) => ({
         ...a,
-        createdAt: typeof a.createdAt === 'string' ? a.createdAt : (a.createdAt ? a.createdAt.toISOString() : null),
-        updatedAt: typeof a.updatedAt === 'string' ? a.updatedAt : (a.updatedAt ? a.updatedAt.toISOString() : null),
+        createdAt: a.createdAt.toISOString(),
+        updatedAt: a.updatedAt.toISOString(),
       }));
     } catch { return []; }
   },

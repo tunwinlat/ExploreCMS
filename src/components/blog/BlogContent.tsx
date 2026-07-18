@@ -27,6 +27,7 @@ interface BlogContentProps {
   nextCursor?: string
   navItems: any[]
   sidebarAbout?: string
+  initialTag?: string
 }
 
 export function BlogContent({
@@ -36,7 +37,12 @@ export function BlogContent({
   nextCursor,
   navItems,
   sidebarAbout,
+  initialTag,
 }: BlogContentProps) {
+  const visibleNavItems = featuredPosts.length > 0
+    ? navItems
+    : navItems.filter(item => item.type !== 'featured')
+
   return (
     <div className="home-layout">
       {/* Left Column */}
@@ -74,8 +80,9 @@ export function BlogContent({
 
           <DynamicPostGrid
             initialPosts={latestPosts}
-            navItems={navItems}
+            navItems={visibleNavItems}
             initialCursor={nextCursor}
+            initialTag={initialTag}
           />
         </section>
       </main>

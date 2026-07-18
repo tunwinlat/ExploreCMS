@@ -6,7 +6,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 
 interface TrendingPost {
@@ -28,25 +28,27 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
   const [posts, setPosts] = useState<TrendingPost[]>(initialPosts)
   const [period, setPeriod] = useState<'7d' | '30d' | 'all'>('7d')
   const [loading, setLoading] = useState(false)
+  const requestId = useRef(0)
 
-  const fetchTrending = async (p: '7d' | '30d' | 'all') => {
+  const fetchTrending = useCallback(async (p: '7d' | '30d' | 'all', showLoading = true) => {
+    const currentRequest = ++requestId.current
     setPeriod(p)
-    if (p === '7d' && initialPosts && initialPosts.length > 0) {
-      setPosts(initialPosts)
-      return
-    }
 
-    setLoading(true)
+    if (showLoading) setLoading(true)
     try {
-      const res = await fetch(`/api/trending?period=${p}&limit=8`)
+      const res = await fetch(`/api/trending?period=${p}&limit=8`, { cache: 'no-store' })
       const data = await res.json()
-      if (data.posts) setPosts(data.posts)
+      if (currentRequest === requestId.current && data.posts) setPosts(data.posts)
     } catch (err) {
       console.error('Failed to fetch trending posts:', err)
     } finally {
-      setLoading(false)
+      if (currentRequest === requestId.current && showLoading) setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    void fetchTrending('7d', false)
+  }, [fetchTrending])
 
   if (posts.length === 0 && !loading) return null
 
@@ -152,7 +154,7 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                       <circle cx="12" cy="12" r="3"></circle>
                     </svg>
-                    {(post.views?.[0]?.uniqueViews || 0).toLocaleString()}
+                    {(post.views?.[0]?.totalViews || 0).toLocaleString()}
                   </span>
                 </div>
               </Link>

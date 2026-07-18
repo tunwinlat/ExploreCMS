@@ -32,7 +32,14 @@ function normalizePosts(posts: BlogListingPost[]) {
   }));
 }
 
-export default async function BlogPage() {
+export default async function BlogPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tag?: string | string[] }>
+}) {
+  const query = await searchParams;
+  const initialTag = typeof query.tag === 'string' ? query.tag : undefined;
+
   // Fetch data in parallel with caching
   const [settings, popupConfig, blogData] = await Promise.all([
     getSettings(),
@@ -91,6 +98,7 @@ export default async function BlogPage() {
           nextCursor={nextCursor}
           navItems={navItems}
           sidebarAbout={settings?.sidebarAbout}
+          initialTag={initialTag}
         />
       </div>
 

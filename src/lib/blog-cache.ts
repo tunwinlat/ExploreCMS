@@ -18,7 +18,7 @@ export interface BlogListingPost {
   createdAt: Date;
   author: { username: string; firstName: string | null };
   tags: { name: string; slug: string }[];
-  views: { totalViews: number } | null;
+  views: { totalViews: number; uniqueViews: number } | null;
   translationGroupId: string | null;
 }
 
@@ -55,7 +55,7 @@ export const getCachedBlogListingPosts = unstable_cache(
             select: { name: true, slug: true }
           },
           views: {
-            select: { totalViews: true }
+            select: { totalViews: true, uniqueViews: true }
           }
         }
       });
@@ -93,11 +93,6 @@ export const getBlogPageData = cache(async () => {
     .filter(p => p.isFeatured)
     .slice(0, 5);
   
-  // Fallback: if no featured, use latest 5
-  const featuredFinal = featuredPosts.length > 0 
-    ? featuredPosts 
-    : primaryPosts.slice(0, 5);
-  
   // Get trending posts (last 7 days, sorted by views)
   const trendingPosts = primaryPosts
     .filter(p => new Date(p.createdAt) >= sevenDaysAgo)
@@ -115,7 +110,7 @@ export const getBlogPageData = cache(async () => {
   }
   
   return {
-    featuredPosts: featuredFinal,
+    featuredPosts,
     trendingPosts,
     latestPosts,
     nextCursor
