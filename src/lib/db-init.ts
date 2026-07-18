@@ -27,8 +27,9 @@ export async function runSchemaMigrations(): Promise<void> {
     // IMPORTANT: whenever you add a new migration below, update this probe to check
     // for the NEWEST table/column — otherwise existing deployments never receive it.
     try {
-      await client.execute({ sql: "SELECT id FROM \"ApiKey\" WHERE 1=0", args: [] });
-      // Latest artifact exists → all migrations have been applied, nothing to do.
+      await client.execute({ sql: "SELECT id FROM \"PostIdempotencyKey\" WHERE 1=0", args: [] });
+      await client.execute({ sql: "SELECT name FROM \"BackgroundJobLock\" WHERE 1=0", args: [] });
+      // Latest artifacts exist → all migrations have been applied, nothing to do.
       return;
     } catch {
       // Artifact missing → proceed with migrations below.
@@ -102,6 +103,26 @@ export async function runSchemaMigrations(): Promise<void> {
       )`,
       `CREATE UNIQUE INDEX "ApiKey_keyHash_key" ON "ApiKey"("keyHash")`,
       `CREATE INDEX "ApiKey_createdById_idx" ON "ApiKey"("createdById")`,
+      // v9 → durable POST idempotency and cross-instance background-job leases
+      `CREATE TABLE "PostIdempotencyKey" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "authorId" TEXT NOT NULL,
+        "keyHash" TEXT NOT NULL,
+        "requestHash" TEXT NOT NULL,
+        "postId" TEXT NOT NULL,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "PostIdempotencyKey_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT "PostIdempotencyKey_postId_fkey" FOREIGN KEY ("postId") REFERENCES "Post" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+      )`,
+      `CREATE UNIQUE INDEX "PostIdempotencyKey_authorId_keyHash_key" ON "PostIdempotencyKey"("authorId", "keyHash")`,
+      `CREATE INDEX "PostIdempotencyKey_postId_idx" ON "PostIdempotencyKey"("postId")`,
+      `CREATE TABLE "BackgroundJobLock" (
+        "name" TEXT NOT NULL PRIMARY KEY,
+        "ownerToken" TEXT NOT NULL,
+        "leaseUntil" DATETIME NOT NULL,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL
+      )`,
       // New tables — CREATE IF NOT EXISTS is not supported by LibSQL, so we use CREATE TABLE and ignore "already exists"
       `CREATE TABLE "Project" (
         "id" TEXT NOT NULL PRIMARY KEY,
@@ -416,6 +437,28 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
 
       CREATE UNIQUE INDEX "ApiKey_keyHash_key" ON "ApiKey"("keyHash");
       CREATE INDEX "ApiKey_createdById_idx" ON "ApiKey"("createdById");
+
+      CREATE TABLE "PostIdempotencyKey" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "authorId" TEXT NOT NULL,
+          "keyHash" TEXT NOT NULL,
+          "requestHash" TEXT NOT NULL,
+          "postId" TEXT NOT NULL,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT "PostIdempotencyKey_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+          CONSTRAINT "PostIdempotencyKey_postId_fkey" FOREIGN KEY ("postId") REFERENCES "Post" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+      );
+
+      CREATE UNIQUE INDEX "PostIdempotencyKey_authorId_keyHash_key" ON "PostIdempotencyKey"("authorId", "keyHash");
+      CREATE INDEX "PostIdempotencyKey_postId_idx" ON "PostIdempotencyKey"("postId");
+
+      CREATE TABLE "BackgroundJobLock" (
+          "name" TEXT NOT NULL PRIMARY KEY,
+          "ownerToken" TEXT NOT NULL,
+          "leaseUntil" DATETIME NOT NULL,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" DATETIME NOT NULL
+      );
     `;
 
     // Split and execute statements one by one (CREATE TABLE/INDEX are no-ops if already exist)

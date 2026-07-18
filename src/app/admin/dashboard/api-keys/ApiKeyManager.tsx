@@ -476,6 +476,7 @@ export default function ApiKeyManager({ initialKeys }: { initialKeys: ApiKeyItem
         }}>
 {`curl -X POST https://your-site.com/api/v1/posts \\
   -H "Authorization: Bearer ecms_..." \\
+  -H "Idempotency-Key: replace-with-a-unique-value" \\
   -H "Content-Type: application/json" \\
   -d '{"title": "Hello API", "content": "# Hi", "published": true, "tags": ["api"]}'`}
         </pre>

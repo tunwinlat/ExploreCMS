@@ -23,6 +23,7 @@ Send the key with every request, either as a Bearer token or a dedicated header:
 | 403 | Key is valid but lacks the required permission |
 | 429 | Rate limit exceeded (60 reads/min, 10 writes/min per IP) |
 | 400 | Validation error — the `error` field describes the problem |
+| 409 | Idempotency-key reuse with a different request, or an exact post collision |
 | 404 | Resource not found |
 
 ## Permissions
@@ -61,9 +62,17 @@ Wildcards: `posts:*` grants all post actions; `*` grants full access.
   "isFeatured": false,
   "tags": ["api", "news"],            // created automatically if new
   "language": "en",
-  "translationGroupId": null
+  "translationGroupId": null,
+  "idempotencyKey": "018f6f4d-..."  // optional; header is preferred
 }
 ```
+
+For retry-safe creates, send a unique `Idempotency-Key` (maximum 255 characters).
+The key is scoped to the API-key owner's account. Replaying the same request and
+key returns the original post with status `200` and `Idempotent-Replayed: true`;
+reusing the key with a different request returns `409 Conflict`. The
+`idempotencyKey` JSON field is supported for clients that cannot set custom
+headers. If both are supplied, they must match.
 
 **Update body:** any subset of the same fields. Omitting a field leaves it unchanged.
 
@@ -73,6 +82,7 @@ Posts created via the API are attributed to the user who created the API key.
 # Create a post
 curl -X POST https://your-site.com/api/v1/posts \
   -H "Authorization: Bearer ecms_..." \
+  -H "Idempotency-Key: 018f6f4d-7c2a-7c10-a5b8-1f621b6c9342" \
   -H "Content-Type: application/json" \
   -d '{"title":"Hello API","content":"# Hi","published":true,"tags":["api"]}'
 
@@ -150,5 +160,7 @@ Deleting an album also deletes all of its photos.
 ## Notes
 
 - All mutations automatically revalidate the public site cache — changes are visible immediately.
-- Slug conflicts are resolved automatically by appending a timestamp suffix.
+- An exact title-and-slug collision returns the existing post for the same
+  author (or `409` for another author). A timestamp suffix is only added when a
+  genuinely different title normalizes to the same slug base.
 - Craft.do sync safeguards apply: posts synced from Craft in `read-only` mode cannot be edited via the API, and deletions propagate to Craft in `full-sync` mode.
