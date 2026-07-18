@@ -31,6 +31,7 @@ model User {
   passwordResetExpiry      DateTime?
 
   apiKeys ApiKey[]
+  postIdempotencyKeys PostIdempotencyKey[]
 }
 
 model ApiKey {
@@ -71,6 +72,30 @@ model Post {
   // Localization
   language            String  @default("en") // ISO 639-1 language code
   translationGroupId  String? // Links translated posts together (shares same ID)
+
+  idempotencyKeys PostIdempotencyKey[]
+}
+
+model PostIdempotencyKey {
+  id          String   @id @default(cuid())
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  keyHash     String
+  requestHash String
+  postId      String
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([authorId, keyHash])
+  @@index([postId])
+}
+
+model BackgroundJobLock {
+  name       String   @id
+  ownerToken String
+  leaseUntil DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Tag {

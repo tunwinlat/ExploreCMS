@@ -14,15 +14,44 @@ import { join } from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import { decrypt } from '@/lib/crypto'
 import { isValidImageSignature } from '@/lib/upload'
+import {
+  acquireBackgroundJobLease,
+  releaseBackgroundJobLease,
+  renewBackgroundJobLease,
+  type BackgroundJobLease,
+} from '@/lib/backgroundJobLock'
 
 // Concurrency guard
 let syncInProgress = false
 let lastSyncTime = 0
 const SYNC_COOLDOWN_MS = 60_000 // 1 minute between auto-syncs
 const POST_DELAY_MS = 10_000 // 10 seconds between posts
+const CRAFT_SYNC_LOCK_NAME = 'craft-sync'
+const CRAFT_SYNC_LEASE_MS = 30 * 60_000
+const CRAFT_SYNC_HEARTBEAT_MS = 60_000
+
+function startCraftLeaseHeartbeat(lease: BackgroundJobLease): () => void {
+  const timer = setInterval(() => {
+    void renewBackgroundJobLease(lease, CRAFT_SYNC_LEASE_MS)
+      .then(renewed => {
+        if (!renewed) console.error('[CraftSync] Craft sync lease ownership was lost')
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err)
+        console.error('[CraftSync] Failed to renew Craft sync lease:', message)
+      })
+  }, CRAFT_SYNC_HEARTBEAT_MS)
+  timer.unref()
+
+  return () => clearInterval(timer)
+}
 
 function generateSlug(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
+}
+
+function normalizeTitle(title: string): string {
+  return title.normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-US')
 }
 
 // ── Storage helpers (mirrors upload/route.ts logic) ──
@@ -521,47 +550,73 @@ export async function craftImportSync(
 
         let slug = generateSlug(cleanTitle)
         const existingSlug = await postDb.post.findUnique({ where: { slug } })
-        if (existingSlug) slug = `${slug}-${Date.now()}`
+        const isExactCollision = existingSlug
+          && normalizeTitle(existingSlug.title) === normalizeTitle(cleanTitle)
+          && (existingSlug.language || 'en') === language
 
-        // Check if there's already a base post we can group with
-        const basePost = await postDb.post.findFirst({
-          where: {
-            title: cleanTitle,
-            OR: [
-              { translationGroupId: { not: null } },
-              { language: { not: language } }
-            ]
-          }
-        })
-
-        let translationGroupId = null
-        if (basePost) {
-          translationGroupId = basePost.translationGroupId || basePost.id
-          
-          // If base doesn't have a group yet, update it
-          if (!basePost.translationGroupId) {
+        if (isExactCollision) {
+          if (!existingSlug.craftDocumentId && !existingSlug.craftUnlinked) {
+            // Reconcile a local/API post with its first Craft copy instead of
+            // importing that copy as a second live post.
             await postDb.post.update({
-              where: { id: basePost.id },
-              data: { translationGroupId: basePost.id }
+              where: { id: existingSlug.id },
+              data: {
+                content,
+                contentFormat: 'markdown',
+                craftDocumentId: doc.id,
+                craftLastModifiedAt: doc.lastModifiedAt || null,
+              },
             })
+            result.updated++
+          } else {
+            // A second Craft document with the same title/language is the
+            // backup race this guard is designed to contain. Keep it out of
+            // the live post table and surface it during manual syncs.
+            result.errors.push(`Skipped duplicate Craft document "${doc.title}" (${doc.id})`)
           }
-        }
+        } else {
+          if (existingSlug) slug = `${slug}-${Date.now()}`
 
-        await postDb.post.create({
-          data: {
-            title: cleanTitle,
-            slug,
-            content,
-            contentFormat: 'markdown',
-            language,
-            translationGroupId,
-            published: true,
-            authorId: owner.id,
-            craftDocumentId: doc.id,
-            craftLastModifiedAt: doc.lastModifiedAt || null,
-          },
-        })
-        result.imported++
+          // Check if there's already a base post we can group with
+          const basePost = await postDb.post.findFirst({
+            where: {
+              title: cleanTitle,
+              OR: [
+                { translationGroupId: { not: null } },
+                { language: { not: language } }
+              ]
+            }
+          })
+
+          let translationGroupId = null
+          if (basePost) {
+            translationGroupId = basePost.translationGroupId || basePost.id
+
+            // If base doesn't have a group yet, update it
+            if (!basePost.translationGroupId) {
+              await postDb.post.update({
+                where: { id: basePost.id },
+                data: { translationGroupId: basePost.id }
+              })
+            }
+          }
+
+          await postDb.post.create({
+            data: {
+              title: cleanTitle,
+              slug,
+              content,
+              contentFormat: 'markdown',
+              language,
+              translationGroupId,
+              published: true,
+              authorId: owner.id,
+              craftDocumentId: doc.id,
+              craftLastModifiedAt: doc.lastModifiedAt || null,
+            },
+          })
+          result.imported++
+        }
       }
     } catch (err: any) {
       result.errors.push(`Error processing "${doc.title}": ${err.message}`)
@@ -651,7 +706,16 @@ export async function getCraftSyncMode(): Promise<string | null> {
  * Non-blocking — errors are logged but don't break the publish flow.
  */
 export async function pushPostToCraft(postId: string): Promise<void> {
+  let lease: BackgroundJobLease | null = null
+  let stopLeaseHeartbeat: (() => void) | null = null
+
   try {
+    lease = await acquireBackgroundJobLease(CRAFT_SYNC_LOCK_NAME, CRAFT_SYNC_LEASE_MS)
+    // A full import/backup or another post push owns the shared Craft writer.
+    // The next full sync will pick up this post if it is not linked yet.
+    if (!lease) return
+    stopLeaseHeartbeat = startCraftLeaseHeartbeat(lease)
+
     const settings = await getCraftSettings()
     if (!settings) return
 
@@ -689,6 +753,15 @@ export async function pushPostToCraft(postId: string): Promise<void> {
     }
   } catch (err: any) {
     console.error(`[CraftSync] Failed to push post ${postId} to Craft:`, err.message)
+  } finally {
+    stopLeaseHeartbeat?.()
+    if (lease) {
+      try {
+        await releaseBackgroundJobLease(lease)
+      } catch (err: any) {
+        console.error('[CraftSync] Failed to release Craft sync lease:', err.message)
+      }
+    }
   }
 }
 
@@ -748,11 +821,17 @@ export async function runCraftSync(
     return result
   }
 
-  const settings = await getCraftSettings()
-  if (!settings) return result
+  const lease = await acquireBackgroundJobLease(CRAFT_SYNC_LOCK_NAME, CRAFT_SYNC_LEASE_MS)
+  if (!lease) {
+    return options.manual ? { ...result, errors: ['Sync already in progress'] } : result
+  }
+  const stopLeaseHeartbeat = startCraftLeaseHeartbeat(lease)
 
   syncInProgress = true
   try {
+    const settings = await getCraftSettings()
+    if (!settings) return result
+
     const client = new CraftClient(settings.craftServerUrl, settings.craftApiToken)
     const mode = settings.craftSyncMode || 'read-only'
 
@@ -809,6 +888,12 @@ export async function runCraftSync(
     lastSyncTime = Date.now()
   } finally {
     syncInProgress = false
+    stopLeaseHeartbeat()
+    try {
+      await releaseBackgroundJobLease(lease)
+    } catch (err: any) {
+      console.error('[CraftSync] Failed to release Craft sync lease:', err.message)
+    }
   }
 
   return result

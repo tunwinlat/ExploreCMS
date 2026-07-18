@@ -18,7 +18,7 @@ vi.mock('@libsql/client', async importOriginal => {
 })
 
 import { createClient } from '@libsql/client'
-import { runSchemaMigrations } from './db-init'
+import { initializeDatabase, runSchemaMigrations } from './db-init'
 
 const mockCreateClient = createClient as unknown as ReturnType<typeof vi.fn>
 
@@ -71,7 +71,7 @@ describe('runSchemaMigrations (production auto-migration)', () => {
     expect(mockCreateClient).not.toHaveBeenCalled()
   })
 
-  it('applies migrations including the ApiKey table on an old database', async () => {
+  it('applies migrations including idempotency and lease tables on an old database', async () => {
     // Simulate a pre-existing production DB: base tables only, no ApiKey
     await db.execute(`CREATE TABLE "User" (
       "id" TEXT NOT NULL PRIMARY KEY,
@@ -103,9 +103,11 @@ describe('runSchemaMigrations (production auto-migration)', () => {
     expect(await columnExists('Post', 'contentFormat')).toBe(true)
     expect(await tableExists('Project')).toBe(true)
     expect(await tableExists('PhotoAlbum')).toBe(true)
+    expect(await tableExists('PostIdempotencyKey')).toBe(true)
+    expect(await tableExists('BackgroundJobLock')).toBe(true)
   })
 
-  it('does not short-circuit when the DB has the newest column but lacks ApiKey', async () => {
+  it('does not short-circuit when the DB has an older artifact but lacks the newest tables', async () => {
     // Regression guard: the fast-path probe must check the NEWEST migration
     // artifact. Simulate a DB that has dynamicPattern (old probe) but no ApiKey.
     await db.execute(`CREATE TABLE "User" (
@@ -125,6 +127,23 @@ describe('runSchemaMigrations (production auto-migration)', () => {
     await runSchemaMigrations()
 
     expect(await tableExists('ApiKey')).toBe(true)
+    expect(await tableExists('PostIdempotencyKey')).toBe(true)
+    expect(await tableExists('BackgroundJobLock')).toBe(true)
+  })
+
+  it('does not short-circuit after a partial newest migration', async () => {
+    await db.execute(`CREATE TABLE "PostIdempotencyKey" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "authorId" TEXT NOT NULL,
+      "keyHash" TEXT NOT NULL,
+      "requestHash" TEXT NOT NULL,
+      "postId" TEXT NOT NULL,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`)
+
+    await runSchemaMigrations()
+
+    expect(await tableExists('BackgroundJobLock')).toBe(true)
   })
 
   it('is idempotent — running twice succeeds and preserves data', async () => {
@@ -167,9 +186,11 @@ describe('runSchemaMigrations (production auto-migration)', () => {
     )`)
     await runSchemaMigrations()
     expect(await tableExists('ApiKey')).toBe(true)
+    expect(await tableExists('PostIdempotencyKey')).toBe(true)
+    expect(await tableExists('BackgroundJobLock')).toBe(true)
 
-    // Track subsequent statements: the fast path should run exactly one probe
-    // query and no DDL.
+    // Track subsequent statements: the fast path should run only its two probes
+    // and no DDL.
     const statements: string[] = []
     const spy = vi.spyOn(db, 'execute').mockImplementation(async (stmt) => {
       statements.push(typeof stmt === 'string' ? stmt : stmt.sql)
@@ -178,8 +199,17 @@ describe('runSchemaMigrations (production auto-migration)', () => {
 
     await runSchemaMigrations()
 
-    expect(statements).toHaveLength(1)
-    expect(statements[0]).toContain('ApiKey')
+    expect(statements).toHaveLength(2)
+    expect(statements[0]).toContain('PostIdempotencyKey')
+    expect(statements[1]).toContain('BackgroundJobLock')
     spy.mockRestore()
+  })
+
+  it('includes the newest tables in fresh remote database initialization', async () => {
+    const result = await initializeDatabase()
+
+    expect(result.success).toBe(true)
+    expect(await tableExists('PostIdempotencyKey')).toBe(true)
+    expect(await tableExists('BackgroundJobLock')).toBe(true)
   })
 })
