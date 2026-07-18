@@ -120,6 +120,20 @@ describe('GET /api/posts', () => {
     expect(data.nextCursor).toBeUndefined();
   });
 
+  it('should query posts with the requested tag', async () => {
+    mockFindMany.mockResolvedValue([]);
+
+    const req = createMockRequest('http://localhost:3000/api/posts?tag=technology');
+    await GET(req);
+
+    expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        published: true,
+        tags: { some: { slug: 'technology' } },
+      },
+    }));
+  });
+
   it('should return a 500 error response if the database query fails', async () => {
     mockFindMany.mockRejectedValue(new Error('Database connection failed'));
 

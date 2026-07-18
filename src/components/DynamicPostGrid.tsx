@@ -114,29 +114,79 @@ function DropdownNav({ item, activeFilter, setActiveFilter }: {
 export default function DynamicPostGrid({ 
   initialPosts, 
   navItems, 
-  initialCursor 
+  initialCursor,
+  initialTag,
 }: { 
   initialPosts: Post[], 
   navItems: NavItem[], 
-  initialCursor?: string 
+  initialCursor?: string,
+  initialTag?: string,
 }) {
   const [posts, setPosts] = useState<Post[]>(initialPosts)
-  const [activeFilter, setActiveFilter] = useState<{type: 'latest'|'featured'|'tag', target?: string}>({type: 'latest'})
+  const [activeFilter, setActiveFilter] = useState<{type: 'latest'|'featured'|'tag', target?: string}>(
+    initialTag ? { type: 'tag', target: initialTag } : { type: 'latest' }
+  )
   
   // Pagination State
   const [cursor, setCursor] = useState<string | undefined>(initialCursor)
-  const [loading, setLoading] = useState(false)
-  const [hasMore, setHasMore] = useState(!!initialCursor)
+  const [loading, setLoading] = useState(!!initialTag)
+  const [hasMore, setHasMore] = useState(initialTag ? false : !!initialCursor)
   
   const observerRef = useRef<IntersectionObserver | null>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setActiveFilter(initialTag ? { type: 'tag', target: initialTag } : { type: 'latest' })
+  }, [initialTag])
+
+  useEffect(() => {
+    if (activeFilter.type !== 'tag' || !activeFilter.target) {
+      setPosts(initialPosts)
+      setCursor(initialCursor)
+      setHasMore(!!initialCursor)
+      setLoading(false)
+      return
+    }
+
+    const controller = new AbortController()
+    const loadTaggedPosts = async () => {
+      setLoading(true)
+      setHasMore(false)
+
+      try {
+        const params = new URLSearchParams({ tag: activeFilter.target! })
+        const res = await fetch(`/api/posts?${params.toString()}`, { signal: controller.signal })
+        const data = await res.json()
+
+        if (!controller.signal.aborted && data.posts) {
+          setPosts(data.posts)
+          setCursor(data.nextCursor)
+          setHasMore(!!data.nextCursor)
+        }
+      } catch (err) {
+        if (!controller.signal.aborted) {
+          console.error('Failed to load tagged posts:', err)
+          setPosts([])
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false)
+      }
+    }
+
+    void loadTaggedPosts()
+    return () => controller.abort()
+  }, [activeFilter.type, activeFilter.target, initialCursor, initialPosts])
 
   const fetchNextPage = useCallback(async () => {
     if (loading || !hasMore || !cursor) return
     setLoading(true)
     
     try {
-      const res = await fetch(`/api/posts?cursor=${cursor}`)
+      const params = new URLSearchParams({ cursor })
+      if (activeFilter.type === 'tag' && activeFilter.target) {
+        params.set('tag', activeFilter.target)
+      }
+      const res = await fetch(`/api/posts?${params.toString()}`)
       const data = await res.json()
       
       if (data.posts && data.posts.length > 0) {
@@ -151,7 +201,7 @@ export default function DynamicPostGrid({
     } finally {
       setLoading(false)
     }
-  }, [cursor, loading, hasMore])
+  }, [activeFilter.target, activeFilter.type, cursor, loading, hasMore])
 
   useEffect(() => {
     if (!hasMore) return
@@ -238,7 +288,9 @@ export default function DynamicPostGrid({
         alignItems: 'start'
       }}>
         {processedFilteredPosts.length === 0 ? (
-          <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-secondary)' }}>No posts found for this view.</p>
+          <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-secondary)' }}>
+            {loading ? 'Loading posts...' : 'No posts found for this view.'}
+          </p>
         ) : (
           processedFilteredPosts.map(post => {
             return (
