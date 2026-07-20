@@ -67,6 +67,16 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
   const spawnTimerRef = useRef(0)
   const [accentRgb, setAccentRgb] = useState<[number, number, number]>([99, 102, 241])
   const [isDark, setIsDark] = useState(true)
+  const [reducedMotion, setReducedMotion] = useState(false)
+
+  // Respect prefers-reduced-motion: no particle animation at all
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    setReducedMotion(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   // Track theme changes
   useEffect(() => {
@@ -166,7 +176,7 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
   }, [createParticle])
 
   useEffect(() => {
-    if (!enabled) return
+    if (!enabled || reducedMotion) return
 
     const canvas = canvasRef.current
     if (!canvas) return
@@ -458,9 +468,9 @@ export function ParticleBackground({ enabled = true }: { enabled?: boolean }) {
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [enabled, accentRgb, isDark, initParticles, spawnParticles, explodeParticle])
+  }, [enabled, reducedMotion, accentRgb, isDark, initParticles, spawnParticles, explodeParticle])
 
-  if (!enabled) return null
+  if (!enabled || reducedMotion) return null
 
   return (
     <canvas
