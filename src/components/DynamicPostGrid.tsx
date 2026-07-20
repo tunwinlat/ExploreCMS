@@ -219,7 +219,7 @@ export default function DynamicPostGrid({
                   )}
 
                   {post.tags.length > 0 && (
-                    <div className="post-row-tags">
+                    <div className="tag-list">
                       {post.tags.map(tag => (
                         <span key={tag.name} className="tag-chip">{tag.name}</span>
                       ))}

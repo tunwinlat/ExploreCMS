@@ -189,19 +189,19 @@ These are broken today regardless of redesign. Fix first, ship independently if 
 
 ## Phase 4 — Projects redesign
 
-- [ ] **4.1** One unified grid in `src/app/projects/page.tsx` — remove the separate
+- [x] **4.1** One unified grid in `src/app/projects/page.tsx` — remove the separate
   "Featured" section; featured projects sort first with a small "Featured" eyebrow badge.
-- [ ] **4.2** Case-study cards (`ProjectCard.tsx`): 16/9 cover, serif title, tagline,
+- [x] **4.2** Case-study cards (`ProjectCard.tsx`): 16/9 cover, serif title, tagline,
   `.meta` row (status dot + label), tech chips (quiet, hairline-bordered). **Whole card is
   a link** to `/projects/[slug]`; GitHub/live remain separate icon links inside (nested-link
   safe pattern: card via stretched-link or absolutely-positioned overlay link).
-- [ ] **4.3** Page hero via `PageHero` (eyebrow "Projects", title, lede). Replace the
+- [x] **4.3** Page hero via `PageHero` (eyebrow "Projects", title, lede). Replace the
   centered pill + `heading-xl`.
-- [ ] **4.4** `projects/[slug]/page.tsx`: bring onto shared tokens/chrome — `SiteHeader`
+- [x] **4.4** `projects/[slug]/page.tsx`: bring onto shared tokens/chrome — `SiteHeader`
   (already), `SiteFooter`, content in a `--measure` reading column, typographic gallery
   grid for `images[]`, quiet tech chips, status/featured as `.meta`, not gradient badges.
-- [ ] **4.5** Empty state typographic (no 🚀).
-- [ ] **4.6** Verify: lint/test/build; keyboard tab order on cards (card link → github →
+- [x] **4.5** Empty state typographic (no 🚀).
+- [x] **4.6** Verify: lint/test/build; keyboard tab order on cards (card link → github →
   live); dark+light.
 
 ---
@@ -288,4 +288,5 @@ These are broken today regardless of redesign. Fix first, ship independently if 
 | 2026-07-20 | 1 | **Phase 1 complete.** 1.1: editorial tokens in `:root` (`--font-display`, `--text-*` scale, `--space-*` scale, `--measure`). 1.2: Fraunces variable font loaded globally in `layout.tsx` (eslint-disable for the Pages-Router-oriented font rule); `--font-display` overrides for 7 serif themes (royal/marble/autumn/gothic/parchment/copper/steampunk) in `themes.css`. 1.3: public utilities `.eyebrow`, `.display-1/2`, `.lede`, `.rule`, `.section`, `.card`, `.meta`. 1.4: global `prefers-reduced-motion` block. 1.5: lint clean, 189/189 tests, build green. No visual change yet — foundations only. **Not committed yet.** | Commit Phase 1, then Phase 2 item 2.1 (SiteFooter). |
 | 2026-07-20 | 2 | **Phase 2 complete.** 2.1: `SiteFooter.tsx` replaces all 6 duplicated footers. 2.2: `PageHero.tsx` created (adoption in Phases 3–5). 2.3: `SiteHeader` rebuilt — sticky + blur + hairline, serif wordmark, tabs as text links with `aria-current` underline, wraps to scrollable row 2 on mobile; `ComponentTabs` rewritten without inline styles/icons. 2.4: `ThemeToggle` SVG sun/moon on `.icon-btn`, no mount flash. 2.5: shared `BlogHome.tsx`; `page.tsx`/`blog/page.tsx` now thin shells. 2.6: deleted `Modal.tsx`, `PostFeed.tsx`, `@modal/` slot. Also added missing `--radius-sm`. 2.7: lint clean, 189/189 tests, build green (one fix: `sidebarAbout ?? undefined`). **Phases 1+2 uncommitted in working tree.** | Commit Phases 1+2, then Phase 3 item 3.1 (lead story). |
 | 2026-07-20 | 1–2 | Phases 1+2 committed `7f8b2ec`, pushed to `origin/related-posts-empty-end-of-posts`. | Start Phase 3, item 3.1. |
-| 2026-07-20 | 3 | **Phase 3 complete.** 3.1: `LeadStory.tsx` (1 lead + up to 2 secondary, static) replaces carousel — `FeaturedPostsCarousel.tsx` + all carousel/dropdown CSS deleted. 3.2: `DynamicPostGrid` now a magazine list (`.post-row`: thumb left, serif title, 2-line excerpt, tag chips, meta) + "You've reached the end." marker. 3.3: pill/dropdown filters → `.filter-tab` underline tabs (dropdown nav items flattened to tag tabs). 3.4: sidebar un-glassed — `.sidebar-section` hairlines, About as italic serif editor's note, TrendingPosts hover via `.trending-link` CSS (no JS handlers). 3.5: section headers = eyebrow + display-2 + rule; blog home hero → `PageHero` (kills `heading-xl` on blog). 3.6: `.empty-state` typographic. 3.7: blog loading skeleton matches new layout. 3.8: 2 new BlogContent tests (lead story link/excerpt, list excerpt + end marker). 3.9: lint clean, 191/191 tests, build green. **Not committed yet.** | Commit Phase 3, then Phase 4 item 4.1 (unified projects grid). |
+| 2026-07-20 | 3 | **Phase 3 complete.** 3.1: `LeadStory.tsx` (1 lead + up to 2 secondary, static) replaces carousel — `FeaturedPostsCarousel.tsx` + all carousel/dropdown CSS deleted. 3.2: `DynamicPostGrid` now a magazine list (`.post-row`: thumb left, serif title, 2-line excerpt, tag chips, meta) + "You've reached the end." marker. 3.3: pill/dropdown filters → `.filter-tab` underline tabs (dropdown nav items flattened to tag tabs). 3.4: sidebar un-glassed — `.sidebar-section` hairlines, About as italic serif editor's note, TrendingPosts hover via `.trending-link` CSS (no JS handlers). 3.5: section headers = eyebrow + display-2 + rule; blog home hero → `PageHero` (kills `heading-xl` on blog). 3.6: `.empty-state` typographic. 3.7: blog loading skeleton matches new layout. 3.8: 2 new BlogContent tests (lead story link/excerpt, list excerpt + end marker). 3.9: lint clean, 191/191 tests, build green. **Committed `b84ee25`, pushed.** | Start Phase 4, item 4.1 (unified projects grid). |
+| 2026-07-20 | 4 | **Phase 4 complete.** 4.1: unified `.project-grid`, featured pinned first. 4.2: `ProjectCard` rebuilt (server component, stretched-link whole-card nav, status dot + meta, quiet `.tag-chip`s, icon links z-indexed above). 4.3: `PageHero` on `/projects`. 4.4: detail page on shared tokens (`.display-1`, `.lede`, `.action-btn`, `.project-gallery-*`); **also fixed: project rich content was entirely unstyled — now imports post.css typography (dedup tracked for Phase 6/8)**. 4.5: `.empty-state`. Cleanup: old `.project-card:hover` lift rules removed; `.post-row-tags` renamed to shared `.tag-list`. 4.6: lint clean, 191/191 tests, build green. **Not committed yet.** | Commit Phase 4, then Phase 5 item 5.1 (album cards). |
