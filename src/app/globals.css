@@ -447,6 +447,23 @@ h1, h2, h3, h4 {
   font-size: var(--text-3xl);
 }
 
+/* Animated flowing gradient text (the signature hero-title effect) */
+.text-gradient-flow {
+  background: linear-gradient(
+    90deg,
+    var(--accent-color) 0%,
+    var(--accent-hover) 25%,
+    var(--text-primary) 50%,
+    var(--accent-hover) 75%,
+    var(--accent-color) 100%
+  );
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientFlow 5s ease-in-out infinite;
+}
+
 .lede {
   font-size: var(--text-lg);
   line-height: 1.7;

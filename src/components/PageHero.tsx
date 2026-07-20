@@ -18,7 +18,7 @@ export function PageHero({ eyebrow, title, description }: PageHeroProps) {
   return (
     <div className="page-hero container">
       {eyebrow && <p className="eyebrow">{eyebrow}</p>}
-      <h1 className="display-1">{title}</h1>
+      <h1 className="display-1 text-gradient-flow">{title}</h1>
       {description && <p className="lede">{description}</p>}
     </div>
   )
