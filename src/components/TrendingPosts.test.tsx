@@ -34,7 +34,9 @@ describe('TrendingPosts', () => {
       views: [{ totalViews: 37, uniqueViews: 2 }],
     }
     const fetchMock = vi.fn().mockResolvedValue({
-      json: async () => ({ posts: [post] }),
+      json: async () => ({
+        posts: [{ ...post, views: { totalViews: 42, uniqueViews: 3 } }],
+      }),
     })
     vi.stubGlobal('fetch', fetchMock)
 
@@ -46,6 +48,11 @@ describe('TrendingPosts', () => {
         '/api/trending?period=7d&limit=8',
         { cache: 'no-store' }
       )
+    })
+    // API returns `views` as a single object (to-one relation); the component
+    // must normalize it and show the fresh view count
+    await waitFor(() => {
+      expect(screen.getByText('42')).toBeTruthy()
     })
   })
 })

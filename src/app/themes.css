@@ -209,6 +209,7 @@
 
 /* 9. Royal Velvet - Elegant Diamonds / Argyle */
 [data-theme="royal"] {
+  --font-display: 'Cormorant Garamond', Georgia, serif;
   --bg-color: #faf5ff;
   --bg-color-secondary: #ffffff;
   --text-primary: #3b0764;
@@ -240,8 +241,8 @@
   --bg-color-secondary: #f8fafc;
   --text-primary: #0f172a;
   --text-secondary: #334155;
-  --accent-color: #3b82f6;
-  --accent-hover: #2563eb;
+  --accent-color: #1d4ed8;
+  --accent-hover: #1e40af;
   --border-color: rgba(15, 23, 42, 0.1);
   --font-primary: 'Montserrat', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --btn-text: #ffffff;
@@ -601,6 +602,7 @@
 
 /* 23. Autumn Harvest - Warm falling leaves */
 [data-theme="autumn"] {
+  --font-display: 'Crimson Pro', Georgia, serif;
   --bg-color: #fef9ee;
   --bg-color-secondary: #ffffff;
   --text-primary: #451a03;
@@ -719,6 +721,7 @@
 
 /* 27. Luxury Marble - White marble with gold veining */
 [data-theme="marble"] {
+  --font-display: 'EB Garamond', Georgia, serif;
   --bg-color: #f8f8f6;
   --bg-color-secondary: #ffffff;
   --text-primary: #1a1a1a;
@@ -747,6 +750,7 @@
 
 /* 28. Gothic Cathedral - Stone arches and crimson shadows */
 [data-theme="gothic"] {
+  --font-display: 'Philosopher', Georgia, serif;
   --bg-color: #f0ecec;
   --bg-color-secondary: #faf8f8;
   --text-primary: #1a0a0a;
@@ -882,6 +886,7 @@
 
 /* 32. Ancient Parchment - Aged paper with manuscript borders */
 [data-theme="parchment"] {
+  --font-display: 'IM Fell English', Georgia, serif;
   --bg-color: #f4e8c4;
   --bg-color-secondary: #faf2da;
   --text-primary: #2d1a0a;
@@ -940,6 +945,7 @@
 
 /* 34. Copper & Verdigris - Oxidized metal with organic patina */
 [data-theme="copper"] {
+  --font-display: 'Spectral', Georgia, serif;
   --bg-color: #f5f0e8;
   --bg-color-secondary: #faf7f0;
   --text-primary: #2c1a0e;
@@ -998,6 +1004,7 @@
 
 /* 36. Steampunk Workshop - Brass gears and Victorian machinery */
 [data-theme="steampunk"] {
+  --font-display: 'Josefin Slab', Georgia, serif;
   --bg-color: #f5ead0;
   --bg-color-secondary: #fdf5e0;
   --text-primary: #2a1a06;

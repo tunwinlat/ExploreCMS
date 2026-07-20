@@ -50,7 +50,13 @@ export async function GET(request: Request) {
       }
     })
 
-    return NextResponse.json({ posts, period })
+    // Normalize `views` (a to-one relation) into the array shape the client expects
+    const normalizedPosts = posts.map(post => ({
+      ...post,
+      views: post.views ? [post.views] : []
+    }))
+
+    return NextResponse.json({ posts: normalizedPosts, period })
   } catch (error) {
     console.error('Trending API Error:', error)
     return NextResponse.json({ error: 'Failed to load trending posts' }, { status: 500 })

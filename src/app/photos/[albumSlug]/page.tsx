@@ -6,6 +6,7 @@
 
 import { prisma } from "@/lib/db";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import { parseComponentConfig, COMPONENTS } from "@/lib/components-config";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -90,7 +91,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumSlu
 
       <div className="container" style={{ paddingBottom: '5rem' }}>
         {/* Back link */}
-        <Link href="/photos" style={{
+        <Link href="/photos" className="back-link" style={{
           display: 'inline-flex',
           alignItems: 'center',
           gap: '0.4rem',
@@ -106,39 +107,18 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumSlu
         </Link>
 
         {/* Album header */}
-        <div style={{ marginBottom: '2.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-            <h1 style={{ fontSize: '2rem', fontWeight: 800, margin: 0 }}>{album.title}</h1>
-            <span style={{
-              padding: '0.2rem 0.65rem',
-              borderRadius: '20px',
-              fontSize: '0.75rem',
-              color: 'var(--text-secondary)',
-              background: 'var(--border-color)',
-            }}>
-              {album.photos.length} photos
-            </span>
-          </div>
+        <div className="page-hero" style={{ marginBottom: 'var(--space-8)' }}>
+          <h1 className="display-1">{album.title}</h1>
+          <p className="meta">{album.photos.length} photos</p>
           {album.description && (
-            <p style={{ fontSize: '1rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6 }}>
-              {album.description}
-            </p>
+            <p className="lede">{album.description}</p>
           )}
         </div>
 
         <PhotoGrid photos={lightboxPhotos} />
       </div>
 
-      <footer className="container" style={{
-        borderTop: '1px solid var(--border-color)',
-        paddingTop: '2rem',
-        textAlign: 'center',
-        color: 'var(--text-secondary)',
-        fontSize: '0.9rem',
-        marginBottom: '2rem',
-      }}>
-        <p>© {new Date().getFullYear()} {settings?.footerText || `${settings?.title || 'ExploreCMS'}. All rights reserved.`}</p>
-      </footer>
+      <SiteFooter title={settings?.title} footerText={settings?.footerText} />
       <ViewTracker />
     </div>
   );

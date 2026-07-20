@@ -9,6 +9,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 
+interface ViewCount {
+  totalViews: number
+  uniqueViews: number
+}
+
 interface TrendingPost {
   id: string
   title: string
@@ -17,8 +22,11 @@ interface TrendingPost {
   createdAt: string
   author: { username: string; firstName: string | null }
   tags: { name: string; slug: string }[]
-  views?: { totalViews: number; uniqueViews: number }[]
+  views?: ViewCount[]
 }
+
+// Raw API payload where `views` may still be a single object (to-one relation)
+type RawTrendingPost = Omit<TrendingPost, 'views'> & { views?: ViewCount[] | ViewCount | null }
 
 interface TrendingPostsProps {
   initialPosts?: TrendingPost[]
@@ -38,7 +46,13 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
     try {
       const res = await fetch(`/api/trending?period=${p}&limit=8`, { cache: 'no-store' })
       const data = await res.json()
-      if (currentRequest === requestId.current && data.posts) setPosts(data.posts)
+      if (currentRequest === requestId.current && data.posts) {
+        // Normalize `views` into an array regardless of API payload shape
+        setPosts(data.posts.map((post: RawTrendingPost) => ({
+          ...post,
+          views: Array.isArray(post.views) ? post.views : post.views ? [post.views] : []
+        })))
+      }
     } catch (err) {
       console.error('Failed to fetch trending posts:', err)
     } finally {
@@ -109,6 +123,7 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
             <li key={post.id}>
               <Link
                 href={`/post/${post.slug}`}
+                className="trending-link"
                 style={{
                   display: 'flex',
                   alignItems: 'flex-start',
@@ -119,8 +134,6 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
                   transition: 'background 0.15s ease',
                   color: 'inherit'
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-color-secondary)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
                 {/* Number */}
                 <span style={{

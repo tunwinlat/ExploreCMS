@@ -45,10 +45,8 @@ function faviconType(url: string) {
 
 export default async function RootLayout({
   children,
-  modal
 }: {
   children: React.ReactNode;
-  modal: React.ReactNode;
 }) {
   // Ensure schema migrations are applied for LibSQL/Turso deployments
   await ensureMigrations();
@@ -76,12 +74,13 @@ export default async function RootLayout({
         <link rel="shortcut icon" href={faviconUrl} type={faviconType(faviconUrl)} />
         <link rel="apple-touch-icon" href={faviconUrl} sizes="180x180" />
         <meta name="msapplication-TileImage" content={faviconUrl} />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Editorial display face (theme-independent); serif themes override --font-display in themes.css */}
+        {/* eslint-disable-next-line @next/next/no-page-custom-font -- App Router root layout loads this site-wide; rule targets Pages Router */}
+        <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&display=swap" rel="stylesheet" />
         {activeTheme.fontUrl && (
-          <>
-            <link rel="preconnect" href="https://fonts.googleapis.com" />
-            <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-            <link href={activeTheme.fontUrl} rel="stylesheet" />
-          </>
+          <link href={activeTheme.fontUrl} rel="stylesheet" />
         )}
       </head>
       <body>
@@ -93,7 +92,6 @@ export default async function RootLayout({
         <ThemeProvider>
           <ParticleBackground enabled={dynamicPattern} />
           {children}
-          {modal}
         </ThemeProvider>
       </body>
     </html>

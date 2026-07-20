@@ -138,8 +138,16 @@ All source files MUST include the Mozilla Public License 2.0 header:
 ### CSS Conventions
 - Use CSS variables from `globals.css` for theming
 - Theme-specific styles go in `themes.css`
-- Glassmorphic effect: `className="glass"`
-- Animation: `className="fade-in-up"`
+- Glassmorphic effect (`className="glass"`) is **admin-only** — public pages use flat surfaces + hairline borders
+- Animation: `className="fade-in-up"` (disabled automatically under `prefers-reduced-motion`)
+
+### Public UI Design System (editorial)
+- **No inline styles on public pages** — use the shared classes below (route-scoped CSS like `post.css` is the allowed exception)
+- Design tokens in `globals.css` `:root`: `--font-display` (serif display face, Fraunces), `--font-body`, `--text-*` scale, `--space-*` scale, `--measure` (reading column width)
+- Shared classes: `.eyebrow`, `.display-1`/`.display-2`, `.lede`, `.rule`, `.section`, `.card`, `.meta`, `.tag-list`/`.tag-chip`, `.empty-state`, `.icon-btn`
+- Shared components: `SiteHeader` + `ComponentTabs` (chrome), `SiteFooter`, `PageHero` (section headers), `LeadStory`, `DynamicPostGrid` (magazine list)
+- Fraunces is loaded globally in `layout.tsx`; serif-body themes override `--font-display` in `themes.css`
+- Motion must respect `prefers-reduced-motion` (global block in `globals.css`; JS animations must opt out too — see `ParticleBackground`)
 
 ## Testing Instructions
 

@@ -4,8 +4,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-'use client'
-
 import { normalizeUrl } from '@/lib/urlUtils'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -23,10 +21,10 @@ export interface ProjectCardData {
   techTags: string[]
 }
 
-const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  completed:   { bg: 'color-mix(in srgb, #22c55e 15%, transparent)', text: '#22c55e', label: 'Completed' },
-  in_progress: { bg: 'color-mix(in srgb, var(--accent-color) 15%, transparent)', text: 'var(--accent-color)', label: 'In Progress' },
-  archived:    { bg: 'color-mix(in srgb, #94a3b8 15%, transparent)', text: '#94a3b8', label: 'Archived' },
+const STATUS_LABELS: Record<string, string> = {
+  completed: 'Completed',
+  in_progress: 'In Progress',
+  archived: 'Archived',
 }
 
 function GitHubIcon() {
@@ -47,216 +45,104 @@ function ExternalLinkIcon() {
   )
 }
 
+function PlaceholderIcon() {
+  return (
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="3" width="6" height="6" rx="1"/>
+      <rect x="16" y="3" width="6" height="6" rx="1"/>
+      <rect x="2" y="15" width="6" height="6" rx="1"/>
+      <path d="M22 15H16a1 1 0 0 0-1 1v1"/>
+      <path d="M19 18v3"/>
+      <path d="M9 6h6"/>
+      <path d="M9 18h3"/>
+    </svg>
+  )
+}
+
 export function ProjectCard({ project }: { project: ProjectCardData }) {
-  const status = STATUS_COLORS[project.status] || STATUS_COLORS.completed
+  const statusLabel = STATUS_LABELS[project.status] || STATUS_LABELS.completed
 
   const safeGithubUrl = normalizeUrl(project.githubUrl)
   const safeLiveUrl = normalizeUrl(project.liveUrl)
 
   return (
-    <div
-      className="project-card"
-      style={{
-        borderRadius: '16px',
-        overflow: 'hidden',
-        border: '1px solid var(--border-color)',
-        background: 'var(--bg-color-secondary, rgba(255,255,255,0.02))',
-        transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      <style>{`
-        .project-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 40px color-mix(in srgb, var(--accent-color) 15%, transparent);
-          border-color: color-mix(in srgb, var(--accent-color) 35%, transparent) !important;
-        }
-        .project-card:hover .project-cover-overlay {
-          opacity: 1 !important;
-        }
-      `}</style>
-
-      {/* Cover Image */}
-      <Link href={`/projects/${project.slug}`} style={{ display: 'block', position: 'relative', overflow: 'hidden', aspectRatio: '16/9' }}>
+    <article className="project-card">
+      {/* Cover */}
+      <div className="project-card-cover">
         {project.coverImage ? (
-          <>
-            <Image
-              src={project.coverImage}
-              alt={project.title}
-              fill
-              style={{ objectFit: 'cover', transition: 'transform 0.4s ease' }}
-              sizes="(max-width: 768px) 100vw, 33vw"
-            />
-            <div
-              className="project-cover-overlay"
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent-color) 30%, transparent), transparent)',
-                opacity: 0,
-                transition: 'opacity 0.3s ease',
-              }}
-            />
-          </>
+          <Image
+            src={project.coverImage}
+            alt={project.title}
+            fill
+            style={{ objectFit: 'cover' }}
+            sizes="(max-width: 768px) 100vw, 33vw"
+          />
         ) : (
-          <div style={{
-            width: '100%',
-            height: '100%',
-            background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent-color) 20%, var(--bg-color)), var(--bg-color))',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4 }}>
-              <rect x="2" y="3" width="6" height="6" rx="1"/>
-              <rect x="16" y="3" width="6" height="6" rx="1"/>
-              <rect x="2" y="15" width="6" height="6" rx="1"/>
-              <path d="M22 15H16a1 1 0 0 0-1 1v1"/>
-              <path d="M19 18v3"/>
-              <path d="M9 6h6"/>
-              <path d="M9 18h3"/>
-            </svg>
+          <div className="project-card-cover-placeholder">
+            <PlaceholderIcon />
           </div>
         )}
-
-        {/* Featured badge */}
         {project.featured && (
-          <div style={{
-            position: 'absolute',
-            top: '0.6rem',
-            left: '0.6rem',
-            padding: '0.2rem 0.6rem',
-            borderRadius: '20px',
-            background: 'linear-gradient(135deg, var(--accent-color), var(--accent-hover))',
-            fontSize: '0.65rem',
-            fontWeight: 700,
-            color: '#fff',
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase',
-          }}>
-            Featured
-          </div>
+          <span className="eyebrow card-badge">Featured</span>
         )}
-      </Link>
+      </div>
 
-      {/* Card Body */}
-      <div style={{ padding: '1.25rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {/* Status + links row */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-          <span style={{
-            padding: '0.2rem 0.65rem',
-            borderRadius: '20px',
-            fontSize: '0.7rem',
-            fontWeight: 600,
-            background: status.bg,
-            color: status.text,
-            letterSpacing: '0.03em',
-          }}>
-            {status.label}
-          </span>
-          <div style={{ display: 'flex', gap: '0.4rem' }}>
-            {safeGithubUrl && (
-              <a
-                href={safeGithubUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-color)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--text-secondary)',
-                  transition: 'color 0.2s, border-color 0.2s',
-                }}
-                onClick={e => e.stopPropagation()}
-                title="View on GitHub"
-              >
-                <GitHubIcon />
-              </a>
-            )}
-            {safeLiveUrl && (
-              <a
-                href={safeLiveUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-color)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--text-secondary)',
-                  transition: 'color 0.2s, border-color 0.2s',
-                }}
-                onClick={e => e.stopPropagation()}
-                title="View live site"
-              >
-                <ExternalLinkIcon />
-              </a>
-            )}
-          </div>
-        </div>
+      {/* Body */}
+      <div className="project-card-body">
+        <h3 className="project-card-title">
+          <Link href={`/projects/${project.slug}`}>{project.title}</Link>
+        </h3>
 
-        {/* Title */}
-        <Link href={`/projects/${project.slug}`} style={{ textDecoration: 'none' }}>
-          <h3 style={{
-            fontSize: '1.05rem',
-            fontWeight: 700,
-            margin: 0,
-            color: 'var(--text-primary)',
-            lineHeight: 1.3,
-            transition: 'color 0.2s',
-          }}>
-            {project.title}
-          </h3>
-        </Link>
-
-        {/* Tagline */}
         {project.tagline && (
-          <p style={{
-            fontSize: '0.85rem',
-            color: 'var(--text-secondary)',
-            margin: 0,
-            lineHeight: 1.5,
-            flex: 1,
-          }}>
-            {project.tagline}
-          </p>
+          <p className="project-card-tagline">{project.tagline}</p>
         )}
 
-        {/* Tech tags */}
+        <p className="meta">
+          <span className={`status-dot status-${project.status}`} aria-hidden="true" />
+          <span>{statusLabel}</span>
+        </p>
+
         {project.techTags.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: 'auto' }}>
+          <div className="tag-list">
             {project.techTags.slice(0, 5).map(tag => (
-              <span key={tag} style={{
-                padding: '0.15rem 0.55rem',
-                borderRadius: '6px',
-                fontSize: '0.7rem',
-                fontWeight: 500,
-                background: 'color-mix(in srgb, var(--accent-color) 10%, transparent)',
-                color: 'var(--accent-color)',
-                border: '1px solid color-mix(in srgb, var(--accent-color) 20%, transparent)',
-              }}>
-                {tag}
-              </span>
+              <span key={tag} className="tag-chip">{tag}</span>
             ))}
             {project.techTags.length > 5 && (
-              <span style={{
-                padding: '0.15rem 0.55rem',
-                borderRadius: '6px',
-                fontSize: '0.7rem',
-                color: 'var(--text-secondary)',
-              }}>+{project.techTags.length - 5}</span>
+              <span className="tag-chip">+{project.techTags.length - 5}</span>
             )}
           </div>
         )}
       </div>
-    </div>
+
+      {/* External links (above the stretched card link) */}
+      {(safeGithubUrl || safeLiveUrl) && (
+        <div className="project-card-links">
+          {safeGithubUrl && (
+            <a
+              href={safeGithubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="icon-btn"
+              title="View on GitHub"
+              aria-label={`${project.title} on GitHub`}
+            >
+              <GitHubIcon />
+            </a>
+          )}
+          {safeLiveUrl && (
+            <a
+              href={safeLiveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="icon-btn"
+              title="View live site"
+              aria-label={`${project.title} live site`}
+            >
+              <ExternalLinkIcon />
+            </a>
+          )}
+        </div>
+      )}
+    </article>
   )
 }

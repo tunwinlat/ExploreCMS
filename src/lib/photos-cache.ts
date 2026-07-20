@@ -17,13 +17,21 @@ export const getCachedAlbums = unstable_cache(
       const albums = await prisma.photoAlbum.findMany({
         where: { published: true },
         orderBy: [{ featured: 'desc' }, { order: 'asc' }, { createdAt: 'desc' }],
-        include: { _count: { select: { photos: true } } },
+        include: {
+          _count: { select: { photos: true } },
+          // First photo serves as cover fallback when the album has no explicit cover
+          photos: { orderBy: { order: 'asc' }, take: 1, select: { url: true } },
+        },
       });
-      return albums.map((a) => ({
-        ...a,
-        createdAt: a.createdAt.toISOString(),
-        updatedAt: a.updatedAt.toISOString(),
-      }));
+      return albums.map((a) => {
+        const { photos, ...rest } = a;
+        return {
+          ...rest,
+          coverImage: a.coverImage || photos[0]?.url || null,
+          createdAt: a.createdAt.toISOString(),
+          updatedAt: a.updatedAt.toISOString(),
+        };
+      });
     } catch { return []; }
   },
   ['albums-listing'],
