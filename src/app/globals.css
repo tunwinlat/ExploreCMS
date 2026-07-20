@@ -12,8 +12,8 @@
   --bg-color-secondary: #1a1a1f;
   --text-primary: #f0f0f5;
   --text-secondary: #a0a0b0;
-  --accent-color: #6366f1; /* Indigo */
-  --accent-rgb: 99, 102, 241;
+  --accent-color: #7579f4; /* Indigo — nudged lighter for AA text contrast on dark */
+  --accent-rgb: 117, 121, 244;
   --accent-hover: #818cf8;
   --border-color: rgba(255, 255, 255, 0.1);
   
@@ -66,6 +66,8 @@
   --bg-color-secondary: #ffffff;
   --text-primary: #0f172a;
   --text-secondary: #64748b;
+  --accent-color: #4f46e5; /* darker indigo for AA text contrast on light */
+  --accent-hover: #4338ca;
   --border-color: rgba(0, 0, 0, 0.1);
 }
 
@@ -129,24 +131,6 @@ a:hover {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
-}
-
-.article-card {
-  position: relative;
-}
-
-.article-card:hover {
-  transform: translateY(-6px) scale(1.01);
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
-  border-color: rgba(99, 102, 241, 0.4);
-}
-
-.article-card .card-img {
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.article-card:hover .card-img {
-  transform: scale(1.05);
 }
 
 /* Layout Utilities */
@@ -250,13 +234,6 @@ h1, h2, h3, h4 {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* ===== Trending Posts ===== */
-.trending-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.2);
-  border-color: var(--accent-color);
 }
 
 /* ===== Search Box ===== */
@@ -1486,6 +1463,13 @@ h1, h2, h3, h4 {
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
   border-radius: var(--radius-md);
+}
+
+/* ===== Public Focus & Accessibility ===== */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
 }
 
 /* ===== Admin Focus & Accessibility ===== */

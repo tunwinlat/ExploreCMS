@@ -120,7 +120,7 @@ export function Lightbox({ photos, currentIndex, onClose, onNavigate }: Lightbox
       >
         <Image
           src={photo.url}
-          alt={photo.title || 'Photo'}
+          alt={photo.title || `Photo ${currentIndex + 1} of ${photos.length}`}
           width={1400}
           height={900}
           style={{

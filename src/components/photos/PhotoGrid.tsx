@@ -36,7 +36,7 @@ export function PhotoGrid({ photos }: PhotoGridProps) {
           >
             <Image
               src={photo.url}
-              alt={photo.title || 'Photo'}
+              alt={photo.title || `Photo ${i + 1}`}
               fill
               style={{ objectFit: 'cover' }}
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
