@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { FeaturedPostsCarousel } from '@/components/FeaturedPostsCarousel'
+import { LeadStory } from '@/components/blog/LeadStory'
 import { TrendingPosts } from '@/components/TrendingPosts'
 import DynamicPostGrid from '@/components/DynamicPostGrid'
 
@@ -51,34 +51,14 @@ export function BlogContent({
       {/* Left Column */}
       <main>
         {featuredPosts.length > 0 && (
-          <FeaturedPostsCarousel posts={featuredPosts} />
+          <LeadStory posts={featuredPosts} />
         )}
 
-        <section className="latest-posts-section" style={{ marginTop: '3rem' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            marginBottom: '1.5rem',
-          }}>
-            <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, var(--accent-color), var(--accent-hover))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12 6 12 12 16 14"/>
-              </svg>
-            </div>
-            <div>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Latest Stories</h2>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.15rem 0 0 0' }}>Fresh from the blog</p>
-            </div>
+        <section className="latest-posts-section">
+          <div className="section-header">
+            <p className="eyebrow">Fresh from the blog</p>
+            <h2 className="display-2">Latest Stories</h2>
+            <hr className="rule" />
           </div>
 
           <DynamicPostGrid
@@ -93,37 +73,17 @@ export function BlogContent({
       {/* Right Column - Sidebar */}
       <aside className="sidebar">
         {trendingPosts.length > 0 && (
-          <div className="glass" style={{ padding: '1.25rem', marginBottom: '1.5rem' }}>
+          <section className="sidebar-section">
             <TrendingPosts initialPosts={trendingPosts} />
-          </div>
+          </section>
         )}
 
-        <div className="glass" style={{ padding: '1.25rem' }}>
-          <h4 style={{
-            fontSize: '0.9rem',
-            fontWeight: 600,
-            marginBottom: '0.75rem',
-            color: 'var(--text-primary)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M12 16v-4"/>
-              <path d="M12 8h.01"/>
-            </svg>
-            About
-          </h4>
-          <p style={{
-            fontSize: '0.85rem',
-            color: 'var(--text-secondary)',
-            lineHeight: 1.6,
-            margin: 0,
-          }}>
+        <section className="sidebar-section sidebar-about">
+          <p className="eyebrow">About</p>
+          <p className="sidebar-about-text">
             {sidebarAbout || 'Discover articles on technology, creativity, and personal growth.'}
           </p>
-        </div>
+        </section>
       </aside>
     </div>
   )
