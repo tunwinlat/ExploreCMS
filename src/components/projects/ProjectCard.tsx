@@ -83,7 +83,7 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
           </div>
         )}
         {project.featured && (
-          <span className="eyebrow project-card-featured">Featured</span>
+          <span className="eyebrow card-badge">Featured</span>
         )}
       </div>
 
