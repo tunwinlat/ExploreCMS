@@ -98,7 +98,7 @@ These are broken today regardless of redesign. Fix first, ship independently if 
 
 ## Phase 1 — Design tokens & typography foundation
 
-- [ ] **1.1** In `src/app/globals.css` `:root`, add editorial tokens (keep all existing
+- [x] **1.1** In `src/app/globals.css` `:root`, add editorial tokens (keep all existing
   variables untouched for admin/themes):
   - Fonts: `--font-display: 'Fraunces', Georgia, serif` and `--font-body` (already
     effectively theme-controlled; formalize).
@@ -106,12 +106,12 @@ These are broken today regardless of redesign. Fix first, ship independently if 
   - Spacing scale: `--space-1`…`--space-16` (4px base).
   - Line lengths: `--measure: 68ch` for reading columns.
   - Hairline: reuse `--border-color`.
-- [ ] **1.2** Load Fraunces globally in `src/app/layout.tsx` `<head>` (Google Fonts,
+- [x] **1.2** Load Fraunces globally in `src/app/layout.tsx` `<head>` (Google Fonts,
   alongside the existing per-theme `fontUrl`; `display=swap`). Display font is
   theme-independent; themes that already use serif body fonts (marble, royal, autumn,
   copper, steampunk…) get a per-theme `--font-display` override in `themes.css` if the
   pairing clashes — spot-check those themes specifically.
-- [ ] **1.3** Add shared public-page utility classes to `globals.css` (new "Public
+- [x] **1.3** Add shared public-page utility classes to `globals.css` (new "Public
   editorial" section, admin section untouched):
   `.eyebrow` (uppercase section label w/ letterspacing, replaces pill badges),
   `.display-1/.display-2` (serif display headings; *retire `.heading-xl` gradient text on
@@ -119,38 +119,38 @@ These are broken today regardless of redesign. Fix first, ship independently if 
   `.rule` (hairline divider), `.section` (vertical rhythm),
   `.card` (flat surface + hairline + subtle hover border-color change),
   `.meta` (small caps date/author rows).
-- [ ] **1.4** Add a global `@media (prefers-reduced-motion: reduce)` block in
+- [x] **1.4** Add a global `@media (prefers-reduced-motion: reduce)` block in
   `globals.css`: disable `.fade-in-up`, `gradientFlow`, skeleton pulse, card transitions,
   and scroll-behavior smoothing.
-- [ ] **1.5** Verify: `npm run lint && npm run build`; spot-check ≥5 themes (default,
+- [x] **1.5** Verify: `npm run lint && npm run build`; spot-check ≥5 themes (default,
   midnight — production's theme, plus marble/royal/autumn for serif clashes) in dark+light.
 
 ---
 
 ## Phase 2 — Shared chrome (header, footer, hero, icons)
 
-- [ ] **2.1** Create `src/components/SiteFooter.tsx` (settings-aware `footerText`,
+- [x] **2.1** Create `src/components/SiteFooter.tsx` (settings-aware `footerText`,
   hairline top border, small caps). Replace the 6 copy-pasted footers in `page.tsx`,
   `blog/page.tsx`, `projects/page.tsx`, `projects/[slug]/page.tsx`, `photos/page.tsx`,
   `photos/[albumSlug]/page.tsx`.
-- [ ] **2.2** Create `src/components/PageHero.tsx`: `.eyebrow` + display heading + lede,
+- [x] **2.2** Create `src/components/PageHero.tsx`: `.eyebrow` + display heading + lede,
   left-aligned (editorial) instead of the current centered pill + gradient heading.
   Props: `eyebrow`, `title`, `description`.
-- [ ] **2.3** Redesign `src/components/SiteHeader.tsx`: single row, sticky, hairline bottom
+- [x] **2.3** Redesign `src/components/SiteHeader.tsx`: single row, sticky, hairline bottom
   border, backdrop blur; wordmark left (plain strong text, no gradient), component nav as
   text links with an underline active state (fold `ComponentTabs` in, keep
   `aria-current="page"` and mobile horizontal scroll), `SearchBox` + `ThemeToggle` right.
   Remove all inline styles from the header.
-- [ ] **2.4** `src/components/ThemeToggle.tsx`: replace 🌞/🌙 emoji with inline SVG
+- [x] **2.4** `src/components/ThemeToggle.tsx`: replace 🌞/🌙 emoji with inline SVG
   sun/moon; fix the empty-40px-button-before-mount flash (fixed-size placeholder with
   `aria-label`).
-- [ ] **2.5** De-duplicate `src/app/page.tsx` vs `src/app/blog/page.tsx`: extract the shared
+- [x] **2.5** De-duplicate `src/app/page.tsx` vs `src/app/blog/page.tsx`: extract the shared
   render into one server component (e.g. `src/components/blog/BlogHome.tsx`); the two route
   files keep only their redirect/404 differences.
-- [ ] **2.6** Delete dead code: `src/components/Modal.tsx` (orphaned),
+- [x] **2.6** Delete dead code: `src/components/Modal.tsx` (orphaned),
   `src/components/PostFeed.tsx` (unused), the `@modal` parallel route slot in
   `src/app/layout.tsx` + `src/app/@modal/` (verify no references first).
-- [ ] **2.7** Verify: `npm run lint && npm run test && npm run build`; header/footer identical
+- [x] **2.7** Verify: `npm run lint && npm run test && npm run build`; header/footer identical
   on all public routes; mobile header scrolls nav horizontally.
 
 ---
@@ -284,4 +284,6 @@ These are broken today regardless of redesign. Fix first, ship independently if 
 | Date | Phase | What happened | Next step |
 |------|-------|---------------|-----------|
 | 2026-07-20 | — | Plan created (Option B chosen after UI review of tun.lat). | Start Phase 0, item 0.1. |
-| 2026-07-20 | 0 | **Phase 0 complete.** 0.1: excerpt/coverImage now pre-computed in `getBlogPageData()` (`blog-cache.ts`) and passed through both `normalizePosts()` copies; client-side derivation dropped from `DynamicPostGrid`. 0.2: carousel consumes pre-computed fields. 0.3: post page — `'ExploreCMS'` fallbacks, footer respects `footerText`, hardcoded author role removed, nav built from `enabledComponents`. 0.4: three per-card `<style>` blocks moved to `globals.css` ("Public Card Hover States"). 0.5: alt text on post hero + related cards. 0.6: blog covers now `next/image` (`fill`, sizes) — **added `images.remotePatterns: https/**` to `next.config.ts`** since covers come from arbitrary hosts (trade-off: any https image can be optimized). 0.7: 0-count badge hidden on empty albums. 0.8: lint clean, 189/189 tests pass, `next build` succeeds. | Start Phase 1, item 1.1 (design tokens). |
+| 2026-07-20 | 0 | **Phase 0 complete.** 0.1: excerpt/coverImage now pre-computed in `getBlogPageData()` (`blog-cache.ts`) and passed through both `normalizePosts()` copies; client-side derivation dropped from `DynamicPostGrid`. 0.2: carousel consumes pre-computed fields. 0.3: post page — `'ExploreCMS'` fallbacks, footer respects `footerText`, hardcoded author role removed, nav built from `enabledComponents`. 0.4: three per-card `<style>` blocks moved to `globals.css` ("Public Card Hover States"). 0.5: alt text on post hero + related cards. 0.6: blog covers now `next/image` (`fill`, sizes) — **added `images.remotePatterns: https/**` to `next.config.ts`** since covers come from arbitrary hosts (trade-off: any https image can be optimized). 0.7: 0-count badge hidden on empty albums. 0.8: lint clean, 189/189 tests pass, `next build` succeeds. **Committed `f184ea5`, pushed to `origin/related-posts-empty-end-of-posts`.** | Start Phase 1, item 1.1. |
+| 2026-07-20 | 1 | **Phase 1 complete.** 1.1: editorial tokens in `:root` (`--font-display`, `--text-*` scale, `--space-*` scale, `--measure`). 1.2: Fraunces variable font loaded globally in `layout.tsx` (eslint-disable for the Pages-Router-oriented font rule); `--font-display` overrides for 7 serif themes (royal/marble/autumn/gothic/parchment/copper/steampunk) in `themes.css`. 1.3: public utilities `.eyebrow`, `.display-1/2`, `.lede`, `.rule`, `.section`, `.card`, `.meta`. 1.4: global `prefers-reduced-motion` block. 1.5: lint clean, 189/189 tests, build green. No visual change yet — foundations only. **Not committed yet.** | Commit Phase 1, then Phase 2 item 2.1 (SiteFooter). |
+| 2026-07-20 | 2 | **Phase 2 complete.** 2.1: `SiteFooter.tsx` replaces all 6 duplicated footers. 2.2: `PageHero.tsx` created (adoption in Phases 3–5). 2.3: `SiteHeader` rebuilt — sticky + blur + hairline, serif wordmark, tabs as text links with `aria-current` underline, wraps to scrollable row 2 on mobile; `ComponentTabs` rewritten without inline styles/icons. 2.4: `ThemeToggle` SVG sun/moon on `.icon-btn`, no mount flash. 2.5: shared `BlogHome.tsx`; `page.tsx`/`blog/page.tsx` now thin shells. 2.6: deleted `Modal.tsx`, `PostFeed.tsx`, `@modal/` slot. Also added missing `--radius-sm`. 2.7: lint clean, 189/189 tests, build green (one fix: `sidebarAbout ?? undefined`). **Phases 1+2 uncommitted in working tree.** | Commit Phases 1+2, then Phase 3 item 3.1 (lead story). |

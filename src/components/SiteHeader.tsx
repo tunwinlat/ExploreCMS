@@ -21,39 +21,23 @@ export function SiteHeader({ title, enabledComponents, defaultComponent, showSea
   const showTabs = enabledComponents.length > 1
 
   return (
-    <header style={{
-      borderBottom: '1px solid var(--border-color)',
-      padding: '1rem 0',
-      marginBottom: '2rem',
-    }}>
-      <div className="container">
-        {/* Top bar: logo + actions */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Link href="/" style={{
-            fontSize: '1.5rem',
-            fontWeight: 800,
-            background: 'linear-gradient(135deg, var(--accent-color), var(--accent-hover))',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}>
-            {title}
-          </Link>
+    <header className="site-header">
+      <div className="container site-header-inner">
+        <Link href="/" className="site-wordmark">
+          {title}
+        </Link>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            {showSearch && <SearchBox />}
-            <ThemeToggle />
-          </div>
-        </div>
-
-        {/* Component Tabs row */}
         {showTabs && (
-          <div style={{ marginTop: '0.875rem' }}>
-            <ComponentTabs
-              enabledComponents={enabledComponents}
-              defaultComponent={defaultComponent}
-            />
-          </div>
+          <ComponentTabs
+            enabledComponents={enabledComponents}
+            defaultComponent={defaultComponent}
+          />
         )}
+
+        <div className="site-header-actions">
+          {showSearch && <SearchBox />}
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   )
