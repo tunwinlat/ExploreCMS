@@ -157,32 +157,32 @@ These are broken today regardless of redesign. Fix first, ship independently if 
 
 ## Phase 3 — Blog redesign
 
-- [ ] **3.1** Lead story: replace the auto-playing `FeaturedPostsCarousel` with a
+- [x] **3.1** Lead story: replace the auto-playing `FeaturedPostsCarousel` with a
   static editorial lead — large 16/9 cover, serif `display-1` headline, real excerpt
   (uses 0.1/0.2 data), `.meta` row (author, date, reading time if cheap). Multiple featured
   posts → 1 lead + up to 2 secondary stories in a row beneath. **Remove autoplay entirely.**
   (Delete `FeaturedPostsCarousel.tsx` once replaced.)
-- [ ] **3.2** "Latest Stories" becomes a magazine list in `DynamicPostGrid.tsx`: full-width
+- [x] **3.2** "Latest Stories" becomes a magazine list in `DynamicPostGrid.tsx`: full-width
   rows (small fixed-aspect thumbnail left, headline + 2-line excerpt + meta right) separated
   by hairlines — *or* a 2-column grid on wide screens. Drop the masonry auto-fill grid and
   the lift-scale hover; hover = headline color/underline only. Keep cursor-based infinite
   scroll + `role="status"` loading announcement; add an end-of-list marker ("You've reached
   the end") instead of the empty sentinel.
-- [ ] **3.3** Filter nav: replace pill buttons + hover dropdowns with a simple underline
+- [x] **3.3** Filter nav: replace pill buttons + hover dropdowns with a simple underline
   tab row (Latest / Featured / tags). If dropdowns survive, add real menu keyboard support
   (arrow keys, Home/End, Escape, `aria-expanded`).
-- [ ] **3.4** Sidebar (`BlogContent.tsx`): keep position, restyle — Trending as a numbered
+- [x] **3.4** Sidebar (`BlogContent.tsx`): keep position, restyle — Trending as a numbered
   editorial list (no glass panel), About as an "editor's note" blockquote style. Replace
   `onMouseEnter/Leave` hover in `TrendingPosts.tsx` with CSS `:hover`/`:focus-visible`.
-- [ ] **3.5** Section headers: drop the gradient icon tile; `.eyebrow` + `.display-2` +
+- [x] **3.5** Section headers: drop the gradient icon tile; `.eyebrow` + `.display-2` +
   `.rule`.
-- [ ] **3.6** Empty state: typographic ("No stories yet."), no emoji.
-- [ ] **3.7** Update `src/app/blog/loading.tsx` (and root loading if present) skeletons to
+- [x] **3.6** Empty state: typographic ("No stories yet."), no emoji.
+- [x] **3.7** Update `src/app/blog/loading.tsx` (and root loading if present) skeletons to
   match the new list layout.
-- [ ] **3.8** Update/extend tests: `src/components/blog/BlogContent.test.tsx`,
+- [x] **3.8** Update/extend tests: `src/components/blog/BlogContent.test.tsx`,
   `src/components/TrendingPosts.test.tsx`, plus coverage for the new lead-story and list
   rendering (excerpt/cover present, filters work, end-of-list marker).
-- [ ] **3.9** Verify: `npm run lint && npm run test && npm run build`; home + `/blog`
+- [x] **3.9** Verify: `npm run lint && npm run test && npm run build`; home + `/blog`
   parity; tag filter URLs (`/?tag=x`) still work.
 
 ---
@@ -287,3 +287,5 @@ These are broken today regardless of redesign. Fix first, ship independently if 
 | 2026-07-20 | 0 | **Phase 0 complete.** 0.1: excerpt/coverImage now pre-computed in `getBlogPageData()` (`blog-cache.ts`) and passed through both `normalizePosts()` copies; client-side derivation dropped from `DynamicPostGrid`. 0.2: carousel consumes pre-computed fields. 0.3: post page — `'ExploreCMS'` fallbacks, footer respects `footerText`, hardcoded author role removed, nav built from `enabledComponents`. 0.4: three per-card `<style>` blocks moved to `globals.css` ("Public Card Hover States"). 0.5: alt text on post hero + related cards. 0.6: blog covers now `next/image` (`fill`, sizes) — **added `images.remotePatterns: https/**` to `next.config.ts`** since covers come from arbitrary hosts (trade-off: any https image can be optimized). 0.7: 0-count badge hidden on empty albums. 0.8: lint clean, 189/189 tests pass, `next build` succeeds. **Committed `f184ea5`, pushed to `origin/related-posts-empty-end-of-posts`.** | Start Phase 1, item 1.1. |
 | 2026-07-20 | 1 | **Phase 1 complete.** 1.1: editorial tokens in `:root` (`--font-display`, `--text-*` scale, `--space-*` scale, `--measure`). 1.2: Fraunces variable font loaded globally in `layout.tsx` (eslint-disable for the Pages-Router-oriented font rule); `--font-display` overrides for 7 serif themes (royal/marble/autumn/gothic/parchment/copper/steampunk) in `themes.css`. 1.3: public utilities `.eyebrow`, `.display-1/2`, `.lede`, `.rule`, `.section`, `.card`, `.meta`. 1.4: global `prefers-reduced-motion` block. 1.5: lint clean, 189/189 tests, build green. No visual change yet — foundations only. **Not committed yet.** | Commit Phase 1, then Phase 2 item 2.1 (SiteFooter). |
 | 2026-07-20 | 2 | **Phase 2 complete.** 2.1: `SiteFooter.tsx` replaces all 6 duplicated footers. 2.2: `PageHero.tsx` created (adoption in Phases 3–5). 2.3: `SiteHeader` rebuilt — sticky + blur + hairline, serif wordmark, tabs as text links with `aria-current` underline, wraps to scrollable row 2 on mobile; `ComponentTabs` rewritten without inline styles/icons. 2.4: `ThemeToggle` SVG sun/moon on `.icon-btn`, no mount flash. 2.5: shared `BlogHome.tsx`; `page.tsx`/`blog/page.tsx` now thin shells. 2.6: deleted `Modal.tsx`, `PostFeed.tsx`, `@modal/` slot. Also added missing `--radius-sm`. 2.7: lint clean, 189/189 tests, build green (one fix: `sidebarAbout ?? undefined`). **Phases 1+2 uncommitted in working tree.** | Commit Phases 1+2, then Phase 3 item 3.1 (lead story). |
+| 2026-07-20 | 1–2 | Phases 1+2 committed `7f8b2ec`, pushed to `origin/related-posts-empty-end-of-posts`. | Start Phase 3, item 3.1. |
+| 2026-07-20 | 3 | **Phase 3 complete.** 3.1: `LeadStory.tsx` (1 lead + up to 2 secondary, static) replaces carousel — `FeaturedPostsCarousel.tsx` + all carousel/dropdown CSS deleted. 3.2: `DynamicPostGrid` now a magazine list (`.post-row`: thumb left, serif title, 2-line excerpt, tag chips, meta) + "You've reached the end." marker. 3.3: pill/dropdown filters → `.filter-tab` underline tabs (dropdown nav items flattened to tag tabs). 3.4: sidebar un-glassed — `.sidebar-section` hairlines, About as italic serif editor's note, TrendingPosts hover via `.trending-link` CSS (no JS handlers). 3.5: section headers = eyebrow + display-2 + rule; blog home hero → `PageHero` (kills `heading-xl` on blog). 3.6: `.empty-state` typographic. 3.7: blog loading skeleton matches new layout. 3.8: 2 new BlogContent tests (lead story link/excerpt, list excerpt + end marker). 3.9: lint clean, 191/191 tests, build green. **Not committed yet.** | Commit Phase 3, then Phase 4 item 4.1 (unified projects grid). |

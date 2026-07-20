@@ -18,7 +18,7 @@ type Post = {
   slug: string
   isFeatured: boolean
   author: { username: string, firstName: string | null }
-  createdAt: string | Date 
+  createdAt: string | Date
   tags: { name: string, slug: string }[]
   views?: { uniqueViews: number }[]
   content?: string
@@ -26,99 +26,14 @@ type Post = {
   coverImage?: string | null
 }
 
-
-function DropdownNav({ item, activeFilter, setActiveFilter }: {
-  item: NavItem,
-  activeFilter: {type: 'latest'|'featured'|'tag', target?: string},
-  setActiveFilter: (filter: {type: 'latest'|'featured'|'tag', target?: string}) => void
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div
-      className="dropdown-container"
-      style={{ position: 'relative', display: 'inline-block' }}
-      onMouseEnter={() => setIsOpen(true)}
-      onMouseLeave={() => setIsOpen(false)}
-      onFocus={() => setIsOpen(true)}
-      onBlur={(e) => {
-        if (!e.currentTarget.contains((e.relatedTarget as Node) || null)) {
-          setIsOpen(false);
-        }
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') {
-          setIsOpen(false);
-        }
-      }}
-    >
-      <button
-        className="btn glass"
-        aria-haspopup="menu"
-        aria-expanded={isOpen}
-        aria-controls={isOpen ? `dropdown-menu-${item.id}` : undefined}
-        style={{ padding: '0.5rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-      >
-        {item.label} <span style={{ fontSize: '0.8rem' }} aria-hidden="true">▼</span>
-      </button>
-      <div
-        id={`dropdown-menu-${item.id}`}
-        className="dropdown-menu glass"
-        role="menu"
-        style={{
-          position: 'absolute',
-          top: '100%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          marginTop: '0.5rem',
-          minWidth: '200px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.25rem',
-          padding: '0.5rem',
-          zIndex: 50,
-          opacity: isOpen ? 1 : 0,
-          visibility: isOpen ? 'visible' : 'hidden',
-          transition: 'all var(--transition-fast)'
-        }}
-      >
-        {item.children?.map(child => (
-          <button
-            key={child.id}
-            role="menuitem"
-            onClick={() => {
-              setActiveFilter({ type: 'tag', target: child.tagSlug });
-              setIsOpen(false);
-            }}
-            aria-pressed={activeFilter.target === child.tagSlug}
-            style={{
-              padding: '0.75rem 1rem',
-              background: activeFilter.target === child.tagSlug ? 'var(--accent-color)' : 'transparent',
-              color: activeFilter.target === child.tagSlug ? 'white' : 'var(--text-primary)',
-              border: 'none',
-              textAlign: 'left',
-              cursor: 'pointer',
-              borderRadius: 'var(--radius-sm)',
-              transition: 'background var(--transition-fast)'
-            }}
-            className="dropdown-item"
-          >
-            {child.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-export default function DynamicPostGrid({ 
-  initialPosts, 
-  navItems, 
+export default function DynamicPostGrid({
+  initialPosts,
+  navItems,
   initialCursor,
   initialTag,
-}: { 
-  initialPosts: Post[], 
-  navItems: NavItem[], 
+}: {
+  initialPosts: Post[],
+  navItems: NavItem[],
   initialCursor?: string,
   initialTag?: string,
 }) {
@@ -126,12 +41,12 @@ export default function DynamicPostGrid({
   const [activeFilter, setActiveFilter] = useState<{type: 'latest'|'featured'|'tag', target?: string}>(
     initialTag ? { type: 'tag', target: initialTag } : { type: 'latest' }
   )
-  
+
   // Pagination State
   const [cursor, setCursor] = useState<string | undefined>(initialCursor)
   const [loading, setLoading] = useState(!!initialTag)
   const [hasMore, setHasMore] = useState(initialTag ? false : !!initialCursor)
-  
+
   const observerRef = useRef<IntersectionObserver | null>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
@@ -180,7 +95,7 @@ export default function DynamicPostGrid({
   const fetchNextPage = useCallback(async () => {
     if (loading || !hasMore || !cursor) return
     setLoading(true)
-    
+
     try {
       const params = new URLSearchParams({ cursor })
       if (activeFilter.type === 'tag' && activeFilter.target) {
@@ -188,7 +103,7 @@ export default function DynamicPostGrid({
       }
       const res = await fetch(`/api/posts?${params.toString()}`)
       const data = await res.json()
-      
+
       if (data.posts && data.posts.length > 0) {
         setPosts(prev => [...prev, ...data.posts])
         setCursor(data.nextCursor)
@@ -214,7 +129,7 @@ export default function DynamicPostGrid({
             fetchNextPage()
           }
         },
-        { rootMargin: '200px' } 
+        { rootMargin: '200px' }
       )
       observerRef.current.observe(currentTarget)
     }
@@ -241,113 +156,101 @@ export default function DynamicPostGrid({
 
   return (
     <div>
-      {/* Primary Navigation System */}
-      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '3rem', flexWrap: 'wrap' }}>
-        {navItems.map((item) => {
+      {/* Filter tabs (dropdown nav items are flattened into their tag children) */}
+      <div className="filter-tabs" role="group" aria-label="Filter posts">
+        {navItems.flatMap((item) => {
           if (item.type === 'dropdown') {
-            return (
-              <DropdownNav
-                key={item.id}
-                item={item}
-                activeFilter={activeFilter}
-                setActiveFilter={setActiveFilter}
-              />
-            )
+            return (item.children ?? []).map(child => (
+              <button
+                key={child.id}
+                onClick={() => setActiveFilter({ type: 'tag', target: child.tagSlug })}
+                aria-pressed={activeFilter.type === 'tag' && activeFilter.target === child.tagSlug}
+                className="filter-tab"
+              >
+                {child.label}
+              </button>
+            ))
           }
 
-          // Normal tag or latest/featured button
           const isActive = activeFilter.type === item.type && (!item.tagSlug || item.tagSlug === activeFilter.target)
-          
-          return (
+
+          return [(
             <button
               key={item.id}
               onClick={() => setActiveFilter({ type: item.type as 'latest'|'featured'|'tag', target: item.tagSlug })}
               aria-pressed={isActive}
-              className={`btn ${isActive ? 'btn-primary' : 'glass'}`}
-              style={{ transition: 'all var(--transition-normal)', padding: '0.5rem 1.25rem' }}
+              className="filter-tab"
             >
               {item.label}
             </button>
-          )
+          )]
         })}
       </div>
 
-      {/* Masonry / Pinterest Style Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-        gap: '2rem',
-        alignItems: 'start'
-      }}>
-        {processedFilteredPosts.length === 0 ? (
-          <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-secondary)' }}>
-            {loading ? 'Loading posts...' : 'No posts found for this view.'}
-          </p>
-        ) : (
-          processedFilteredPosts.map(post => {
+      {/* Magazine list */}
+      {processedFilteredPosts.length === 0 ? (
+        <p className="empty-state">
+          {loading ? 'Loading posts…' : 'No posts found for this view.'}
+        </p>
+      ) : (
+        <div className="post-list">
+          {processedFilteredPosts.map(post => {
+            const createdAt = typeof post.createdAt === 'string' ? post.createdAt : post.createdAt.toISOString()
             return (
-              <Link key={post.id} href={`/post/${post.slug}`} style={{ textDecoration: 'none' }}>
-                <article className="glass article-card fade-in-up" style={{
-                  transition: 'all var(--transition-normal)',
-                  breakInside: 'avoid',
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  padding: 0,
-                  overflow: 'hidden'
-                }}>
-                  {post.coverImage && (
-                    <div style={{ width: '100%', height: '240px', overflow: 'hidden', borderBottom: '1px solid var(--border-color)', position: 'relative' }}>
-                      <Image src={post.coverImage} alt={post.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px" style={{ objectFit: 'cover' }} className="card-img" />
-                    </div>
+              <Link key={post.id} href={`/post/${post.slug}`} className="post-row">
+                {post.coverImage && (
+                  <div className="post-row-thumb">
+                    <Image
+                      src={post.coverImage}
+                      alt={post.title}
+                      fill
+                      sizes="(max-width: 640px) 100vw, 220px"
+                      style={{ objectFit: 'cover' }}
+                    />
+                  </div>
+                )}
+
+                <div className="post-row-body">
+                  {post.isFeatured && <span className="eyebrow">Featured</span>}
+                  <h2 className="post-row-title">{post.title}</h2>
+
+                  {post.excerpt && (
+                    <p className="post-row-excerpt">{post.excerpt}</p>
                   )}
-                  
-                  <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                    {post.isFeatured && (
-                      <div style={{ display: 'inline-block', background: 'var(--accent-color)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '1rem', width: 'fit-content', letterSpacing: '0.05em' }}>
-                        FEATURED
-                      </div>
-                    )}
-                    <h2 style={{ fontSize: '1.4rem', marginBottom: '0.75rem', color: 'var(--text-primary)', lineHeight: 1.3, fontWeight: 700 }}>
-                      {post.title}
-                    </h2>
-                    
-                    {post.excerpt && (
-                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.5rem', lineHeight: 1.6, flex: 1 }}>
-                        {post.excerpt}
-                      </p>
-                    )}
-                    
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
+
+                  {post.tags.length > 0 && (
+                    <div className="post-row-tags">
                       {post.tags.map(tag => (
-                        <span key={tag.name} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 500 }}>
-                          {tag.name}
-                        </span>
+                        <span key={tag.name} className="tag-chip">{tag.name}</span>
                       ))}
                     </div>
+                  )}
 
-                    <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 500 }}>
-                      <span>{post.author.firstName || post.author.username}</span>
-                      <span>{new Date(post.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                    </div>
-                  </div>
-                </article>
+                  <p className="meta post-row-meta">
+                    <span>{post.author.firstName || post.author.username}</span>
+                    <span aria-hidden="true">·</span>
+                    <time dateTime={createdAt}>
+                      {new Date(createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </time>
+                  </p>
+                </div>
               </Link>
             )
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
 
-      <div 
-        ref={loadMoreRef} 
-        style={{ height: '40px', margin: '3rem 0', display: 'flex', justifyContent: 'center' }}
+      <div
+        ref={loadMoreRef}
+        className="post-list-status"
         role="status"
         aria-live="polite"
       >
-        {loading && (
-          <div style={{ color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.9rem', animation: 'pulse 2s infinite' }} aria-label="Loading more stories">
-            Loading more stories...
-          </div>
+        {loading && processedFilteredPosts.length > 0 && (
+          <span aria-label="Loading more stories">Loading more stories…</span>
+        )}
+        {!loading && !hasMore && processedFilteredPosts.length > 0 && (
+          <span className="post-list-end">You&rsquo;ve reached the end.</span>
         )}
       </div>
     </div>

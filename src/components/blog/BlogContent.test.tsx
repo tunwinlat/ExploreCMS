@@ -82,4 +82,45 @@ describe('BlogContent', () => {
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     )
   })
+
+  it('renders the lead story with excerpt and a link to the post', () => {
+    render(
+      <BlogContent
+        featuredPosts={[
+          {
+            ...basePost,
+            id: 'featured-1',
+            title: 'Featured Story',
+            slug: 'featured-story',
+            isFeatured: true,
+            excerpt: 'An excerpt of the featured story.',
+            coverImage: 'https://example.com/cover.jpg',
+          },
+        ]}
+        trendingPosts={[]}
+        latestPosts={[]}
+        navItems={[]}
+      />
+    )
+
+    expect(screen.getByRole('heading', { name: 'Featured Story' })).toBeTruthy()
+    expect(screen.getByText('An excerpt of the featured story.')).toBeTruthy()
+    expect(screen.getByRole('link', { name: /Featured Story/ }).getAttribute('href')).toBe('/post/featured-story')
+  })
+
+  it('renders latest posts as rows with excerpts and an end-of-list marker', () => {
+    render(
+      <BlogContent
+        featuredPosts={[]}
+        trendingPosts={[]}
+        latestPosts={[
+          { ...basePost, excerpt: 'Latest excerpt text.' },
+        ]}
+        navItems={[]}
+      />
+    )
+
+    expect(screen.getByText('Latest excerpt text.')).toBeTruthy()
+    expect(screen.getByText(/reached the end/i)).toBeTruthy()
+  })
 })

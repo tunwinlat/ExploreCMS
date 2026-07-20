@@ -6,6 +6,7 @@
 
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { PageHero } from "@/components/PageHero";
 import { BlogContent } from "@/components/blog/BlogContent";
 import { PopupToast } from "@/components/PopupToast";
 import { ViewTracker } from "@/components/ViewTracker";
@@ -85,14 +86,10 @@ export function BlogHome({ settings, popupConfig, blogData, initialTag }: {
       />
 
       {/* Hero Section */}
-      <div className="container" style={{ marginBottom: '2rem' }}>
-        <div style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 2rem' }}>
-          <h1 className="heading-xl">{settings?.headerTitle || "Explore. Create. Inspire."}</h1>
-          <p style={{ fontSize: '1.15rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-            {settings?.headerDescription || "Welcome to my personal corner of the internet."}
-          </p>
-        </div>
-      </div>
+      <PageHero
+        title={settings?.headerTitle || "Explore. Create. Inspire."}
+        description={settings?.headerDescription || "Welcome to my personal corner of the internet."}
+      />
 
       <div className="container">
         <BlogContent

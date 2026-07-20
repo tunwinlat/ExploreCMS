@@ -123,6 +123,7 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
             <li key={post.id}>
               <Link
                 href={`/post/${post.slug}`}
+                className="trending-link"
                 style={{
                   display: 'flex',
                   alignItems: 'flex-start',
@@ -133,8 +134,6 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
                   transition: 'background 0.15s ease',
                   color: 'inherit'
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-color-secondary)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
                 {/* Number */}
                 <span style={{
