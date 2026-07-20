@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ['nodemailer'],
+  images: {
+    // Post covers are extracted from post HTML and may live on any host
+    // (Bunny CDN, Craft.do, embedded third-party images), so allow any https origin.
+    remotePatterns: [{ protocol: 'https', hostname: '**' }],
+  },
   async headers() {
     return [
       {

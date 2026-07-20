@@ -13,8 +13,11 @@ interface Post {
   title: string
   slug: string
   content: string
+  contentFormat?: string
   isFeatured: boolean
   createdAt: string
+  excerpt?: string
+  coverImage?: string | null
   author: { username: string; firstName: string | null }
   tags: { name: string; slug: string }[]
   views: any[]

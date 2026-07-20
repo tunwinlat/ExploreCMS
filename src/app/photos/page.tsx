@@ -91,20 +91,6 @@ export default async function PhotosPage() {
                 style={{ textDecoration: 'none' }}
                 className="album-card"
               >
-                <style>{`
-                  .album-card > div {
-                    border-radius: 16px;
-                    overflow: hidden;
-                    border: 1px solid var(--border-color);
-                    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-                    background: var(--bg-color-secondary, rgba(0,0,0,0.02));
-                  }
-                  .album-card:hover > div {
-                    transform: translateY(-4px);
-                    box-shadow: 0 12px 40px color-mix(in srgb, var(--accent-color) 12%, transparent);
-                    border-color: color-mix(in srgb, var(--accent-color) 35%, transparent);
-                  }
-                `}</style>
                 <div>
                   {/* Album cover */}
                   <div style={{ aspectRatio: '4/3', position: 'relative', overflow: 'hidden' }}>
@@ -132,7 +118,8 @@ export default async function PhotosPage() {
                       </div>
                     )}
 
-                    {/* Photo count badge */}
+                    {/* Photo count badge (hidden for empty albums) */}
+                    {album._count.photos > 0 && (
                     <div style={{
                       position: 'absolute',
                       bottom: '0.6rem',
@@ -154,6 +141,7 @@ export default async function PhotosPage() {
                       </svg>
                       {album._count.photos}
                     </div>
+                    )}
 
                     {/* Featured badge */}
                     {album.featured && (

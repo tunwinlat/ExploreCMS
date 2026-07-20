@@ -8,14 +8,14 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { getExcerpt, getFirstImage } from '@/lib/renderContent'
 
 interface FeaturedPost {
   id: string
   title: string
   slug: string
-  content: string
   createdAt: string
+  excerpt?: string
+  coverImage?: string | null
   author: { username: string; firstName: string | null }
   tags: { name: string; slug: string }[]
   views?: { uniqueViews: number }[]
@@ -55,9 +55,8 @@ export function FeaturedPostsCarousel({ posts }: FeaturedPostsCarouselProps) {
   if (posts.length === 0) return null
 
   const currentPost = posts[currentIndex]
-  const contentFormat = (currentPost as any).contentFormat
-  const excerpt = getExcerpt(currentPost.content, contentFormat, 200)
-  const coverImage = getFirstImage(currentPost.content, contentFormat)
+  const excerpt = currentPost.excerpt ?? ''
+  const coverImage = currentPost.coverImage ?? null
 
   return (
     <section className="featured-carousel" style={{ marginBottom: '4rem' }}>

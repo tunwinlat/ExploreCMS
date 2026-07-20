@@ -15,6 +15,7 @@ import { renderPostContent } from '@/lib/renderContent'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { getFirstImage } from '@/lib/renderContent'
 import { getSettings } from '@/lib/settings-cache'
+import { parseComponentConfig, COMPONENTS } from '@/lib/components-config'
 import './post.css'
 
 export const dynamic = 'force-dynamic';
@@ -76,16 +77,19 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   const coverImage = getFirstImage(post.content, (post as any).contentFormat)
   const readingTime = getReadingTime(post.content)
-  
+
   // Get primary tag for category display
   const primaryTag = post.tags[0]
-  
-  // Navigation items based on settings
+
+  // Navigation items built from enabled components so disabled sections are never linked
+  const { enabledComponents } = parseComponentConfig(settings)
   const navItems = [
-    { label: 'Home', href: '/' },
-    { label: 'Blog', href: '/blog', active: true },
-    { label: 'Projects', href: '/projects' },
-    { label: 'Gallery', href: '/photos' },
+    { label: 'Home', href: '/', active: false },
+    ...COMPONENTS.filter(c => enabledComponents.includes(c.id)).map(c => ({
+      label: c.label,
+      href: c.path,
+      active: c.id === 'blog',
+    })),
   ]
 
   return (
@@ -94,7 +98,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       <nav className="post-nav">
         <div className="post-nav-container">
           <Link href="/" className="post-nav-logo">
-            {settings?.title || 'Oceanic Velocity'}
+            {settings?.title || 'ExploreCMS'}
           </Link>
           
           <div className="post-nav-links">
@@ -132,7 +136,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           <div className="post-hero-background">
             <Image
               src={coverImage}
-              alt=""
+              alt={post.title}
               fill
               priority
               className="post-hero-image"
@@ -169,9 +173,6 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               <div className="post-hero-author-info">
                 <span className="post-hero-author-name">
                   {post.author.firstName || post.author.username}
-                </span>
-                <span className="post-hero-author-role">
-                  {post.author.role === 'OWNER' ? 'Design Strategist & Explorer' : 'Author'}
                 </span>
               </div>
             </div>
@@ -223,17 +224,11 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       {/* Footer */}
       <footer className="post-footer">
         <div className="post-footer-brand">
-          {settings?.title || 'Oceanic Velocity'}
+          {settings?.title || 'ExploreCMS'}
         </div>
-        
-        {settings?.footerText && (
-          <div className="post-footer-text">
-            {settings.footerText}
-          </div>
-        )}
-        
+
         <div className="post-footer-copyright">
-          © {new Date().getFullYear()} {settings?.title || 'Oceanic Velocity'}. All rights reserved.
+          © {new Date().getFullYear()} {settings?.footerText || `${settings?.title || 'ExploreCMS'}. All rights reserved.`}
         </div>
       </footer>
 

@@ -26,6 +26,8 @@ function normalizePosts(posts: BlogListingPost[]) {
     contentFormat: p.contentFormat || 'html',
     isFeatured: p.isFeatured,
     createdAt: typeof p.createdAt === 'string' ? p.createdAt : p.createdAt?.toISOString() || new Date().toISOString(),
+    excerpt: p.excerpt ?? '',
+    coverImage: p.coverImage ?? null,
     author: { username: p.author?.username || 'admin', firstName: p.author?.firstName || null },
     tags: Array.isArray(p.tags) ? p.tags.map((t) => ({ name: t.name, slug: t.slug })) : [],
     views: p.views ? [p.views] : [],
