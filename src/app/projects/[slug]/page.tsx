@@ -7,6 +7,7 @@
 import { normalizeUrl } from '@/lib/urlUtils'
 import { prisma } from "@/lib/db";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import { parseComponentConfig, COMPONENTS } from "@/lib/components-config";
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -288,16 +289,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         )}
       </div>
 
-      <footer className="container" style={{
-        borderTop: '1px solid var(--border-color)',
-        paddingTop: '2rem',
-        textAlign: 'center',
-        color: 'var(--text-secondary)',
-        fontSize: '0.9rem',
-        marginBottom: '2rem',
-      }}>
-        <p>© {new Date().getFullYear()} {settings?.footerText || `${settings?.title || 'ExploreCMS'}. All rights reserved.`}</p>
-      </footer>
+      <SiteFooter title={settings?.title} footerText={settings?.footerText} />
       <ViewTracker />
     </div>
   );

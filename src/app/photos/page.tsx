@@ -5,6 +5,7 @@
  */
 
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import { parseComponentConfig, COMPONENTS } from "@/lib/components-config";
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -195,16 +196,7 @@ export default async function PhotosPage() {
         )}
       </div>
 
-      <footer className="container" style={{
-        borderTop: '1px solid var(--border-color)',
-        paddingTop: '2rem',
-        textAlign: 'center',
-        color: 'var(--text-secondary)',
-        fontSize: '0.9rem',
-        marginBottom: '2rem',
-      }}>
-        <p>© {new Date().getFullYear()} {settings?.footerText || `${settings?.title || 'ExploreCMS'}. All rights reserved.`}</p>
-      </footer>
+      <SiteFooter title={settings?.title} footerText={settings?.footerText} />
 
       {popupConfig?.enabled && popupConfig.content && (
         <PopupToast title={popupConfig.title || ''} content={popupConfig.content} displayMode={popupConfig.displayMode || 'once'} />
