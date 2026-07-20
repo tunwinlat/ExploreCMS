@@ -37,6 +37,7 @@ ExploreCMS/
 │   │   │   ├── dashboard/      # Main admin UI
 │   │   │   │   ├── posts/      # Post management
 │   │   │   │   ├── settings/   # Site settings
+│   │   │   │   ├── seo/        # SEO configuration (OWNER only)
 │   │   │   │   └── ...
 │   │   │   └── setup/          # First-time setup wizard
 │   │   ├── api/                # API routes
@@ -282,6 +283,13 @@ Sensitive tokens encrypted with AES-256-GCM when `ENCRYPTION_KEY` is set:
 - Each theme can specify Google Font URL
 - CSS variables adapt to active theme
 - Theme stored in `SiteSettings.theme`
+
+### SEO
+- Site-wide SEO config lives on `SiteSettings` (`seo*` fields), edited at `/admin/dashboard/seo`; per-post overrides (`Post.seo*`) live in the post editor's SEO panel
+- All public-page metadata is built via `src/lib/seo.ts` helpers (`buildBaseMetadata`, `buildPageMetadata`, `buildPostMetadata`) — use them for any new public page instead of hand-writing `generateMetadata`
+- `seoSiteUrl` drives `metadataBase`, canonicals, `sitemap.ts`, `robots.ts` and `/llms.txt`; sitemap/llms.txt return empty/404 without it
+- OG share image precedence: per-post override → first content image → site default upload → auto-generated card (`opengraph-image.tsx` conventions)
+- JSON-LD (`WebSite`, `BlogPosting`, `BreadcrumbList`) is injected from `seo.ts` builders; do not hand-write ld+json scripts
 
 ## Development Workflow
 

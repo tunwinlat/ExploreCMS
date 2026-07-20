@@ -73,6 +73,12 @@ model Post {
   language            String  @default("en") // ISO 639-1 language code
   translationGroupId  String? // Links translated posts together (shares same ID)
 
+  // SEO overrides (null/empty = auto-derive from content + site settings)
+  seoDescription  String? // meta description override
+  seoOgImageUrl   String? // social share image override
+  seoCanonicalUrl String? // canonical URL override
+  seoNoIndex      Boolean @default(false) // true = hide this post from search engines
+
   idempotencyKeys PostIdempotencyKey[]
 }
 
@@ -161,6 +167,16 @@ model SiteSettings {
   smtpSecure      Boolean @default(false)
   smtpUser        String?
   smtpPassword    String? // Encrypted
+
+  // SEO Config
+  seoSiteUrl            String? // canonical base URL, e.g. https://blog.example.com
+  seoDescription        String? // default meta description (fallback: headerDescription)
+  seoOgImageUrl         String? // default social share image
+  seoTwitterHandle      String? // twitter:site handle, e.g. @mysite
+  seoRobotsIndex        Boolean @default(true) // false = noindex the whole site
+  seoGoogleVerification String? // google-site-verification token
+  seoBingVerification   String? // msvalidate.01 token
+  seoLlmsTxtEnabled     Boolean @default(true) // serve /llms.txt for AI crawlers
 
   updatedAt DateTime @updatedAt
 }

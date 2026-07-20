@@ -13,6 +13,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { after } from 'next/server'
 import { pushPostToCraft, getCraftSyncMode, deletePostFromCraft } from '@/lib/craftSync'
+import { normalizeUrl } from '@/lib/urlUtils'
 
 function generateSlug(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
@@ -45,6 +46,12 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
   
   const language = (formData.get('language') as string) || 'en'
   const translationGroupId = formData.get('translationGroupId') as string | null
+
+  // SEO overrides — empty values mean "auto-derive from content + site settings"
+  const seoDescription = ((formData.get('seoDescription') as string) || '').trim() || null
+  const seoOgImageUrl = normalizeUrl(((formData.get('seoOgImageUrl') as string) || '').trim())
+  const seoCanonicalUrl = normalizeUrl(((formData.get('seoCanonicalUrl') as string) || '').trim())
+  const seoNoIndex = formData.get('seoNoIndex') === 'true'
 
   if (!title || !content) return { error: 'Title and content are required' }
   if (title.length > 500) return { error: 'Title must be 500 characters or fewer' }
@@ -79,6 +86,7 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
         title, slug, content, published, isFeatured, 
         language, 
         translationGroupId,
+        seoDescription, seoOgImageUrl, seoCanonicalUrl, seoNoIndex,
         tags: {
           set: [], // Clear old tags
           connectOrCreate: tagUpdates
@@ -102,6 +110,7 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
         translationGroupId,
         published,
         isFeatured,
+        seoDescription, seoOgImageUrl, seoCanonicalUrl, seoNoIndex,
         authorId: session.userId as string,
         tags: {
           connectOrCreate: tagUpdates

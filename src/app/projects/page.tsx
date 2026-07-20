@@ -8,13 +8,20 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { parseComponentConfig, COMPONENTS } from "@/lib/components-config";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { ViewTracker } from "@/components/ViewTracker";
 import { PopupToast } from "@/components/PopupToast";
 import { getSettings, getPopupConfig } from "@/lib/settings-cache";
+import { buildPageMetadata } from "@/lib/seo";
 
 import { getCachedProjects } from "@/lib/projects-cache";
 
 export const revalidate = 60
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings();
+  return buildPageMetadata({ title: 'Projects', path: '/projects' }, settings);
+}
 
 export default async function ProjectsPage() {
   const [settings, projects, popupConfig] = await Promise.all([

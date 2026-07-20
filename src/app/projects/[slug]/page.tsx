@@ -9,11 +9,13 @@ import { prisma } from "@/lib/db";
 import { SiteHeader } from "@/components/SiteHeader";
 import { parseComponentConfig, COMPONENTS } from "@/lib/components-config";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ViewTracker } from "@/components/ViewTracker";
 import { renderPostContent } from "@/lib/renderContent";
 import { getSettings } from "@/lib/settings-cache";
+import { buildPageMetadata } from "@/lib/seo";
 
 import { unstable_cache } from "next/cache";
 
@@ -39,6 +41,21 @@ const getProject = unstable_cache(
   ['project-detail'],
   { revalidate: 60 }
 );
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const [settings, project] = await Promise.all([getSettings(), getProject(slug)]);
+  if (!project) return { title: 'Not Found' };
+  return buildPageMetadata(
+    {
+      title: project.title,
+      description: project.tagline || undefined,
+      path: `/projects/${slug}`,
+      image: project.coverImage,
+    },
+    settings
+  );
+}
 
 const STATUS_COLORS: Record<string, { text: string; label: string }> = {
   completed:   { text: '#22c55e', label: 'Completed' },

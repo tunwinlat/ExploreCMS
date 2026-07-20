@@ -8,10 +8,12 @@ import { prisma } from "@/lib/db";
 import { SiteHeader } from "@/components/SiteHeader";
 import { parseComponentConfig, COMPONENTS } from "@/lib/components-config";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PhotoGrid } from "@/components/photos/PhotoGrid";
 import { ViewTracker } from "@/components/ViewTracker";
 import { getSettings } from "@/lib/settings-cache";
+import { buildPageMetadata } from "@/lib/seo";
 
 import { unstable_cache } from "next/cache";
 
@@ -40,6 +42,21 @@ const getAlbum = unstable_cache(
   ['album-detail'],
   { revalidate: 60 }
 );
+
+export async function generateMetadata({ params }: { params: Promise<{ albumSlug: string }> }): Promise<Metadata> {
+  const { albumSlug } = await params;
+  const [settings, album] = await Promise.all([getSettings(), getAlbum(albumSlug)]);
+  if (!album) return { title: 'Not Found' };
+  return buildPageMetadata(
+    {
+      title: album.title,
+      description: album.description || undefined,
+      path: `/photos/${albumSlug}`,
+      image: album.coverImage,
+    },
+    settings
+  );
+}
 
 export default async function AlbumPage({ params }: { params: Promise<{ albumSlug: string }> }) {
   const { albumSlug } = await params;
