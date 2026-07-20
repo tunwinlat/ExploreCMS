@@ -8,7 +8,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Link from 'next/link'
-import { getExcerpt, getFirstImage } from '@/lib/renderContent'
+import Image from 'next/image'
 
 import { NavItem } from '@/app/admin/dashboard/navigation/NavBuilder'
 
@@ -226,25 +226,17 @@ export default function DynamicPostGrid({
     }
   }, [fetchNextPage, hasMore])
 
-  // ⚡ Bolt: Memoize post processing (expensive regex for images/excerpts) and filtering (moved hook before early returns)
+  // ⚡ Bolt: Memoize post filtering (moved hook before early returns).
+  // excerpt/coverImage arrive pre-computed from the server (SSR + /api/posts).
   const processedFilteredPosts = useMemo(() => {
-    return posts
-      .filter(post => {
-        if (activeFilter.type === 'latest') return true;
-        if (activeFilter.type === 'featured') return post.isFeatured;
-        if (activeFilter.type === 'tag' && activeFilter.target) {
-          return post.tags.some(t => t.slug === activeFilter.target);
-        }
-        return true;
-      })
-      .map(post => {
-        const contentFormat = (post as { contentFormat?: string }).contentFormat
-        return {
-          ...post,
-          coverImage: post.coverImage !== undefined ? post.coverImage : getFirstImage(post.content || '', contentFormat),
-          excerpt: post.excerpt !== undefined ? post.excerpt : getExcerpt(post.content || '', contentFormat, 120)
-        }
-      });
+    return posts.filter(post => {
+      if (activeFilter.type === 'latest') return true;
+      if (activeFilter.type === 'featured') return post.isFeatured;
+      if (activeFilter.type === 'tag' && activeFilter.target) {
+        return post.tags.some(t => t.slug === activeFilter.target);
+      }
+      return true;
+    });
   }, [posts, activeFilter]);
 
   return (
@@ -305,9 +297,8 @@ export default function DynamicPostGrid({
                   overflow: 'hidden'
                 }}>
                   {post.coverImage && (
-                    <div style={{ width: '100%', height: '240px', overflow: 'hidden', borderBottom: '1px solid var(--border-color)' }}>
-                      {/* ⚡ Bolt: Native lazy loading defers offscreen images, improving initial page load time without JS overhead */}
-                      <img loading="lazy" src={post.coverImage} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} className="card-img" />
+                    <div style={{ width: '100%', height: '240px', overflow: 'hidden', borderBottom: '1px solid var(--border-color)', position: 'relative' }}>
+                      <Image src={post.coverImage} alt={post.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px" style={{ objectFit: 'cover' }} className="card-img" />
                     </div>
                   )}
                   

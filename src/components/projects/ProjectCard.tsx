@@ -66,17 +66,6 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
         flexDirection: 'column',
       }}
     >
-      <style>{`
-        .project-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 40px color-mix(in srgb, var(--accent-color) 15%, transparent);
-          border-color: color-mix(in srgb, var(--accent-color) 35%, transparent) !important;
-        }
-        .project-card:hover .project-cover-overlay {
-          opacity: 1 !important;
-        }
-      `}</style>
-
       {/* Cover Image */}
       <Link href={`/projects/${project.slug}`} style={{ display: 'block', position: 'relative', overflow: 'hidden', aspectRatio: '16/9' }}>
         {project.coverImage ? (

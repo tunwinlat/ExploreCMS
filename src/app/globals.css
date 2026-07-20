@@ -308,6 +308,41 @@ h1, h2, h3, h4 {
   color: white !important;
 }
 
+/* ===== Public Card Hover States ===== */
+/* (moved out of per-card <style> tags in photos/page.tsx, ProjectCard.tsx, PhotoGrid.tsx) */
+.album-card > div {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  background: var(--bg-color-secondary, rgba(0,0,0,0.02));
+}
+
+.album-card:hover > div {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px color-mix(in srgb, var(--accent-color) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent-color) 35%, transparent);
+}
+
+.project-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px color-mix(in srgb, var(--accent-color) 15%, transparent);
+  border-color: color-mix(in srgb, var(--accent-color) 35%, transparent) !important;
+}
+
+.project-card:hover .project-cover-overlay {
+  opacity: 1 !important;
+}
+
+.photo-grid-item:hover {
+  transform: scale(1.015);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+}
+
+.photo-grid-item:hover .photo-overlay {
+  opacity: 1 !important;
+}
+
 /* ===== Animations ===== */
 @keyframes pulse {
   0%, 100% { opacity: 1; }

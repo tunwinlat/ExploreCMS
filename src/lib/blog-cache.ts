@@ -7,8 +7,11 @@
 import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/db';
+import { getExcerpt, getFirstImage } from '@/lib/renderContent';
 
-// Blog post data without heavy content field (for listings)
+// Blog post data without heavy content field (for listings).
+// excerpt/coverImage are pre-computed from content so cards and the featured
+// carousel never need the full content payload.
 export interface BlogListingPost {
   id: string;
   title: string;
@@ -16,6 +19,8 @@ export interface BlogListingPost {
   contentFormat: string;
   isFeatured: boolean;
   createdAt: Date;
+  excerpt: string;
+  coverImage: string | null;
   author: { username: string; firstName: string | null };
   tags: { name: string; slug: string }[];
   views: { totalViews: number; uniqueViews: number } | null;
@@ -35,7 +40,8 @@ export const getCachedBlogListingPosts = unstable_cache(
   async (): Promise<BlogListingPost[]> => {
     if (!process.env.DATABASE_URL) return [];
     try {
-      // Single efficient query with minimal fields
+      // Single query; content is selected only to derive excerpt/coverImage,
+      // then dropped so the cached payload stays light (same pattern as /api/posts)
       const posts = await prisma.post.findMany({
         where: { published: true },
         orderBy: { createdAt: 'desc' },
@@ -44,6 +50,7 @@ export const getCachedBlogListingPosts = unstable_cache(
           id: true,
           title: true,
           slug: true,
+          content: true,
           contentFormat: true,
           isFeatured: true,
           createdAt: true,
@@ -62,8 +69,18 @@ export const getCachedBlogListingPosts = unstable_cache(
 
       // Ensure Dates are converted to ISO strings to avoid JSON stringify serialization issues
       return posts.map(p => ({
-        ...p,
-        createdAt: typeof p.createdAt === 'string' ? p.createdAt : (p.createdAt ? (p.createdAt as unknown as Date).toISOString() : null) as unknown as Date,
+        id: p.id,
+        title: p.title,
+        slug: p.slug,
+        contentFormat: p.contentFormat,
+        isFeatured: p.isFeatured,
+        createdAt: (typeof p.createdAt === 'string' ? p.createdAt : (p.createdAt ? (p.createdAt as unknown as Date).toISOString() : null)) as unknown as Date,
+        excerpt: getExcerpt(p.content || '', p.contentFormat, 200),
+        coverImage: getFirstImage(p.content || '', p.contentFormat),
+        author: p.author,
+        tags: p.tags,
+        views: p.views,
+        translationGroupId: p.translationGroupId,
       }));
     } catch (e) {
       console.error('Failed to fetch blog listing posts, likely due to missing DB at build time:', e);

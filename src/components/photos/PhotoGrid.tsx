@@ -57,10 +57,6 @@ export function PhotoGrid({ photos }: PhotoGridProps) {
             }}
             className="photo-grid-item"
           >
-            <style>{`
-              .photo-grid-item:hover { transform: scale(1.015); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
-              .photo-grid-item:hover .photo-overlay { opacity: 1 !important; }
-            `}</style>
             <Image
               src={photo.url}
               alt={photo.title || 'Photo'}
