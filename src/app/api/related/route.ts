@@ -7,16 +7,6 @@
 import { NextResponse } from 'next/server'
 import { getPostDb } from '@/lib/bunnyDb'
 
-// Check if post content contains an image
-function hasImage(content: string, contentFormat?: string): boolean {
-  if (!content) return false
-  // Check for markdown image syntax ![alt](url)
-  if (/!\[.*?\]\(.*?\)/.test(content)) return true
-  // Check for HTML img tags
-  if (/<img\s+[^>]*src/i.test(content)) return true
-  return false
-}
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const slug = searchParams.get('slug')
@@ -41,25 +31,30 @@ export async function GET(request: Request) {
     }
 
     const tagIds = currentPost.tags.map(tag => tag.id)
-    const translationGroupId = (currentPost as any).translationGroupId
+    const translationGroupId = currentPost.translationGroupId
+    const translationGroupFilter = translationGroupId ? {
+      // A simple NOT filter also excludes NULL values in SQL. Include standalone
+      // posts explicitly while filtering out translations of the current post.
+      OR: [
+        { translationGroupId: null },
+        { translationGroupId: { not: translationGroupId } }
+      ]
+    } : {}
 
-    // Find related posts that share tags with the current post
-    // Exclude: same post, same translation group (different languages), posts without images
+    // Find related posts that share tags with the current post.
+    // Posts without images are valid recommendations; the card renders a placeholder for them.
     const relatedPosts = await postDb.post.findMany({
       where: {
         published: true,
         id: { not: currentPost.id }, // Exclude current post
-        // Exclude posts from the same translation group (other languages of same post)
-        ...(translationGroupId ? {
-          NOT: { translationGroupId: translationGroupId }
-        } : {}),
+        ...translationGroupFilter,
         tags: tagIds.length > 0 ? {
           some: {
             id: { in: tagIds }
           }
         } : undefined
       },
-      take: limit * 3, // Fetch more to filter out posts without images
+      take: limit,
       orderBy: [
         // Prioritize posts with more matching tags
         { createdAt: 'desc' }
@@ -73,24 +68,18 @@ export async function GET(request: Request) {
       }
     })
 
-    // Filter out posts without images
-    let posts = relatedPosts.filter(post => hasImage(post.content, (post as any).contentFormat))
+    let posts = relatedPosts
 
-    // If not enough related posts by tags, get recent posts with images
+    // If there are not enough tag matches, fill the remaining slots with recent posts.
     if (posts.length < limit) {
       const additionalPosts = await postDb.post.findMany({
         where: {
           published: true,
-          id: { not: currentPost.id },
-          ...(translationGroupId ? {
-            NOT: { translationGroupId: translationGroupId }
-          } : {}),
-          // Exclude already fetched posts
-          ...(posts.length > 0 ? {
-            id: { notIn: posts.map(p => p.id) }
-          } : {})
+          // Exclude the current post and the tag matches already selected above.
+          id: { notIn: [currentPost.id, ...posts.map(post => post.id)] },
+          ...translationGroupFilter
         },
-        take: limit * 2,
+        take: limit - posts.length,
         orderBy: { createdAt: 'desc' },
         include: {
           author: { select: { username: true, firstName: true } },
@@ -98,12 +87,7 @@ export async function GET(request: Request) {
           views: true
         }
       })
-      
-      // Filter and add more posts with images
-      const postsWithImages = additionalPosts.filter(post => 
-        hasImage(post.content, (post as any).contentFormat)
-      )
-      posts = [...posts, ...postsWithImages]
+      posts = [...posts, ...additionalPosts]
     }
 
     // Limit to requested amount
@@ -115,4 +99,3 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Failed to load related posts' }, { status: 500 })
   }
 }
-
