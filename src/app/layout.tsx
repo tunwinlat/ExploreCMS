@@ -12,6 +12,7 @@ import "./themes.css";
 import { getThemeConfig } from "@/lib/themes";
 import { ensureMigrations } from "@/lib/db-init";
 import { getSettings } from "@/lib/settings-cache";
+import { buildBaseMetadata, webSiteJsonLd, DEFAULT_SITE_DESCRIPTION, DEFAULT_SITE_TITLE } from "@/lib/seo";
 import { ParticleBackground } from "@/components/ParticleBackground";
 
 export const viewport: Viewport = {
@@ -22,16 +23,12 @@ export const viewport: Viewport = {
 export async function generateMetadata(): Promise<Metadata> {
   try {
     const settings = await getSettings();
-
-    return {
-      title: settings?.title || "ExploreCMS",
-      description: "A modern, self-hosted minimalistic blogging platform.",
-    };
+    return buildBaseMetadata(settings);
   } catch (error) {
     // Fallback if DB isn't ready or Prisma throws
     return {
-      title: "ExploreCMS",
-      description: "A modern, self-hosted minimalistic blogging platform.",
+      title: DEFAULT_SITE_TITLE,
+      description: DEFAULT_SITE_DESCRIPTION,
     };
   }
 }
@@ -57,11 +54,12 @@ export default async function RootLayout({
   let themeId = 'default';
   let faviconUrl = '/favicon.ico';
   let dynamicPattern = true;
+  let siteSettings: Awaited<ReturnType<typeof getSettings>> = null;
   try {
-    const settings = await getSettings();
-    if (settings?.theme) themeId = settings.theme;
-    if (settings?.faviconUrl) faviconUrl = settings.faviconUrl;
-    if (settings?.dynamicPattern !== undefined) dynamicPattern = settings.dynamicPattern;
+    siteSettings = await getSettings();
+    if (siteSettings?.theme) themeId = siteSettings.theme;
+    if (siteSettings?.faviconUrl) faviconUrl = siteSettings.faviconUrl;
+    if (siteSettings?.dynamicPattern !== undefined) dynamicPattern = siteSettings.dynamicPattern;
   } catch {
     // Database might not be initialized yet
   }
@@ -86,6 +84,11 @@ export default async function RootLayout({
         )}
       </head>
       <body>
+        {/* Structured data: WebSite (rendered on every page, describes the site) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteJsonLd(siteSettings)) }}
+        />
         <ThemeProvider>
           <ParticleBackground enabled={dynamicPattern} />
           {children}

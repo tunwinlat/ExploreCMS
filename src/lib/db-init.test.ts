@@ -105,6 +105,8 @@ describe('runSchemaMigrations (production auto-migration)', () => {
     expect(await tableExists('PhotoAlbum')).toBe(true)
     expect(await tableExists('PostIdempotencyKey')).toBe(true)
     expect(await tableExists('BackgroundJobLock')).toBe(true)
+    expect(await columnExists('SiteSettings', 'seoLlmsTxtEnabled')).toBe(true)
+    expect(await columnExists('Post', 'seoNoIndex')).toBe(true)
   })
 
   it('does not short-circuit when the DB has an older artifact but lacks the newest tables', async () => {
@@ -144,6 +146,46 @@ describe('runSchemaMigrations (production auto-migration)', () => {
     await runSchemaMigrations()
 
     expect(await tableExists('BackgroundJobLock')).toBe(true)
+  })
+
+  it('does not short-circuit when the DB has v9 tables but lacks the newest SEO columns', async () => {
+    // Regression guard: the fast-path probe must check the NEWEST migration
+    // artifact. Simulate a DB fully migrated up to v9 (idempotency + lease
+    // tables) but missing the v10 SEO columns.
+    await db.execute(`CREATE TABLE "SiteSettings" (
+      "id" TEXT NOT NULL PRIMARY KEY DEFAULT 'singleton',
+      "title" TEXT NOT NULL DEFAULT 'ExploreCMS',
+      "updatedAt" DATETIME NOT NULL
+    )`)
+    await db.execute(`CREATE TABLE "Post" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "title" TEXT NOT NULL,
+      "slug" TEXT NOT NULL,
+      "content" TEXT NOT NULL,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" DATETIME NOT NULL,
+      "authorId" TEXT NOT NULL
+    )`)
+    await db.execute(`CREATE TABLE "PostIdempotencyKey" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "authorId" TEXT NOT NULL,
+      "keyHash" TEXT NOT NULL,
+      "requestHash" TEXT NOT NULL,
+      "postId" TEXT NOT NULL,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`)
+    await db.execute(`CREATE TABLE "BackgroundJobLock" (
+      "name" TEXT NOT NULL PRIMARY KEY,
+      "ownerToken" TEXT NOT NULL,
+      "leaseUntil" DATETIME NOT NULL,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" DATETIME NOT NULL
+    )`)
+
+    await runSchemaMigrations()
+
+    expect(await columnExists('SiteSettings', 'seoLlmsTxtEnabled')).toBe(true)
+    expect(await columnExists('Post', 'seoNoIndex')).toBe(true)
   })
 
   it('is idempotent — running twice succeeds and preserves data', async () => {
@@ -189,7 +231,7 @@ describe('runSchemaMigrations (production auto-migration)', () => {
     expect(await tableExists('PostIdempotencyKey')).toBe(true)
     expect(await tableExists('BackgroundJobLock')).toBe(true)
 
-    // Track subsequent statements: the fast path should run only its two probes
+    // Track subsequent statements: the fast path should run only its probes
     // and no DDL.
     const statements: string[] = []
     const spy = vi.spyOn(db, 'execute').mockImplementation(async (stmt) => {
@@ -199,9 +241,11 @@ describe('runSchemaMigrations (production auto-migration)', () => {
 
     await runSchemaMigrations()
 
-    expect(statements).toHaveLength(2)
+    expect(statements).toHaveLength(4)
     expect(statements[0]).toContain('PostIdempotencyKey')
     expect(statements[1]).toContain('BackgroundJobLock')
+    expect(statements[2]).toContain('seoLlmsTxtEnabled')
+    expect(statements[3]).toContain('seoNoIndex')
     spy.mockRestore()
   })
 
@@ -211,5 +255,7 @@ describe('runSchemaMigrations (production auto-migration)', () => {
     expect(result.success).toBe(true)
     expect(await tableExists('PostIdempotencyKey')).toBe(true)
     expect(await tableExists('BackgroundJobLock')).toBe(true)
+    expect(await columnExists('SiteSettings', 'seoLlmsTxtEnabled')).toBe(true)
+    expect(await columnExists('Post', 'seoNoIndex')).toBe(true)
   })
 })

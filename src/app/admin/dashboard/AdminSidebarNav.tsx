@@ -168,6 +168,7 @@ export default function AdminSidebarNav({ role }: { role: string }) {
             pathname.startsWith('/admin/dashboard/components') ||
             pathname.startsWith('/admin/dashboard/integrations') ||
             pathname.startsWith('/admin/dashboard/api-keys') ||
+            pathname.startsWith('/admin/dashboard/seo') ||
             pathname.startsWith('/admin/dashboard/settings')
           }
         >
@@ -178,6 +179,7 @@ export default function AdminSidebarNav({ role }: { role: string }) {
           {navItem('/admin/dashboard/components', 'Components')}
           {navItem('/admin/dashboard/integrations', 'Integrations')}
           {navItem('/admin/dashboard/api-keys', 'API Keys')}
+          {navItem('/admin/dashboard/seo', 'SEO')}
           {navItem('/admin/dashboard/settings', 'Site Settings')}
         </NavGroup>
       )}

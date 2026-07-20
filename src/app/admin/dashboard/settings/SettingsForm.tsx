@@ -12,7 +12,7 @@ import { THEMES } from '@/lib/themes'
 import { useToast } from '@/components/admin/Toast'
 
 // Expandable Section Component
-function ExpandableSection({ 
+export function ExpandableSection({ 
   title, 
   children, 
   defaultExpanded = false,

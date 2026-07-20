@@ -8,11 +8,18 @@ import { BlogHome } from "@/components/blog/BlogHome";
 import { parseComponentConfig } from "@/lib/components-config";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
+import type { Metadata } from "next";
 import { getBlogPageData } from "@/lib/blog-cache";
 import { getSettings, getPopupConfig } from "@/lib/settings-cache";
+import { buildPageMetadata } from "@/lib/seo";
 
 // Use ISR with 60 second revalidation for better performance
 export const revalidate = 60;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings();
+  return buildPageMetadata({ title: 'Blog', path: '/blog' }, settings);
+}
 
 export default async function BlogPage({
   searchParams,

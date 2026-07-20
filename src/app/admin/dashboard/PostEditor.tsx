@@ -60,6 +60,10 @@ export default function PostEditor({
   const [showAddTranslation, setShowAddTranslation] = useState(false)
   const [selectedLang, setSelectedLang] = useState('')
   const [langFilter, setLangFilter] = useState('')
+  const [showSeo, setShowSeo] = useState(false)
+  const [seoDescription, setSeoDescription] = useState(post?.seoDescription || '')
+  const [seoOgImageUrl, setSeoOgImageUrl] = useState(post?.seoOgImageUrl || '')
+  const [seoUploading, setSeoUploading] = useState(false)
   const initialTags = post?.tags?.map(t => t.name) || []
 
   const formRef = useRef<HTMLFormElement>(null)
@@ -88,6 +92,27 @@ export default function PostEditor({
       setUnlinkLoading(false)
     }
   }, [craftPostId, toast])
+
+  const handleSeoImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setSeoUploading(true)
+    const formData = new FormData()
+    formData.append('file', file)
+    try {
+      const res = await fetch('/api/upload', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (res.ok) {
+        setSeoOgImageUrl(data.url)
+        toast('Share image uploaded.', 'success')
+      } else {
+        toast('Failed to upload share image.', 'error')
+      }
+    } catch {
+      toast('An error occurred during upload.', 'error')
+    }
+    setSeoUploading(false)
+  }, [toast])
 
   // Background Auto-Save (Debounced 5 seconds after typing stops)
   useEffect(() => {
@@ -642,6 +667,132 @@ export default function PostEditor({
               </label>
             </div>
             <TagSelector availableTags={availableTags} initialTags={initialTags} />
+          </div>
+        )}
+
+        {/* SEO panel — per-post overrides; empty fields auto-derive from content */}
+        {!readOnly && (
+          <div style={{
+            marginTop: '1rem',
+            padding: '1.25rem 1.5rem',
+            background: 'var(--bg-color-secondary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: 'var(--radius-md)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem',
+          }}>
+            <button
+              type="button"
+              onClick={() => setShowSeo(!showSeo)}
+              aria-expanded={showSeo}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: '100%',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                color: 'var(--text-primary)',
+              }}
+            >
+              <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>SEO</span>
+              <span style={{
+                transform: showSeo ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.2s',
+                fontSize: '0.75rem',
+                color: 'var(--text-secondary)',
+              }}>
+                ▼
+              </span>
+            </button>
+
+            {/*
+              Fields stay mounted when collapsed (hidden via CSS) so autosave
+              FormData always carries them — otherwise collapsing the panel
+              would silently clear saved values on the next save.
+            */}
+            <div
+              className={showSeo ? 'fade-in-up' : undefined}
+              style={{ display: showSeo ? 'flex' : 'none', flexDirection: 'column', gap: '1rem' }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <label htmlFor="seo-description" style={{ fontWeight: 500, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    Meta Description
+                  </label>
+                  <textarea
+                    id="seo-description"
+                    name="seoDescription"
+                    value={seoDescription}
+                    onChange={(e) => setSeoDescription(e.target.value)}
+                    placeholder="Leave blank to auto-generate from the post content"
+                    rows={2}
+                    className="input-field"
+                    style={{ resize: 'vertical', fontSize: '0.875rem' }}
+                  />
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: seoDescription.length > 160 ? 'var(--accent-color)' : 'var(--text-secondary)' }}>
+                    {seoDescription.length}/160 characters
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <label htmlFor="seo-og-image" style={{ fontWeight: 500, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    Share Image (Open Graph)
+                  </label>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <input
+                      id="seo-og-image"
+                      type="text"
+                      name="seoOgImageUrl"
+                      value={seoOgImageUrl}
+                      onChange={(e) => setSeoOgImageUrl(e.target.value)}
+                      placeholder="Blank = first image in post, then site default"
+                      className="input-field"
+                      style={{ fontSize: '0.875rem', flex: 1 }}
+                    />
+                    <input
+                      type="file"
+                      accept="image/png, image/jpeg, image/webp"
+                      onChange={handleSeoImageUpload}
+                      disabled={seoUploading}
+                      style={{ display: 'none' }}
+                      id="seo-og-image-upload"
+                    />
+                    <label
+                      htmlFor="seo-og-image-upload"
+                      className="btn"
+                      style={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)', cursor: 'pointer', fontSize: '0.8rem', padding: '0.45rem 0.75rem', whiteSpace: 'nowrap' }}
+                    >
+                      {seoUploading ? 'Uploading...' : 'Upload'}
+                    </label>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <label htmlFor="seo-canonical" style={{ fontWeight: 500, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    Canonical URL
+                  </label>
+                  <input
+                    id="seo-canonical"
+                    type="text"
+                    name="seoCanonicalUrl"
+                    defaultValue={post?.seoCanonicalUrl || ''}
+                    placeholder="Blank = the post's own URL"
+                    className="input-field"
+                    style={{ fontSize: '0.875rem' }}
+                  />
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                    Only set this if the same content lives at another URL (e.g. cross-posted).
+                  </p>
+                </div>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  <input type="checkbox" name="seoNoIndex" value="true" defaultChecked={post?.seoNoIndex} style={{ transform: 'scale(1.1)' }} />
+                  Hide this post from search engines (noindex)
+                </label>
+            </div>
           </div>
         )}
       </form>

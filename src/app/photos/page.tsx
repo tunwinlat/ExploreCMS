@@ -9,15 +9,22 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { PageHero } from "@/components/PageHero";
 import { parseComponentConfig, COMPONENTS } from "@/lib/components-config";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ViewTracker } from "@/components/ViewTracker";
 import { PopupToast } from "@/components/PopupToast";
 import { getSettings, getPopupConfig } from "@/lib/settings-cache";
+import { buildPageMetadata } from "@/lib/seo";
 
 import { getCachedAlbums } from "@/lib/photos-cache";
 
 export const revalidate = 60
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings();
+  return buildPageMetadata({ title: 'Photos', path: '/photos' }, settings);
+}
 
 function CameraIcon() {
   return (

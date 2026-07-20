@@ -17,6 +17,7 @@ import { renderPostContent } from '@/lib/renderContent'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { getFirstImage } from '@/lib/renderContent'
 import { getSettings } from '@/lib/settings-cache'
+import { buildPostMetadata, blogPostingJsonLd, breadcrumbJsonLd } from '@/lib/seo'
 import { parseComponentConfig, COMPONENTS } from '@/lib/components-config'
 import './post.css'
 
@@ -48,9 +49,9 @@ const getTranslations = cache(async (translationGroupId: string | null, currentS
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const post = await getPost(slug)
+  const [post, settings] = await Promise.all([getPost(slug), getSettings()])
   if (!post) return { title: 'Not Found' }
-  return { title: `${post.title} | ExploreCMS` }
+  return buildPostMetadata(post, settings)
 }
 
 // Calculate reading time
@@ -88,6 +89,26 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   return (
     <div className="post-page">
+      {/* Structured data: BlogPosting + BreadcrumbList */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingJsonLd(post, settings)) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            breadcrumbJsonLd(
+              [
+                { name: 'Home', path: '/' },
+                { name: 'Blog', path: '/blog' },
+                { name: post.title, path: `/post/${post.slug}` },
+              ],
+              settings
+            )
+          ),
+        }}
+      />
       <SiteHeader
         title={settings?.title || 'ExploreCMS'}
         enabledComponents={enabledMeta}

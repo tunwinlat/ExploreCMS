@@ -29,6 +29,8 @@ export async function runSchemaMigrations(): Promise<void> {
     try {
       await client.execute({ sql: "SELECT id FROM \"PostIdempotencyKey\" WHERE 1=0", args: [] });
       await client.execute({ sql: "SELECT name FROM \"BackgroundJobLock\" WHERE 1=0", args: [] });
+      await client.execute({ sql: "SELECT \"seoLlmsTxtEnabled\" FROM \"SiteSettings\" WHERE 1=0", args: [] });
+      await client.execute({ sql: "SELECT \"seoNoIndex\" FROM \"Post\" WHERE 1=0", args: [] });
       // Latest artifacts exist → all migrations have been applied, nothing to do.
       return;
     } catch {
@@ -183,6 +185,19 @@ export async function runSchemaMigrations(): Promise<void> {
         "updatedAt" DATETIME NOT NULL,
         CONSTRAINT "Photo_albumId_fkey" FOREIGN KEY ("albumId") REFERENCES "PhotoAlbum" ("id") ON DELETE CASCADE ON UPDATE CASCADE
       )`,
+      // v10 → SEO columns
+      `ALTER TABLE "SiteSettings" ADD COLUMN "seoSiteUrl" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "seoDescription" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "seoOgImageUrl" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "seoTwitterHandle" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "seoRobotsIndex" BOOLEAN NOT NULL DEFAULT true`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "seoGoogleVerification" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "seoBingVerification" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "seoLlmsTxtEnabled" BOOLEAN NOT NULL DEFAULT true`,
+      `ALTER TABLE "Post" ADD COLUMN "seoDescription" TEXT`,
+      `ALTER TABLE "Post" ADD COLUMN "seoOgImageUrl" TEXT`,
+      `ALTER TABLE "Post" ADD COLUMN "seoCanonicalUrl" TEXT`,
+      `ALTER TABLE "Post" ADD COLUMN "seoNoIndex" BOOLEAN NOT NULL DEFAULT false`,
     ];
 
     for (const stmt of migrations) {
@@ -518,6 +533,19 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
       `ALTER TABLE "SiteSettings" ADD COLUMN "smtpPassword" TEXT`,
       // Dynamic particle background
       `ALTER TABLE "SiteSettings" ADD COLUMN "dynamicPattern" BOOLEAN NOT NULL DEFAULT true`,
+      // SEO columns
+      `ALTER TABLE "SiteSettings" ADD COLUMN "seoSiteUrl" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "seoDescription" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "seoOgImageUrl" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "seoTwitterHandle" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "seoRobotsIndex" BOOLEAN NOT NULL DEFAULT true`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "seoGoogleVerification" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "seoBingVerification" TEXT`,
+      `ALTER TABLE "SiteSettings" ADD COLUMN "seoLlmsTxtEnabled" BOOLEAN NOT NULL DEFAULT true`,
+      `ALTER TABLE "Post" ADD COLUMN "seoDescription" TEXT`,
+      `ALTER TABLE "Post" ADD COLUMN "seoOgImageUrl" TEXT`,
+      `ALTER TABLE "Post" ADD COLUMN "seoCanonicalUrl" TEXT`,
+      `ALTER TABLE "Post" ADD COLUMN "seoNoIndex" BOOLEAN NOT NULL DEFAULT false`,
     ];
     for (const stmt of alterStatements) {
       try {

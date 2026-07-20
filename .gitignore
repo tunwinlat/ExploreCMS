@@ -39,6 +39,8 @@ yarn-error.log*
 .pnpm-debug.log*
 *.log
 *.txt
+# Next.js route handler serving /llms.txt (directory name matches *.txt above)
+!src/app/llms.txt/
 
 # env files (can opt-in for committing if needed)
 .env*
