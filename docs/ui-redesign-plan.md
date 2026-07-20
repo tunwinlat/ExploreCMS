@@ -208,21 +208,21 @@ These are broken today regardless of redesign. Fix first, ship independently if 
 
 ## Phase 5 — Photos redesign
 
-- [ ] **5.1** Album cards (`src/app/photos/page.tsx`): larger 3:2 cover, title + `.meta`
+- [x] **5.1** Album cards (`src/app/photos/page.tsx`): larger 3:2 cover, title + `.meta`
   (photo count + newest photo date if cheap), no per-card `<style>` (done in 0.4), no
   "Featured" gradient badge (eyebrow instead).
-- [ ] **5.2** Cover fallback: albums with no explicit cover use the **first photo** as
+- [x] **5.2** Cover fallback: albums with no explicit cover use the **first photo** as
   cover (extend `getCachedAlbums()` in `src/lib/photos-cache.ts` to select the earliest
   photo URL); only if the album is empty show the gradient placeholder — kills the
   "empty product" look seen on production.
-- [ ] **5.3** Album detail grid (`PhotoGrid.tsx`): replace CSS-columns masonry (breaks
+- [x] **5.3** Album detail grid (`PhotoGrid.tsx`): replace CSS-columns masonry (breaks
   chronological order, causes reflow jank) with a **justified row layout** (fixed row
   height ~260–320px, `object-fit: cover`, small gaps) or a square-crop grid with
   `next/image` + `sizes`. Preserve photo order.
-- [ ] **5.4** Lightbox polish (`Lightbox.tsx`): verify arrow-key/Escape handling, add
+- [x] **5.4** Lightbox polish (`Lightbox.tsx`): verify arrow-key/Escape handling, add
   caption + counter ("3 / 24"), respect reduced motion for transitions.
-- [ ] **5.5** Page hero via `PageHero`; empty state typographic (no 📸).
-- [ ] **5.6** Verify: lint/test/build; grid keeps order; no layout shift on load
+- [x] **5.5** Page hero via `PageHero`; empty state typographic (no 📸).
+- [x] **5.6** Verify: lint/test/build; grid keeps order; no layout shift on load
   (widths/heights reserved); light+ dark.
 
 ---
@@ -290,3 +290,5 @@ These are broken today regardless of redesign. Fix first, ship independently if 
 | 2026-07-20 | 1–2 | Phases 1+2 committed `7f8b2ec`, pushed to `origin/related-posts-empty-end-of-posts`. | Start Phase 3, item 3.1. |
 | 2026-07-20 | 3 | **Phase 3 complete.** 3.1: `LeadStory.tsx` (1 lead + up to 2 secondary, static) replaces carousel — `FeaturedPostsCarousel.tsx` + all carousel/dropdown CSS deleted. 3.2: `DynamicPostGrid` now a magazine list (`.post-row`: thumb left, serif title, 2-line excerpt, tag chips, meta) + "You've reached the end." marker. 3.3: pill/dropdown filters → `.filter-tab` underline tabs (dropdown nav items flattened to tag tabs). 3.4: sidebar un-glassed — `.sidebar-section` hairlines, About as italic serif editor's note, TrendingPosts hover via `.trending-link` CSS (no JS handlers). 3.5: section headers = eyebrow + display-2 + rule; blog home hero → `PageHero` (kills `heading-xl` on blog). 3.6: `.empty-state` typographic. 3.7: blog loading skeleton matches new layout. 3.8: 2 new BlogContent tests (lead story link/excerpt, list excerpt + end marker). 3.9: lint clean, 191/191 tests, build green. **Committed `b84ee25`, pushed.** | Start Phase 4, item 4.1 (unified projects grid). |
 | 2026-07-20 | 4 | **Phase 4 complete.** 4.1: unified `.project-grid`, featured pinned first. 4.2: `ProjectCard` rebuilt (server component, stretched-link whole-card nav, status dot + meta, quiet `.tag-chip`s, icon links z-indexed above). 4.3: `PageHero` on `/projects`. 4.4: detail page on shared tokens (`.display-1`, `.lede`, `.action-btn`, `.project-gallery-*`); **also fixed: project rich content was entirely unstyled — now imports post.css typography (dedup tracked for Phase 6/8)**. 4.5: `.empty-state`. Cleanup: old `.project-card:hover` lift rules removed; `.post-row-tags` renamed to shared `.tag-list`. 4.6: lint clean, 191/191 tests, build green. **Not committed yet.** | Commit Phase 4, then Phase 5 item 5.1 (album cards). |
+| 2026-07-20 | 4 | Phase 4 committed `0a362e4`, pushed. | Start Phase 5, item 5.1. |
+| 2026-07-20 | 5 | **Phase 5 complete.** 5.1: album cards rebuilt (3:2 cover, serif title, `.meta` count, shared `.card-badge`). 5.2: `getCachedAlbums()` falls back to first photo URL as cover. 5.3: CSS-columns masonry → ordered square-crop `.photo-grid` with real `<button>`s and CSS overlays (order preserved, no reflow jank). 5.4: Lightbox — keyboard/counter/caption already existed; added focus-on-open. 5.5: `PageHero` + `.empty-state` on `/photos`; album detail header → display-1/meta/lede. Old Phase-0 album/photo hover rules removed. 5.6: lint clean, 191/191 tests, build green. **Not committed yet.** | Commit Phase 5, then Phase 6 item 6.1 (post page on shared chrome). |

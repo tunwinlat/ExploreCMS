@@ -6,7 +6,7 @@
 
 'use client'
 
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 
 export interface LightboxPhoto {
@@ -29,6 +29,7 @@ export function Lightbox({ photos, currentIndex, onClose, onNavigate }: Lightbox
   const photo = photos[currentIndex]
   const hasPrev = currentIndex > 0
   const hasNext = currentIndex < photos.length - 1
+  const closeRef = useRef<HTMLButtonElement>(null)
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') onClose()
@@ -44,6 +45,11 @@ export function Lightbox({ photos, currentIndex, onClose, onNavigate }: Lightbox
       document.body.style.overflow = ''
     }
   }, [handleKeyDown])
+
+  // Move focus into the dialog on open so keyboard controls work immediately
+  useEffect(() => {
+    closeRef.current?.focus()
+  }, [])
 
   if (!photo) return null
 
@@ -67,6 +73,7 @@ export function Lightbox({ photos, currentIndex, onClose, onNavigate }: Lightbox
     >
       {/* Close button */}
       <button
+        ref={closeRef}
         onClick={onClose}
         style={{
           position: 'absolute',

@@ -6,6 +6,7 @@
 
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { PageHero } from "@/components/PageHero";
 import { parseComponentConfig, COMPONENTS } from "@/lib/components-config";
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -17,6 +18,15 @@ import { getSettings, getPopupConfig } from "@/lib/settings-cache";
 import { getCachedAlbums } from "@/lib/photos-cache";
 
 export const revalidate = 60
+
+function CameraIcon() {
+  return (
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </svg>
+  )
+}
 
 export default async function PhotosPage() {
   const [settings, albums, popupConfig] = await Promise.all([
@@ -40,155 +50,52 @@ export default async function PhotosPage() {
         defaultComponent={defaultComponent}
       />
 
-      <div className="container" style={{ paddingBottom: '5rem' }}>
-        {/* Hero */}
-        <div style={{ textAlign: 'center', maxWidth: '580px', margin: '0 auto 3.5rem' }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.35rem 1rem',
-            borderRadius: '20px',
-            background: 'color-mix(in srgb, var(--accent-color) 12%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--accent-color) 25%, transparent)',
-            fontSize: '0.8rem',
-            fontWeight: 600,
-            color: 'var(--accent-color)',
-            marginBottom: '1rem',
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase',
-          }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-              <circle cx="12" cy="13" r="4"/>
-            </svg>
-            Photo Gallery
-          </div>
-          <h1 className="heading-xl">Moments Captured</h1>
-          <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-            A visual journey through places, moments and stories.
-          </p>
-        </div>
+      <PageHero
+        eyebrow="Photo Gallery"
+        title="Moments Captured"
+        description="A visual journey through places, moments and stories."
+      />
 
+      <div className="container">
         {albums.length === 0 ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '5rem 2rem',
-            color: 'var(--text-secondary)',
-          }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.3 }}>📸</div>
-            <p style={{ fontSize: '1.1rem' }}>No albums published yet. Check back soon!</p>
-          </div>
+          <p className="empty-state">No albums published yet. Check back soon.</p>
         ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: '1.5rem',
-          }}>
+          <div className="album-grid">
             {albums.map((album: any) => (
               <Link
                 key={album.id}
                 href={`/photos/${album.slug}`}
-                style={{ textDecoration: 'none' }}
                 className="album-card"
               >
-                <div>
-                  {/* Album cover */}
-                  <div style={{ aspectRatio: '4/3', position: 'relative', overflow: 'hidden' }}>
-                    {album.coverImage ? (
-                      <Image
-                        src={album.coverImage}
-                        alt={album.title}
-                        fill
-                        style={{ objectFit: 'cover', transition: 'transform 0.4s ease' }}
-                        sizes="320px"
-                      />
-                    ) : (
-                      <div style={{
-                        width: '100%',
-                        height: '100%',
-                        background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent-color) 15%, var(--bg-color)), var(--bg-color))',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4 }}>
-                          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                          <circle cx="12" cy="13" r="4"/>
-                        </svg>
-                      </div>
-                    )}
-
-                    {/* Photo count badge (hidden for empty albums) */}
-                    {album._count.photos > 0 && (
-                    <div style={{
-                      position: 'absolute',
-                      bottom: '0.6rem',
-                      right: '0.6rem',
-                      padding: '0.2rem 0.6rem',
-                      borderRadius: '20px',
-                      background: 'rgba(0,0,0,0.6)',
-                      fontSize: '0.7rem',
-                      fontWeight: 600,
-                      color: '#fff',
-                      backdropFilter: 'blur(6px)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.3rem',
-                    }}>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                        <circle cx="12" cy="13" r="4"/>
-                      </svg>
-                      {album._count.photos}
+                {/* Album cover (falls back to first photo, then placeholder) */}
+                <div className="album-card-cover">
+                  {album.coverImage ? (
+                    <Image
+                      src={album.coverImage}
+                      alt={album.title}
+                      fill
+                      style={{ objectFit: 'cover' }}
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                    />
+                  ) : (
+                    <div className="album-card-cover-placeholder">
+                      <CameraIcon />
                     </div>
-                    )}
+                  )}
+                  {album.featured && (
+                    <span className="eyebrow card-badge">Featured</span>
+                  )}
+                </div>
 
-                    {/* Featured badge */}
-                    {album.featured && (
-                      <div style={{
-                        position: 'absolute',
-                        top: '0.6rem',
-                        left: '0.6rem',
-                        padding: '0.2rem 0.6rem',
-                        borderRadius: '20px',
-                        background: 'linear-gradient(135deg, var(--accent-color), var(--accent-hover))',
-                        fontSize: '0.65rem',
-                        fontWeight: 700,
-                        color: '#fff',
-                        letterSpacing: '0.05em',
-                        textTransform: 'uppercase',
-                      }}>
-                        Featured
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Album info */}
-                  <div style={{ padding: '1rem' }}>
-                    <h3 style={{
-                      fontSize: '1rem',
-                      fontWeight: 700,
-                      margin: '0 0 0.35rem',
-                      color: 'var(--text-primary)',
-                    }}>
-                      {album.title}
-                    </h3>
-                    {album.description && (
-                      <p style={{
-                        fontSize: '0.8rem',
-                        color: 'var(--text-secondary)',
-                        margin: 0,
-                        lineHeight: 1.5,
-                        overflow: 'hidden',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical' as any,
-                      }}>
-                        {album.description}
-                      </p>
-                    )}
-                  </div>
+                {/* Album info */}
+                <div className="album-card-body">
+                  <h3 className="album-card-title">{album.title}</h3>
+                  {album.description && (
+                    <p className="album-card-desc">{album.description}</p>
+                  )}
+                  {album._count.photos > 0 && (
+                    <p className="meta">{album._count.photos} photos</p>
+                  )}
                 </div>
               </Link>
             ))}
