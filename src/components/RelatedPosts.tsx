@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { getExcerpt, getFirstImage } from '@/lib/renderContent'
 
 interface RelatedPost {
@@ -91,22 +92,21 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
           const primaryTag = post.tags[0]
 
           return (
-            <Link 
-              key={post.id} 
+            <Link
+              key={post.id}
               href={`/post/${post.slug}`}
               className="related-post-card"
             >
               <div className="related-post-image-wrapper">
                 {post.coverImage ? (
-                  <>
-                    {/* ⚡ Bolt: Added lazy loading to related posts to prevent unnecessary image fetches on initial page load */}
-                    <img
-                      loading="lazy"
-                      src={post.coverImage}
-                      alt={post.title}
-                      className="related-post-image"
-                    />
-                  </>
+                  <Image
+                    src={post.coverImage}
+                    alt={post.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    style={{ objectFit: 'cover' }}
+                    className="related-post-image"
+                  />
                 ) : (
                   <div className="related-post-image-placeholder">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -117,18 +117,18 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
                   </div>
                 )}
               </div>
-              
+
               <div className="related-post-content">
                 {primaryTag && (
                   <span className="related-post-category">
                     {primaryTag.name.toUpperCase()}
                   </span>
                 )}
-                
+
                 <h4 className="related-post-card-title">
                   {post.title}
                 </h4>
-                
+
                 <p className="related-post-excerpt">
                   {post.excerpt}
                 </p>
@@ -137,154 +137,6 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
           )
         })}
       </div>
-
-      <style jsx>{`
-        .related-posts {
-          margin-top: 5rem;
-          padding-top: 3rem;
-          border-top: 1px solid var(--border-color);
-        }
-        
-        .related-posts-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 2rem;
-        }
-        
-        .related-posts-title {
-          font-size: 1.75rem;
-          font-weight: 700;
-          color: var(--text-primary);
-          letter-spacing: -0.02em;
-        }
-        
-        .related-posts-explore {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-size: 0.9rem;
-          font-weight: 500;
-          color: var(--accent-color);
-          text-decoration: none;
-          transition: gap 0.2s ease;
-        }
-        
-        .related-posts-explore:hover {
-          gap: 0.75rem;
-        }
-        
-        .related-posts-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 1.5rem;
-        }
-        
-        @media (max-width: 768px) {
-          .related-posts-grid {
-            grid-template-columns: 1fr;
-          }
-        }
-        
-        .related-post-card {
-          display: flex;
-          flex-direction: column;
-          background: var(--bg-color-secondary);
-          border-radius: var(--radius-md, 12px);
-          border: 1px solid var(--border-color);
-          overflow: hidden;
-          text-decoration: none;
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .related-post-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        }
-        
-        .related-post-card.skeleton {
-          height: 300px;
-          background: linear-gradient(
-            90deg,
-            var(--bg-color-secondary) 25%,
-            var(--bg-color) 50%,
-            var(--bg-color-secondary) 75%
-          );
-          background-size: 200% 100%;
-          animation: shimmer 1.5s infinite;
-        }
-        
-        @keyframes shimmer {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-        
-        .related-post-image-wrapper {
-          position: relative;
-          height: 160px;
-          overflow: hidden;
-          background: var(--bg-color);
-        }
-        
-        .related-post-image {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          transition: transform 0.4s ease;
-        }
-        
-        .related-post-card:hover .related-post-image {
-          transform: scale(1.05);
-        }
-        
-        .related-post-image-placeholder {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: var(--text-secondary);
-          opacity: 0.5;
-        }
-        
-        .related-post-content {
-          padding: 1.25rem;
-          display: flex;
-          flex-direction: column;
-          flex: 1;
-        }
-        
-        .related-post-category {
-          font-size: 0.65rem;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          color: var(--accent-color);
-          margin-bottom: 0.75rem;
-        }
-        
-        .related-post-card-title {
-          font-size: 1.1rem;
-          font-weight: 600;
-          line-height: 1.4;
-          color: var(--text-primary);
-          margin-bottom: 0.75rem;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-        
-        .related-post-excerpt {
-          font-size: 0.875rem;
-          line-height: 1.6;
-          color: var(--text-secondary);
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-          flex: 1;
-        }
-      `}</style>
     </section>
   )
 }

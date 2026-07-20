@@ -229,19 +229,19 @@ These are broken today regardless of redesign. Fix first, ship independently if 
 
 ## Phase 6 — Post detail unification
 
-- [ ] **6.1** Replace the custom `.post-nav` in `src/app/post/[slug]/page.tsx` with the
+- [x] **6.1** Replace the custom `.post-nav` in `src/app/post/[slug]/page.tsx` with the
   shared `SiteHeader` (keep `LanguageSwitcher`; move it into `SiteHeader` or the article
   toolbar). Delete the custom footer → `SiteFooter`.
-- [ ] **6.2** Keep the good editorial bones (full-bleed hero, drop cap, reading time) but
+- [x] **6.2** Keep the good editorial bones (full-bleed hero, drop cap, reading time) but
   re-token `post.css` onto the shared variables from Phase 1 (fonts, spacing, hairlines);
   hero title uses `.display-1`; body uses `--font-body` at ≥18px with `--measure`.
-- [ ] **6.3** `RelatedPosts.tsx`: match the Phase-3 card style, fix `alt=""` (0.5), and
+- [x] **6.3** `RelatedPosts.tsx`: match the Phase-3 card style, fix `alt=""` (0.5), and
   replace the `<style jsx>` block with a plain CSS module/globals class (styled-jsx is not
   a declared dependency — verify it even applies today).
-- [ ] **6.4** Align `markdown.css` (code blocks, quotes, tables) with the editorial tokens.
-- [ ] **6.5** Author row: real data only (name, date, reading time) — no hardcoded role
+- [x] **6.4** Align `markdown.css` (code blocks, quotes, tables) with the editorial tokens.
+- [x] **6.5** Author row: real data only (name, date, reading time) — no hardcoded role
   (0.3). Tags as quiet `.meta` links to `/?tag=`.
-- [ ] **6.6** Verify: lint/test/build; transition from listing → post feels like the same
+- [x] **6.6** Verify: lint/test/build; transition from listing → post feels like the same
   site; dark+light; reduced-motion.
 
 ---
@@ -292,3 +292,5 @@ These are broken today regardless of redesign. Fix first, ship independently if 
 | 2026-07-20 | 4 | **Phase 4 complete.** 4.1: unified `.project-grid`, featured pinned first. 4.2: `ProjectCard` rebuilt (server component, stretched-link whole-card nav, status dot + meta, quiet `.tag-chip`s, icon links z-indexed above). 4.3: `PageHero` on `/projects`. 4.4: detail page on shared tokens (`.display-1`, `.lede`, `.action-btn`, `.project-gallery-*`); **also fixed: project rich content was entirely unstyled — now imports post.css typography (dedup tracked for Phase 6/8)**. 4.5: `.empty-state`. Cleanup: old `.project-card:hover` lift rules removed; `.post-row-tags` renamed to shared `.tag-list`. 4.6: lint clean, 191/191 tests, build green. **Not committed yet.** | Commit Phase 4, then Phase 5 item 5.1 (album cards). |
 | 2026-07-20 | 4 | Phase 4 committed `0a362e4`, pushed. | Start Phase 5, item 5.1. |
 | 2026-07-20 | 5 | **Phase 5 complete.** 5.1: album cards rebuilt (3:2 cover, serif title, `.meta` count, shared `.card-badge`). 5.2: `getCachedAlbums()` falls back to first photo URL as cover. 5.3: CSS-columns masonry → ordered square-crop `.photo-grid` with real `<button>`s and CSS overlays (order preserved, no reflow jank). 5.4: Lightbox — keyboard/counter/caption already existed; added focus-on-open. 5.5: `PageHero` + `.empty-state` on `/photos`; album detail header → display-1/meta/lede. Old Phase-0 album/photo hover rules removed. 5.6: lint clean, 191/191 tests, build green. **Not committed yet.** | Commit Phase 5, then Phase 6 item 6.1 (post page on shared chrome). |
+| 2026-07-20 | 5 | Phase 5 committed `2fd886d`, pushed. | Start Phase 6, item 6.1. |
+| 2026-07-20 | 6 | **Phase 6 complete.** 6.1: post page on shared `SiteHeader`/`SiteFooter`; custom `.post-nav` deleted (admin avatar link dropped); `LanguageSwitcher` moved into hero meta row. 6.2: `post.css` rewritten on shared tokens (serif hero title, `--font-body` 18px, `--measure` article column, serif italic blockquotes). 6.3: RelatedPosts matches Phase-3 cards, styled-jsx → globals, next/image. 6.4: `markdown.css` was dead code (never imported) — deleted; `markdown-content` class dropped. 6.5: tags as `.tag-chip` links; primary tag clickable in hero. 6.6: lint clean, 191/191 tests, build green. **Not committed yet.** | Commit Phase 6, then Phase 7 item 7.1 (a11y/motion sweep). |
