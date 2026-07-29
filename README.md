@@ -1,386 +1,287 @@
+<div align="center">
+
 # ExploreCMS
 
-ExploreCMS is a beautifully styled, self-hosted minimalistic blogging platform engineered for speed, aesthetics, and simplicity. Built on Next.js App Router and powered by Prisma + LibSQL, it's designed to be deployed effortlessly on Vercel and other serverless platforms.
+**A self-hosted publishing platform for writing, projects, and photography.**
 
-## ✨ Features
+Built with Next.js, TypeScript, Prisma, and LibSQL.
 
-* **Glassmorphic UI**: A stunning, custom-built CSS design system featuring translucent glass containers, smooth transitions, and high-performance fluid animations.
-* **Animated Hero Gradient**: Dynamic flowing gradient animation on the hero title that smoothly transitions through theme colors.
-* **40 Dynamic Themes**: Switch instantly between 40 gorgeous, tailor-made color palettes, each with their own specialized Google Font pairing and full Light/Dark mode variants. Themes span a wide range of aesthetics — from **Ocean Depth**, **Cyberpunk 2077**, and **Neon Synthwave** to **Aurora Borealis**, **Gothic Cathedral**, **Deep Space**, **Steampunk Workshop**, **Pixel Art 8-bit**, and many more.
-* **Infinite Scroll & Inline Reading**: A frictionless user experience. Navigate a dynamic masonry grid of articles that infinitely paginates using Intersection Observers. Click any article to read it in a sleek sliding Modal Overlay without ever losing your position in the feed! 
-* **Flexible Database**: Built on Prisma + LibSQL. Use a local SQLite file for development, or connect to a hosted LibSQL provider (Turso, Bunny.net) for production deployments.
-* **Rich WYSIWYG Editor**: A beautifully minimal, ghost-style writing experience built on TipTap. Supports slash commands (`/`), image dropping, embedded YouTube videos, and floating toolbars to get out of your way while you write.
-* **Built-in Analytics**: Complete with total site views and per-article unique view tracking, plotted in a beautiful native Admin Dashboard.
-* **Instant Auto-Save & Drafts**: Never lose your writing. ExploreCMS automatically saves your progress in the background to your Drafts queue every 5 seconds.
-* **Custom Favicon**: Upload a custom favicon (PNG, ICO, SVG) to personalize your site branding.
-* **Popup Toast System**: Configure custom popup messages that appear to visitors on the homepage. Control display frequency (once per visitor or every visit).
-* **Photo Gallery**: Create and manage photo albums with drag-and-drop organization, lightbox viewing, and optional location metadata.
-* **Component System**: Enable or disable site sections (Blog, Projects, Photos) and configure which component serves as your homepage default.
-* **REST API**: Manage posts, projects and your photo gallery programmatically via a secured JSON API at `/api/v1`. Create multiple API keys with granular per-key permissions (read/create/update/delete per resource), optional expiry and one-click revocation — perfect for mobile apps, CI pipelines and external integrations. See [docs/api.md](docs/api.md) for the full reference.
-* **User Management**: Multi-user support with role-based access control (OWNER, ADMIN, COLLABORATOR). Manage permissions and user accounts from the admin panel.
+[![License: MPL-2.0](https://img.shields.io/badge/license-MPL--2.0-blue.svg)](LICENSE)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Self-hosted](https://img.shields.io/badge/deployment-self--hosted-6f42c1)](#deployment)
 
-### 🌐 Storage Integration
+[Features](#features) · [Quick start](#quick-start) · [Configuration](#configuration) · [REST API](#rest-api) · [Deployment](#deployment)
 
-**Bunny Storage (CDN)**: Store all images and assets on Bunny's global CDN.
-- Supports all 11 Bunny Storage regions: Falkenstein (fsn1), Frankfurt (de), London (uk), Stockholm (se), New York (ny), Los Angeles (la), Singapore (sg), Sydney (syd), Sao Paulo (br), Johannesburg (jh)
-- Automatic image URL migration when switching storage providers
-- Easy setup wizard during initial configuration
+</div>
 
-**S3-Compatible Storage**: Supports AWS S3, Cloudflare R2, MinIO, and any S3-compatible storage provider.
+ExploreCMS combines an editorial public site with a focused administration workspace. Publish rich articles, present software projects, curate photo albums, customize the visual identity, and automate content through integrations or a permission-scoped API—all while retaining control of the application and its data.
 
-### 🔄 External Integrations
+## Features
 
-**Craft.do Sync**: Import and sync your Craft.do documents as blog posts.
-- **Read-Only Mode**: Import Craft documents as read-only posts
-- **Backup Mode**: Push site posts to Craft for backup
-- **Full Sync Mode**: Two-way sync between Craft and site (create, update, delete)
-- Automatic Markdown conversion for seamless content transfer
-- Preserve images and formatting during sync
+| Area | What is included |
+| --- | --- |
+| Publishing | TipTap editor with Markdown storage, slash commands, task lists, code blocks, links, YouTube embeds, image upload, drafts, featured posts, tags, custom slugs, and debounced autosave for existing posts. |
+| Reader experience | Editorial layouts, featured and trending content, cursor-based infinite pagination, tag filters, live post search with `Ctrl/Cmd + K`, related posts, reading-time estimates, and responsive light/dark modes. |
+| Multilingual content | ISO 639-1 language selection, translation groups, translation creation from the editor, and a reader-facing language switcher. |
+| Projects | Manual portfolio management plus GitHub import and sync for public repositories, README content, topics, links, status, and generated cover art. |
+| Photo gallery | Publish ordered albums with cover images, photo metadata, featured items, and an accessible keyboard-enabled lightbox. |
+| Site composition | Enable Blog, Projects, and Photos independently, choose the homepage section, and build tag-based navigation with dropdowns. |
+| Design system | 41 visual themes, per-theme typography, light/dark variants, custom branding and favicon, editorial public surfaces, and an optional interactive particle background. |
+| SEO | Site-wide and per-post metadata, canonical URLs, Open Graph/Twitter cards, generated share images, JSON-LD, dynamic `sitemap.xml`, `robots.txt`, search verification, indexing controls, and optional `llms.txt`. |
+| Integrations | Craft.do read-only, backup, and full-sync workflows; GitHub project import; Bunny Storage; Resend or SMTP email; and database/storage migration tools. |
+| Administration | Analytics overview, post/project/album management, popup announcements, user roles, encrypted integration credentials, and a first-run setup wizard. |
+| Developer API | Key-authenticated REST API for posts, projects, albums, photos, and media uploads with granular permissions, expiry, revocation, pagination, rate limits, and idempotent post creation. |
 
-**GitHub Integration**: Showcase your GitHub repositories as project portfolios.
-- Import public repositories with one click
-- Auto-generate project pages from README content
-- Auto-generate cover images with language-specific colors
-- Sync button to refresh project info from GitHub anytime
-- Supports manual selection or importing all public repos
+## Technology stack
 
-**Email Integration**: Configure email providers for notifications and user management.
-- Support for Resend and SMTP providers
-- Email verification for new users
-- Password reset via email
-- Configurable sender name and address
+| Layer | Technology |
+| --- | --- |
+| Application | Next.js 16 App Router, React 19, TypeScript 5 |
+| Editing | TipTap 3 with Markdown and rich-content extensions |
+| Data | Prisma 6, `@prisma/adapter-libsql`, SQLite-compatible LibSQL |
+| Authentication | Signed JWT sessions with `jose`, password hashing with `bcryptjs` |
+| Styling | CSS custom properties, route-scoped CSS, 41 theme definitions |
+| Content safety | `sanitize-html`, MIME allowlists, image signature validation |
+| Testing | Vitest, jsdom, Testing Library |
+| Deployment | Node.js server or serverless hosting with a hosted LibSQL database |
 
-### 🗄️ Migration Tools
-
-**Database Migration**: Migrate your entire database to any LibSQL-compatible provider.
-- Connect to target database (Turso, Bunny.net, etc.)
-- Test connection before migrating
-- Migrate all data: users, posts, tags, views, settings, analytics
-- Perfect for backups or switching database providers
-
-**Storage Migration**: Switch between storage providers seamlessly.
-- Migrate from local storage to Bunny/S3
-- Switch between different S3 providers
-- Automatic URL updates in all posts
-- Files transferred with progress tracking
-
-### 🔧 Setup Wizard
-
-First-time setup is handled through an intuitive web-based wizard:
-- **Step 1**: Welcome and introduction
-- **Step 2**: Create your admin account (username, password, name)
-- **Step 3**: Configure media storage (Bunny/S3) or skip for later
-- **Step 4**: Review and complete
-
-No manual database seeding or configuration files needed!
-
-## 🚀 Getting Started
+## Quick start
 
 ### Prerequisites
 
-- Node.js 18+ 
-- A LibSQL-compatible database (for production):
-  - [Turso](https://turso.tech) (Recommended for Vercel)
-  - [Bunny.net Edge Storage](https://bunny.net)
-  - Local SQLite (development only)
+- Node.js 20.9 or newer
+- npm
+- SQLite for local development, or a hosted LibSQL database for deployment
 
-### Development Setup
-
-1. Clone the repository and install dependencies:
+### 1. Install the project
 
 ```bash
-git clone <repository-url>
-cd explore-cms
-npm install
+git clone https://github.com/tunwinlat/ExploreCMS.git
+cd ExploreCMS
+npm ci
 ```
 
-2. Configure environment variables:
+### 2. Configure the local environment
 
-```bash
-cp .env .env.local
-```
-
-Edit `.env.local` and set your database URL:
+Create a `.env` file in the repository root:
 
 ```env
-# For local development with SQLite:
 DATABASE_URL="file:./dev.db"
-JWT_SECRET="your-secret-key-here"
+JWT_SECRET="replace-with-a-long-random-secret"
+ENCRYPTION_KEY="replace-with-another-long-random-secret"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-3. Generate the Prisma Client and sync your database:
+Generate suitable secrets with:
+
+```bash
+openssl rand -base64 64
+openssl rand -base64 32
+```
+
+Environment files are ignored by Git. Keep these values private and use different secrets for each deployment.
+
+### 3. Prepare the local database
 
 ```bash
 npx prisma generate
-
-# For local SQLite only:
 npx prisma db push
-
-# For hosted LibSQL (Turso/Bunny.net), tables are created automatically on first setup
 ```
 
-4. Run the development server:
+### 4. Start ExploreCMS
 
 ```bash
 npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000/setup](http://localhost:3000/setup). The setup wizard creates the single owner account, initializes default site settings, and can optionally configure Bunny Storage. After setup, administration is available at `/admin/dashboard`.
 
-## 🔐 Initial Setup
+## Configuration
 
-On your very first run, you will be automatically redirected to `/setup`. 
+### Environment variables
 
-The setup wizard will guide you through creating your admin account and configuring optional media storage. Once established, the setup screen locks itself down permanently, and you will be routed straight to your new Admin Dashboard to begin writing.
+| Variable | Requirement | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | Required | Local `file:` URL or hosted `libsql://`, `https://`, or `wss://` connection URL. |
+| `DATABASE_AUTH_TOKEN` | Hosted databases | Authentication token for the LibSQL provider. |
+| `JWT_SECRET` | Required | Signs seven-day HTTP-only admin session cookies. Use a strong random value. |
+| `ENCRYPTION_KEY` | Strongly recommended; required for secure production use | Encrypts stored Craft, GitHub, Bunny, email, and database credentials with AES-256-GCM. Do not rotate it without migrating encrypted values. |
+| `NEXT_PUBLIC_APP_URL` | Recommended | Absolute application URL used in verification and password-reset emails. |
+| `NEXTAUTH_URL` | Optional fallback | Used for email links when `NEXT_PUBLIC_APP_URL` is absent. |
 
-## 🚀 Deploying to Vercel
+Craft.do, GitHub, Bunny Storage, Resend, and SMTP credentials are configured in the owner dashboard and stored in the database. They do not require separate environment variables.
 
-### 1. Database Setup (Turso Recommended)
+### Database behavior
 
-Create a database on Turso:
+Local development uses Prisma against a `file:` database. Run `prisma db push` after schema changes.
 
-```bash
-# Install Turso CLI
-curl -sSfL https://get.tur.so/install.sh | bash
+Hosted LibSQL deployments are handled differently:
 
-# Login and create database
-turso auth login
-turso db create explore-cms
-turso db show explore-cms
+- The setup wizard initializes a new remote database.
+- Idempotent production migrations run during application startup.
+- Existing installations are upgraded automatically when the application is deployed.
+- `prisma migrate deploy` is not required for the hosted runtime path used by this project.
 
-# Get connection string
-turso db tokens create explore-cms
-```
+### Media storage
 
-### 2. Deploy to Vercel
+Local uploads are written to `public/uploads`, which is appropriate for local development and persistent Node.js hosts. Serverless filesystems are ephemeral, so configure Bunny Storage before relying on uploads in production.
 
-Click the button below to deploy:
+The upload endpoint accepts validated image formats, enforces a 10 MB size limit, verifies file signatures, and falls back to local storage if Bunny Storage is unavailable.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
+## Administration
 
-Or deploy via CLI:
+The owner dashboard provides:
 
-```bash
-npm i -g vercel
-vercel --prod
-```
+- Analytics for total, unique, and per-post views
+- Draft, published, featured, tagged, multilingual, and SEO-aware post workflows
+- Project and photo-album management
+- Theme, branding, homepage, component, navigation, and popup controls
+- Craft.do, GitHub, email, database, and storage integrations
+- API key lifecycle and permission management
+- Owner, administrator, and contributor roles
 
-### 3. Configure Environment Variables
+Most global configuration and credential-management screens are owner-only. Admin routes are protected by signed session cookies and server-side authorization checks.
 
-Set these environment variables in your Vercel project settings:
+## REST API
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `DATABASE_URL` | Your LibSQL database URL | `libsql://your-db.turso.io` |
-| `DATABASE_AUTH_TOKEN` | Auth token for Turso/Bunny | `eyJ...` |
-| `JWT_SECRET` | Secret for session signing | Generate with `openssl rand -base64 32` |
+ExploreCMS exposes a JSON API at `/api/v1` for external tools and applications.
 
-**Note:** Do not set `DATABASE_URL` to a `file:` path on Vercel - file system is ephemeral and your data will be lost.
+| Resource | Endpoints | Permissions |
+| --- | --- | --- |
+| Posts | `/api/v1/posts`, `/api/v1/posts/{id}` | `posts:read`, `posts:create`, `posts:update`, `posts:delete` |
+| Projects | `/api/v1/projects`, `/api/v1/projects/{id}` | `projects:read`, `projects:create`, `projects:update`, `projects:delete` |
+| Gallery | Album and photo endpoints under `/api/v1/gallery` | `gallery:read`, `gallery:create`, `gallery:update`, `gallery:delete` |
+| Media | `/api/v1/media` image uploads for embedding in post content | `media:create` |
 
-### 4. Run Setup
-
-After deployment, visit your site URL. You'll be redirected to the setup wizard to create your admin account and configure storage.
-
-## 🔌 Configuring Integrations
-
-### Craft.do Setup
-
-1. Get your Craft.do API credentials:
-   - Open Craft.do → Settings → API Access
-   - Copy your Server URL and API Token
-
-2. Go to **Admin** → **Integrations** → **Craft.do**
-   - Paste your Server URL and API Token
-   - Click "Test Connection" to verify
-   - Select your sync folder from the dropdown
-   - Choose sync mode (Read-Only, Backup, or Full Sync)
-
-3. Click "Save Settings" to enable the integration
-
-### GitHub Setup
-
-1. Create a GitHub Personal Access Token:
-   - Go to GitHub → Settings → Developer Settings → Personal Access Tokens
-   - Generate a new token with `repo` and `read:user` scopes
-
-2. Go to **Admin** → **Projects** → **GitHub**
-   - Paste your access token
-   - Click "Connect" to link your account
-   - Choose sync mode (Manual Select or All Public Repos)
-   - Select repositories to import as projects
-
-3. Projects will be created with README content, tech tags, and auto-generated cover images
-
-### Email Setup
-
-1. Choose your email provider:
-   - **Resend**: Sign up at [resend.com](https://resend.com) and get an API key
-   - **SMTP**: Use your existing email provider (Gmail, Outlook, etc.)
-
-2. Go to **Admin** → **Integrations** → **Email**
-   - Select your provider
-   - Enter API key or SMTP credentials
-   - Configure sender name and email address
-   - Click "Test Connection" to verify
-   - Save settings
-
-## 🔑 REST API
-
-ExploreCMS exposes a secured JSON REST API at `/api/v1` so external apps can manage your content:
-
-* **Blog**: list, create, update and delete posts (including tags, publishing and featuring)
-* **Projects**: full CRUD for portfolio projects
-* **Gallery**: full CRUD for photo albums and individual photos
-
-**Authentication** uses API keys, created under **Admin** → **Management** → **API Keys** (owner only). Each key gets its own permission set in `resource:action` format (e.g. `posts:create`, `gallery:*`), so you can hand out exactly the access an integration needs. Keys can optionally expire and can be revoked at any time.
+Create a key under **Admin → Management → API Keys**. The plaintext key is shown once and never stored; a SHA-256 hash and short display prefix are retained.
 
 ```bash
-curl -X POST https://your-site.com/api/v1/posts \
+curl -X POST https://example.com/api/v1/posts \
   -H "Authorization: Bearer ecms_your_key" \
+  -H "Idempotency-Key: 018f6f4d-7c2a-7c10-a5b8-1f621b6c9342" \
   -H "Content-Type: application/json" \
-  -d '{"title": "Hello API", "content": "# Hi", "published": true, "tags": ["api"]}'
+  -d '{"title":"Hello API","content":"# Hello","published":true,"tags":["api"]}'
 ```
 
-See **[docs/api.md](docs/api.md)** for the complete endpoint reference, permission model and more examples.
+See the [complete API reference](docs/api.md) for request schemas, pagination, permissions, response codes, idempotency behavior, and gallery endpoints.
 
-## 🎨 Changing Themes
+## Integrations
 
-Themes can be easily previewed and activated live via the Admin Dashboard.
-Navigate to **Admin** → **Settings** → **Theme & Background** to:
-- Swap between 40 aesthetics globally in real-time
-- Enable/disable the Dynamic Particle Background
+### Craft.do
 
-### Particle Background
+Connect a Craft API server, choose a folder, and select one of three modes:
 
-The Dynamic Particle Background creates an interactive, living backdrop for your site:
+- **Read only** imports Craft documents and protects linked posts from local edits.
+- **Backup** pushes local posts to Craft.
+- **Full sync** imports and exports content, including deletion synchronization.
 
-- **Cursor Reaction**: Particles are repelled from your cursor (antigravity effect)
-- **Attraction**: Particles naturally attract and slowly drift toward each other
-- **Merging**: When particles collide, they merge into larger particles
-- **Spawning**: New particles continuously spawn at screen edges
-- **Explosions**: Fleeing particles that hit larger ones cause explosive fragmentation
-- **Theme-Aware**: Particle colors adapt to match your selected theme's accent color
+Synchronization can run manually or in the background after eligible homepage responses. A database-backed lease prevents concurrent sync jobs across instances.
 
-To disable the particle background, toggle it off in **Admin** → **Settings** → **Theme & Background**.
+### GitHub
 
-## 🗄️ Database Architecture
+Connect a personal access token to import public repositories as published projects. ExploreCMS maps repository metadata, README Markdown, topics or primary language, homepage links, and archive status into the project model. Linked projects can be refreshed from GitHub later.
 
-ExploreCMS uses **LibSQL** (SQLite-compatible) via Prisma:
+See [GitHub integration setup](GITHUB_SETUP.md) for configuration details.
 
-- **Development**: Local SQLite file (`file:./dev.db`)
-- **Production**: Hosted LibSQL (Turso, Bunny.net, etc.)
+### Email
 
-### Database Schema
+Choose Resend or a custom SMTP server for email verification and password-reset messages. Provider credentials are stored encrypted when `ENCRYPTION_KEY` is configured.
 
-The database includes tables for:
-- **Users** - Admin accounts with roles (OWNER, ADMIN, COLLABORATOR)
-- **Posts** - Blog posts with rich HTML content
-- **Tags** - Categorization for posts
-- **SiteSettings** - Global site configuration
-- **SiteAnalytics** - View tracking and analytics
-- **PostView** - Per-post view statistics
-- **Projects** - GitHub projects and portfolio items
-- **PhotoAlbum** - Photo gallery albums
-- **Photo** - Individual photos with metadata
-- **PopupConfig** - Homepage popup configuration
+## Architecture
 
-### Database Migration
+```mermaid
+flowchart LR
+    Visitors[Visitors] --> Public[Public App Router pages]
+    Editors[Editors] --> Admin[Protected admin workspace]
+    Clients[API clients] --> API[Permission-scoped REST API]
 
-To migrate to a new database:
-1. Go to **Admin** → **Settings** → **Database Migration**
-2. Enter the new database URL and auth token
-3. Click **"Test Connection"** to verify
-4. Click **"Migrate Data"** to transfer all data
-5. Update your `DATABASE_URL` environment variable in Vercel
-6. Redeploy - the site now uses the new database!
+    Public --> Services[Server actions, route handlers, and cache layer]
+    Admin --> Services
+    API --> Services
+    Services --> Prisma[Prisma + LibSQL adapter]
+    Prisma --> DB[(SQLite / hosted LibSQL)]
 
-**Note**: Schema migrations are applied automatically on startup. No manual migration steps required.
-
-## 📦 Storage Architecture
-
-### External Storage (Required for Vercel)
-
-Vercel's filesystem is ephemeral, so **external storage is required for production**. The platform supports:
-
-- **Bunny Storage** - Recommended for ease of use
-- **AWS S3** - Industry standard
-- **Cloudflare R2** - Zero egress fees
-- **MinIO** - Self-hosted S3-compatible
-
-### Storage Migration
-
-To switch storage providers:
-1. Go to **Admin** → **Settings** → **Storage Migration**
-2. Select your provider (Bunny or S3-Compatible)
-3. Enter credentials and CDN URL
-4. Click **"Test Connection"** to verify access
-5. Click **"Migrate Files"** to transfer all images
-6. All post URLs are automatically updated
-
-## ⚠️ Known Issues & Limitations
-
-* **Favicon Format**: JPEG favicons may not display correctly in some browsers. For best compatibility, use PNG format (32x32 or 180x180 pixels recommended).
-* **Bunny Storage Region Selection**: You must select the correct storage region that matches your Bunny Storage zone configuration. Using "Auto (Default)" only works for Falkenstein (fsn1) and Frankfurt (de) regions. For all other regions (LA, NY, Singapore, etc.), you must select the specific region from the dropdown.
-* **Large File Migrations**: When migrating storage with many files, the transfer may pass through Vercel's serverless functions. For large migrations (>100 files), consider using direct storage-to-storage transfer tools instead.
-
-## 📝 Environment Variables Reference
-
-### Required
-
-| Variable | Description | Required In |
-|----------|-------------|-------------|
-| `DATABASE_URL` | LibSQL connection string | All environments |
-| `DATABASE_AUTH_TOKEN` | Auth token for hosted LibSQL (Turso, Bunny.net) | When using hosted DB |
-| `JWT_SECRET` | Secret key for session signing | Production |
-| `ENCRYPTION_KEY` | Key for encrypting sensitive tokens (API keys) | Production (recommended) |
-
-### Optional Integration Variables
-
-| Variable | Description | Used For |
-|----------|-------------|----------|
-| `CRAFT_SERVER_URL` | Craft.do Connect API URL | Craft sync (or configure via UI) |
-| `CRAFT_API_TOKEN` | Craft.do Bearer token | Craft sync (or configure via UI) |
-| `GITHUB_ACCESS_TOKEN` | GitHub Personal Access Token | GitHub integration (or configure via UI) |
-
-### Database URL Examples
-
-**Local SQLite (Development):**
-```env
-DATABASE_URL="file:./dev.db"
+    Services --> Craft[Craft.do]
+    Services --> GitHub[GitHub]
+    Services --> Media[Bunny Storage]
+    Services --> Email[Resend / SMTP]
 ```
 
-**Turso:**
-```env
-DATABASE_URL="libsql://your-db.turso.io"
-DATABASE_AUTH_TOKEN="your-token"
+Public listing pages use a 60-second revalidation window, while mutations explicitly invalidate affected routes and cache tags. Post and project content can be stored as Markdown or HTML and is sanitized before rendering.
+
+### Repository layout
+
+```text
+ExploreCMS/
+├── prisma/                 # Schema, migrations, and local/hosted DB parity
+├── public/                 # Static assets and local uploads
+├── src/
+│   ├── app/                # Public routes, admin workspace, and APIs
+│   ├── components/         # Shared public, admin, editor, and gallery UI
+│   ├── lib/                # Auth, data, caching, SEO, sync, and integrations
+│   └── middleware.ts       # Admin route protection
+├── tests/                  # Shared test setup and integration-focused tests
+├── docs/                   # API reference and design documentation
+├── SECURITY.md             # Security model and deployment checklist
+└── package.json            # Scripts and dependency manifest
 ```
 
-**Bunny.net:**
-```env
-DATABASE_URL="libsql://your-db.lite.bunnydb.net/"
-DATABASE_AUTH_TOKEN="your-jwt-token"
-```
+## Development
 
-## 🤖 Development & AI Disclosure
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the development server. |
+| `npm run build` | Generate Prisma Client and create a production build. |
+| `npm run start` | Start the production server. |
+| `npm run lint` | Run ESLint. |
+| `npm run test` | Run the Vitest suite once. |
+| `npx vitest` | Run tests in watch mode. |
+| `npx prisma generate` | Regenerate Prisma Client. |
+| `npx prisma db push` | Synchronize a local development schema. |
 
-This project is developed with assistance from advanced AI systems:
+Source files use strict TypeScript and carry the MPL-2.0 header. Server Components are the default; Client Components are reserved for interactive UI and browser APIs.
 
-- **Code Generation**: Google Gemini 3.1 Pro, Moonshot Kimi K2.5, Anthropic Claude Opus 4.6, and Claude Sonnet 4.6
-- **Quality Assurance**: Google Jules using Gemini 3.1 Pro for proactive performance, UX, and security reviews
-- **Security Assessment**: Weekly vulnerability scans conducted by Kimi K2.5 Agent Swarm and Claude Opus 4.6
-- **Penetration Testing**: Simulated attacks performed in AgentZero by MiniMax 2.5
+## Deployment
 
-### Production Readiness
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ftunwinlat%2FExploreCMS)
 
-While we employ multiple AI systems for quality assurance and security testing, this software is provided as-is. **Use at your own risk for production environments.** We welcome:
-- Bug reports and issue submissions
-- Security vulnerability disclosures
-- Feature suggestions and pull requests
-- Performance optimization recommendations
+For a serverless deployment:
 
-Community contributions help improve the project for everyone. Please open an issue or submit a PR if you encounter any problems.
+1. Create a hosted LibSQL database with a provider such as Turso or Bunny Database.
+2. Deploy the repository and set `DATABASE_URL`, `DATABASE_AUTH_TOKEN`, `JWT_SECRET`, `ENCRYPTION_KEY`, and `NEXT_PUBLIC_APP_URL`.
+3. Visit `/setup` on the deployed site to initialize the schema and create the owner.
+4. Configure Bunny Storage in the setup wizard or owner dashboard before uploading production media.
+5. Set the canonical site URL under **Admin → SEO** to activate absolute canonicals, sitemap URLs, social metadata, and `llms.txt`.
 
-## 📜 License
+Do not use a `file:` database or local uploads on an ephemeral serverless filesystem. A traditional Node.js host with persistent storage can use both.
 
-This project is licensed under the **Mozilla Public License, v. 2.0 (MPL-2.0)**. 
-See the [LICENSE](LICENSE) file for more details. Any copy of the file must include the MPL header.
+## Security
+
+ExploreCMS includes:
+
+- Password hashing with bcrypt and seven-day HS256 sessions
+- HTTP-only, `SameSite=Lax`, secure-in-production cookies
+- Role checks for protected mutations and owner-only configuration
+- AES-256-GCM encryption for stored integration secrets
+- Sanitized HTML and Markdown rendering
+- Upload authentication, size/type/signature validation, and UUID filenames
+- API key hashing, granular permissions, expiry, and revocation
+- Rate limits for authentication, uploads, public reads, writes, search, and analytics
+- Restrictive response headers and an uploaded-SVG content policy
+
+Review [SECURITY.md](SECURITY.md) before production deployment. Please report suspected vulnerabilities privately rather than opening a public issue.
+
+## Contributing
+
+Issues and pull requests are welcome.
+
+1. Fork the repository and create a focused branch.
+2. Add or update tests for behavioral changes.
+3. Run `npm run test`, `npm run lint`, and `npm run build`.
+4. Keep database changes synchronized across the Prisma schema, Prisma migrations, hosted runtime migrations, setup initialization, and the migration fast-path probe.
+5. Open a pull request describing the motivation, implementation, and verification performed.
+
+## License
+
+ExploreCMS is licensed under the [Mozilla Public License 2.0](LICENSE). Modifications to MPL-covered files must remain available under the MPL when distributed.

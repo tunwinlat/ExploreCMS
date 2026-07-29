@@ -35,6 +35,7 @@ Each key carries its own permission set in `resource:action` format:
 | `posts` | `posts:read` `posts:create` `posts:update` `posts:delete` |
 | `projects` | `projects:read` `projects:create` `projects:update` `projects:delete` |
 | `gallery` | `gallery:read` `gallery:create` `gallery:update` `gallery:delete` |
+| `media` | `media:create` (only action currently enforced) |
 
 Wildcards: `posts:*` grants all post actions; `*` grants full access.
 
@@ -156,6 +157,35 @@ Deleting an album also deletes all of its photos.
 ```
 
 **Update a photo** (`PATCH /api/v1/gallery/photos/{id}`): any subset of the same fields, plus `albumId` to move the photo to a different album.
+
+## Media
+
+| Method | Endpoint | Permission |
+|--------|----------|------------|
+| POST | `/api/v1/media` | `media:create` |
+
+Upload an image to embed in post content. Send `multipart/form-data` with a
+single `file` field. Limits: 10 MB; JPEG, PNG, GIF, WebP or ICO (verified
+against the file's magic bytes, not just the declared type). Returns
+`201 Created` with `{ "url": "..." }` — a CDN URL when Bunny Storage is
+enabled, otherwise a local `/uploads/...` path (same storage as admin uploads).
+
+Posting an image is a two-step flow: upload the file, then embed the returned
+URL in the post `content` (`![alt](url)` in markdown, `<img src="url">` in HTML).
+
+```bash
+# 1. Upload the image
+curl -X POST https://your-site.com/api/v1/media \
+  -H "Authorization: Bearer ecms_..." \
+  -F "file=@photo.jpg"
+# → {"url":"https://cdn.example.com/uploads/1b9d....jpg"}
+
+# 2. Reference it in a post
+curl -X POST https://your-site.com/api/v1/posts \
+  -H "Authorization: Bearer ecms_..." \
+  -H "Content-Type: application/json" \
+  -d '{"title":"With image","content":"![photo](https://cdn.example.com/uploads/1b9d....jpg)","published":true}'
+```
 
 ## Notes
 

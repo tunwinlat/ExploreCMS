@@ -7,7 +7,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { POST } from './route'
 import { verifySession } from '@/lib/auth'
-import { createWriteStream, mkdirSync, existsSync } from 'fs'
+import { mkdir, writeFile } from 'fs/promises'
 
 // Mocking dependencies
 vi.mock('@/lib/auth', () => ({
@@ -30,10 +30,9 @@ vi.mock('@/lib/rateLimit', () => ({
   RATE_LIMITS: { upload: { windowMs: 60000, maxRequests: 10 } },
 }))
 
-vi.mock('fs', () => ({
-  createWriteStream: vi.fn(),
-  mkdirSync: vi.fn(),
-  existsSync: vi.fn(),
+vi.mock('fs/promises', () => ({
+  mkdir: vi.fn(),
+  writeFile: vi.fn(),
 }))
 
 vi.mock('uuid', () => ({
@@ -103,7 +102,6 @@ describe('POST /api/upload', () => {
 
   it('uploads a file successfully', async () => {
     vi.mocked(verifySession).mockResolvedValue({ userId: 1 })
-    vi.mocked(existsSync).mockReturnValue(false) // simulate dir not exists
 
     const formData = new FormData()
     // Provide a valid PNG magic byte signature so validation passes
@@ -115,22 +113,14 @@ describe('POST /api/upload', () => {
       formData: async () => formData
     } as unknown as Request
 
-    const mockStream = {
-      write: vi.fn(),
-      end: vi.fn(),
-    }
-    vi.mocked(createWriteStream).mockReturnValue(mockStream as any)
-
     const res = await POST(req)
     expect(res.status).toBe(200)
 
     const json = await res.json()
     expect(json).toEqual({ url: '/uploads/mock-uuid.png' })
 
-    expect(mkdirSync).toHaveBeenCalledWith(expect.stringContaining('uploads'), { recursive: true })
-    expect(createWriteStream).toHaveBeenCalled()
-    expect(mockStream.write).toHaveBeenCalled()
-    expect(mockStream.end).toHaveBeenCalled()
+    expect(mkdir).toHaveBeenCalledWith(expect.stringContaining('uploads'), { recursive: true })
+    expect(writeFile).toHaveBeenCalledWith(expect.stringContaining('mock-uuid.png'), expect.any(Buffer))
   })
 
   it('returns 500 when an error is thrown', async () => {

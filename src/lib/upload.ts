@@ -1,3 +1,29 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+import { mkdir, writeFile } from 'fs/promises'
+import { join } from 'path'
+import { v4 as uuidv4 } from 'uuid'
+import { prisma } from '@/lib/db'
+import { decrypt } from '@/lib/crypto'
+
+/** Maximum accepted image size (10 MB). */
+export const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024
+
+/** Allowed image MIME types mapped to the file extension they are stored with. */
+export const ALLOWED_IMAGE_MIME_TYPES: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg',
+  'image/png': 'png',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+  'image/x-icon': 'ico',
+  'image/vnd.microsoft.icon': 'ico',
+}
+
 export function isValidImageSignature(buffer: Buffer, mimeType: string): boolean {
   if (buffer.length < 12) return false
 
@@ -46,4 +72,99 @@ export function isValidImageSignature(buffer: Buffer, mimeType: string): boolean
   }
 
   return false
+}
+
+// Bunny Storage API Client
+class BunnyStorageClient {
+  private apiKey: string
+  private storageZoneName: string
+  private region: string
+  private baseUrl: string
+
+  constructor(apiKey: string, storageZoneName: string, region: string) {
+    this.apiKey = apiKey
+    this.storageZoneName = storageZoneName
+    this.region = region
+    // Storage endpoint: storage.bunnycdn.com (default/Falkenstein/Frankfurt) or region-specific
+    // Region-specific endpoints: la.storage.bunnycdn.com, ny.storage.bunnycdn.com, etc.
+    const defaultRegions = ['', 'fsn1', 'de']
+    this.baseUrl = defaultRegions.includes(region)
+      ? 'storage.bunnycdn.com'
+      : `${region}.storage.bunnycdn.com`
+  }
+
+  async uploadFile(path: string, buffer: Buffer, contentType?: string): Promise<string> {
+    const url = `https://${this.baseUrl}/${this.storageZoneName}/${path}`
+
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'AccessKey': this.apiKey,
+        'Content-Type': contentType || 'application/octet-stream',
+      },
+      body: new Uint8Array(buffer),
+    })
+
+    if (!response.ok) {
+      const error = await response.text()
+      throw new Error(`Bunny Storage upload failed: ${response.status} ${error}`)
+    }
+
+    return path
+  }
+}
+
+/**
+ * Store an already-validated image and return its public URL.
+ *
+ * Uses Bunny Storage when enabled in the site settings and falls back to
+ * `public/uploads/` when Bunny is disabled or the upload fails.
+ * Callers must validate the buffer (size, MIME allowlist, magic bytes) first.
+ */
+export async function storeImage(buffer: Buffer, mimeType: string): Promise<string> {
+  const fileExtension = ALLOWED_IMAGE_MIME_TYPES[mimeType]
+  if (!fileExtension) {
+    throw new Error(`Unsupported image type: ${mimeType}`)
+  }
+  const filename = `${uuidv4()}.${fileExtension}`
+
+  const settings = await (prisma as any).siteSettings.findUnique({
+    where: { id: 'singleton' },
+    select: {
+      bunnyStorageEnabled: true,
+      bunnyStorageRegion: true,
+      bunnyStorageZoneName: true,
+      bunnyStorageApiKey: true,
+      bunnyStorageUrl: true,
+    }
+  })
+
+  // Use Bunny Storage if enabled
+  if (settings?.bunnyStorageEnabled && settings.bunnyStorageApiKey) {
+    try {
+      const decryptedKey = decrypt(settings.bunnyStorageApiKey) || settings.bunnyStorageApiKey
+      const storage = new BunnyStorageClient(
+        decryptedKey,
+        settings.bunnyStorageZoneName,
+        settings.bunnyStorageRegion
+      )
+
+      const storagePath = `uploads/${filename}`
+      await storage.uploadFile(storagePath, buffer, mimeType)
+
+      // Return CDN URL
+      return `${settings.bunnyStorageUrl}/uploads/${filename}`
+    } catch (storageError: unknown) {
+      console.error('Bunny Storage upload failed:', storageError)
+      // Fall back to local upload
+      console.log('Falling back to local storage...')
+    }
+  }
+
+  // Local upload
+  const uploadDir = join(process.cwd(), 'public', 'uploads')
+  await mkdir(uploadDir, { recursive: true })
+  await writeFile(join(uploadDir, filename), buffer)
+
+  return `/uploads/${filename}`
 }

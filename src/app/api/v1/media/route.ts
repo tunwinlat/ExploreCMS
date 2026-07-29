@@ -5,8 +5,7 @@
  */
 
 import { NextResponse } from 'next/server'
-import { verifySession } from '@/lib/auth'
-import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rateLimit'
+import { requireApiPermission } from '@/lib/apiAuth'
 import {
   ALLOWED_IMAGE_MIME_TYPES,
   MAX_IMAGE_FILE_SIZE,
@@ -14,24 +13,16 @@ import {
   storeImage,
 } from '@/lib/upload'
 
-export async function POST(req: Request) {
+// POST /api/v1/media — upload an image (requires media:create)
+// multipart/form-data with a single "file" field; returns { url } for
+// embedding in post content. Storage backend matches the admin upload
+// endpoint (Bunny Storage when enabled, local public/uploads otherwise).
+export async function POST(request: Request) {
+  const auth = await requireApiPermission(request, 'media:create')
+  if (auth.error) return auth.error
+
   try {
-    // Rate limiting
-    const clientIP = getClientIP(req)
-    const rateLimit = checkRateLimit(clientIP, RATE_LIMITS.upload)
-    if (!rateLimit.success) {
-      return NextResponse.json(
-        { error: 'Rate limit exceeded. Please try again later.' },
-        { status: 429, headers: { 'X-RateLimit-Reset': String(rateLimit.resetTime) } }
-      )
-    }
-
-    const session = await verifySession()
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const formData = await req.formData()
+    const formData = await request.formData()
     const file = formData.get('file') as File | null
 
     if (!file) {
@@ -58,10 +49,9 @@ export async function POST(req: Request) {
     }
 
     const url = await storeImage(buffer, mimeType)
-    return NextResponse.json({ url })
-
+    return NextResponse.json({ url }, { status: 201 })
   } catch (error) {
-    console.error('Upload error:', error)
+    console.error('[API v1] Failed to upload media:', error)
     return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
   }
 }
