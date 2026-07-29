@@ -251,7 +251,7 @@ model PopupConfig {
   enabled     Boolean  @default(false)
   title       String   @default("")
   content     String   @default("")
-  displayMode String   @default("once") // "once" = once per visitor, "always" = every page load
+  displayMode String   @default("once") // "once" = once per visitor, "always" = once per browsing session
   updatedAt   DateTime @updatedAt
 }
 

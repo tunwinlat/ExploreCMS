@@ -150,7 +150,7 @@ export default function PopupEditor({ initialConfig }: { initialConfig: any }) {
               style={{ display: 'none' }}
             />
             <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>Every visit</div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Shows every time the homepage loads</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Shows once per browsing session</div>
           </label>
         </div>
       </div>

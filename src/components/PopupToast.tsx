@@ -16,7 +16,8 @@ interface PopupToastProps {
   displayMode: string
 }
 
-const STORAGE_KEY = 'explorecms_popup_dismissed'
+const DISMISSED_STORAGE_KEY = 'explorecms_popup_dismissed'
+const VISIT_STORAGE_KEY = 'explorecms_popup_shown_this_visit'
 
 export function PopupToast({ title, content, displayMode }: PopupToastProps) {
   const [visible, setVisible] = useState(false)
@@ -30,17 +31,26 @@ export function PopupToast({ title, content, displayMode }: PopupToastProps) {
   useEffect(() => {
     if (!mounted) return
     if (displayMode === 'once') {
-      const dismissed = localStorage.getItem(STORAGE_KEY)
+      const dismissed = localStorage.getItem(DISMISSED_STORAGE_KEY)
       if (dismissed) return
     }
-    const timer = setTimeout(() => setVisible(true), 500)
+    if (displayMode === 'always' && sessionStorage.getItem(VISIT_STORAGE_KEY)) {
+      return
+    }
+
+    const timer = setTimeout(() => {
+      if (displayMode === 'always') {
+        sessionStorage.setItem(VISIT_STORAGE_KEY, Date.now().toString())
+      }
+      setVisible(true)
+    }, 500)
     return () => clearTimeout(timer)
   }, [displayMode, mounted])
 
   const handleDismiss = () => {
     setClosing(true)
     if (displayMode === 'once') {
-      localStorage.setItem(STORAGE_KEY, Date.now().toString())
+      localStorage.setItem(DISMISSED_STORAGE_KEY, Date.now().toString())
     }
     setTimeout(() => setVisible(false), 300)
   }
