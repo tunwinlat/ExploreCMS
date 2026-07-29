@@ -12,3 +12,8 @@
 **Vulnerability:** Duplicated URL sanitization logic across components increases the risk of logical drift and inconsistent validation.
 **Learning:** Centralizing security functions is a best practice that prevents future inconsistencies in URL validation.
 **Prevention:** Extract shared URL validation into a centralized utility and update all call-sites to use it.
+
+## 2024-05-18 - Hardcoded JWT Secret Fallback in Middleware
+**Vulnerability:** A hardcoded secret ('explore-cms-development-secret-only') was being used as a fallback when the JWT_SECRET environment variable was absent in non-production environments within `src/middleware.ts`.
+**Learning:** This likely existed to simplify local development and testing by removing the necessity to configure a secure secret. However, it inadvertently created a security risk as the hardcoded secret was plainly visible in the source code. If deployed to production without the environment variable (or if NODE_ENV check failed), the application would be completely compromised, allowing attackers to forge valid JWT session tokens and gain unauthorized access to the admin dashboard.
+**Prevention:** Never use hardcoded secrets in code, even as fallbacks for development. If an environment variable is required for security (like a JWT secret), enforce its presence immediately at startup or runtime by throwing an explicit error if it's missing, regardless of the environment. Ensure consistent configuration checks across all authentication modules.
