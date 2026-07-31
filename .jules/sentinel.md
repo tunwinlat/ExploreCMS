@@ -13,6 +13,11 @@
 **Learning:** Centralizing security functions is a best practice that prevents future inconsistencies in URL validation.
 **Prevention:** Extract shared URL validation into a centralized utility and update all call-sites to use it.
 
+## 2024-05-18 - Fix Plaintext Storage Fallback for Sensitive Data
+**Vulnerability:** The `encrypt` function in `src/lib/crypto.ts` fell back to storing data as plaintext (with a `plain:` prefix) if `ENCRYPTION_KEY` was missing from the environment.
+**Learning:** This insecure fallback existed likely to prevent complete crashes when the key was missing, but it prioritized uptime over data security.
+**Prevention:** Encryption utilities must fail securely. If a required encryption key is absent, the function must throw an error or crash the process, never silently degrade to plaintext storage for sensitive fields.
+
 ## 2024-05-18 - Hardcoded JWT Secret Fallback in Middleware
 **Vulnerability:** A hardcoded secret ('explore-cms-development-secret-only') was being used as a fallback when the JWT_SECRET environment variable was absent in non-production environments within `src/middleware.ts`.
 **Learning:** This likely existed to simplify local development and testing by removing the necessity to configure a secure secret. However, it inadvertently created a security risk as the hardcoded secret was plainly visible in the source code. If deployed to production without the environment variable (or if NODE_ENV check failed), the application would be completely compromised, allowing attackers to forge valid JWT session tokens and gain unauthorized access to the admin dashboard.
