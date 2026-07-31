@@ -19,6 +19,12 @@ export async function updateUserProfile(formData: FormData) {
   const session = await verifySession()
   if (!session) return { error: 'Unauthorized' }
 
+  const userId = (session as { userId: string }).userId
+  const rateLimit = checkRateLimit(`profile-update:${userId}`, RATE_LIMITS.apiWrite)
+  if (!rateLimit.success) {
+    return { error: 'Too many requests. Please try again later.' }
+  }
+
   const firstName = formData.get('firstName') as string
   const lastName = formData.get('lastName') as string
   const password = formData.get('password') as string
@@ -31,7 +37,6 @@ export async function updateUserProfile(formData: FormData) {
     }
 
     // Handle email change
-    const userId = (session as { userId: string }).userId
     const currentUser = await prisma.user.findUnique({
       where: { id: userId },
       select: { email: true, emailVerified: true }
