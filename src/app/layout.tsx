@@ -6,6 +6,7 @@
 
 import type { Metadata, Viewport } from "next";
 import { Fraunces } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 import "./themes.css";
@@ -110,6 +111,7 @@ export default async function RootLayout({
           <ParticleBackground enabled={dynamicPattern} />
           {children}
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
