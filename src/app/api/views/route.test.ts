@@ -81,6 +81,17 @@ describe('POST /api/views', () => {
     expect(prisma.siteAnalytics.upsert).toHaveBeenCalled();
   });
 
+  it('rejects a non-string slug before querying the database', async () => {
+    const req = createRequest({ slug: { not: 'a string' } });
+
+    const res = await POST(req);
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ success: false, error: 'Invalid slug' });
+    expect(getPostDb).not.toHaveBeenCalled();
+    expect(prisma.siteAnalytics.upsert).not.toHaveBeenCalled();
+  });
+
   it('tracks post view and global view for first time visitor to a post', async () => {
     const slug = 'test-post';
     const req = createRequest({ slug });

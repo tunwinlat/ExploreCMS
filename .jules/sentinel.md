@@ -12,7 +12,13 @@
 **Vulnerability:** Duplicated URL sanitization logic across components increases the risk of logical drift and inconsistent validation.
 **Learning:** Centralizing security functions is a best practice that prevents future inconsistencies in URL validation.
 **Prevention:** Extract shared URL validation into a centralized utility and update all call-sites to use it.
+
 ## 2024-05-18 - Fix Plaintext Storage Fallback for Sensitive Data
 **Vulnerability:** The `encrypt` function in `src/lib/crypto.ts` fell back to storing data as plaintext (with a `plain:` prefix) if `ENCRYPTION_KEY` was missing from the environment.
 **Learning:** This insecure fallback existed likely to prevent complete crashes when the key was missing, but it prioritized uptime over data security.
 **Prevention:** Encryption utilities must fail securely. If a required encryption key is absent, the function must throw an error or crash the process, never silently degrade to plaintext storage for sensitive fields.
+
+## 2026-07-31 - Server Action Rate Limiting & Input Validation
+**Vulnerability:** The `updateUserProfile` server action lacked rate limiting, potentially allowing automated brute forcing. The `/api/views` endpoint accepted a JSON payload where `slug` was passed directly to Prisma without string validation. Development environment fell back to a hardcoded JWT secret.
+**Learning:** Sensitive Server Actions require explicit rate limiting, and parsed JSON values need runtime type checks before reaching Prisma. Rate-limit identifiers must also be namespaced by operation so unrelated traffic cannot consume another action's quota.
+**Prevention:** Apply a namespaced, authenticated-user rate limit to sensitive Server Actions. Explicitly check `typeof field === 'string'` for API body parameters before passing them to the database. Never use hardcoded secret fallbacks.

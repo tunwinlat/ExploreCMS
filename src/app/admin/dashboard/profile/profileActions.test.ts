@@ -10,10 +10,21 @@ import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import bcrypt from 'bcryptjs'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rateLimit'
 
 // Mock dependencies
 vi.mock('@/lib/auth', () => ({
   verifySession: vi.fn(),
+}))
+
+vi.mock('next/headers', () => ({
+  headers: vi.fn().mockReturnValue(new Map()),
+}))
+
+vi.mock('@/lib/rateLimit', () => ({
+  checkRateLimit: vi.fn().mockReturnValue({ success: true }),
+  getClientIPFromHeaders: vi.fn().mockReturnValue('127.0.0.1'),
+  RATE_LIMITS: { apiWrite: { windowMs: 60 * 1000, maxRequests: 10 } }
 }))
 
 vi.mock('@/lib/db', () => ({
@@ -47,6 +58,24 @@ describe('updateUserProfile', () => {
     const result = await updateUserProfile(formData)
 
     expect(result).toEqual({ error: 'Unauthorized' })
+    expect(checkRateLimit).not.toHaveBeenCalled()
+    expect(prisma.user.update).not.toHaveBeenCalled()
+  })
+
+  it('should rate limit profile updates by authenticated user and operation', async () => {
+    vi.mocked(verifySession).mockResolvedValue({ userId: 'user123' } as any)
+    vi.mocked(checkRateLimit).mockReturnValueOnce({
+      success: false,
+      limit: 10,
+      remaining: 0,
+      resetTime: Date.now() + 60_000,
+    })
+
+    const result = await updateUserProfile(new FormData())
+
+    expect(checkRateLimit).toHaveBeenCalledWith('profile-update:user123', RATE_LIMITS.apiWrite)
+    expect(result).toEqual({ error: 'Too many requests. Please try again later.' })
+    expect(prisma.user.findUnique).not.toHaveBeenCalled()
     expect(prisma.user.update).not.toHaveBeenCalled()
   })
 
@@ -61,6 +90,7 @@ describe('updateUserProfile', () => {
     const result = await updateUserProfile(formData)
 
     expect(result).toEqual({ success: true, emailChanged: false })
+    expect(checkRateLimit).toHaveBeenCalledWith('profile-update:user123', RATE_LIMITS.apiWrite)
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user123' },
       data: {
