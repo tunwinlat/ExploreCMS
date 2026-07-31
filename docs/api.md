@@ -193,4 +193,3 @@ curl -X POST https://your-site.com/api/v1/posts \
 - An exact title-and-slug collision returns the existing post for the same
   author (or `409` for another author). A timestamp suffix is only added when a
   genuinely different title normalizes to the same slug base.
-- Craft.do sync safeguards apply: posts synced from Craft in `read-only` mode cannot be edited via the API, and deletions propagate to Craft in `full-sync` mode.

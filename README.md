@@ -29,7 +29,7 @@ ExploreCMS combines an editorial public site with a focused administration works
 | Site composition | Enable Blog, Projects, and Photos independently, choose the homepage section, and build tag-based navigation with dropdowns. |
 | Design system | 41 visual themes, per-theme typography, light/dark variants, custom branding and favicon, editorial public surfaces, and an optional interactive particle background. |
 | SEO | Site-wide and per-post metadata, canonical URLs, Open Graph/Twitter cards, generated share images, JSON-LD, dynamic `sitemap.xml`, `robots.txt`, search verification, indexing controls, and optional `llms.txt`. |
-| Integrations | Craft.do read-only, backup, and full-sync workflows; GitHub project import; Bunny Storage; Resend or SMTP email; and database/storage migration tools. |
+| Integrations | GitHub project import; Bunny Storage; Resend or SMTP email; and database/storage migration tools. |
 | Administration | Analytics overview, post/project/album management, popup announcements, user roles, encrypted integration credentials, and a first-run setup wizard. |
 | Developer API | Key-authenticated REST API for posts, projects, albums, photos, and media uploads with granular permissions, expiry, revocation, pagination, rate limits, and idempotent post creation. |
 
@@ -106,11 +106,11 @@ Open [http://localhost:3000/setup](http://localhost:3000/setup). The setup wizar
 | `DATABASE_URL` | Required | Local `file:` URL or hosted `libsql://`, `https://`, or `wss://` connection URL. |
 | `DATABASE_AUTH_TOKEN` | Hosted databases | Authentication token for the LibSQL provider. |
 | `JWT_SECRET` | Required | Signs seven-day HTTP-only admin session cookies. Use a strong random value. |
-| `ENCRYPTION_KEY` | Strongly recommended; required for secure production use | Encrypts stored Craft, GitHub, Bunny, email, and database credentials with AES-256-GCM. Do not rotate it without migrating encrypted values. |
+| `ENCRYPTION_KEY` | Strongly recommended; required for secure production use | Encrypts stored GitHub, Bunny, email, and database credentials with AES-256-GCM. Do not rotate it without migrating encrypted values. |
 | `NEXT_PUBLIC_APP_URL` | Recommended | Absolute application URL used in verification and password-reset emails. |
 | `NEXTAUTH_URL` | Optional fallback | Used for email links when `NEXT_PUBLIC_APP_URL` is absent. |
 
-Craft.do, GitHub, Bunny Storage, Resend, and SMTP credentials are configured in the owner dashboard and stored in the database. They do not require separate environment variables.
+GitHub, Bunny Storage, Resend, and SMTP credentials are configured in the owner dashboard and stored in the database. They do not require separate environment variables.
 
 ### Database behavior
 
@@ -137,7 +137,7 @@ The owner dashboard provides:
 - Draft, published, featured, tagged, multilingual, and SEO-aware post workflows
 - Project and photo-album management
 - Theme, branding, homepage, component, navigation, and popup controls
-- Craft.do, GitHub, email, database, and storage integrations
+- GitHub, email, database, and storage integrations
 - API key lifecycle and permission management
 - Owner, administrator, and contributor roles
 
@@ -168,16 +168,6 @@ See the [complete API reference](docs/api.md) for request schemas, pagination, p
 
 ## Integrations
 
-### Craft.do
-
-Connect a Craft API server, choose a folder, and select one of three modes:
-
-- **Read only** imports Craft documents and protects linked posts from local edits.
-- **Backup** pushes local posts to Craft.
-- **Full sync** imports and exports content, including deletion synchronization.
-
-Synchronization can run manually or in the background after eligible homepage responses. A database-backed lease prevents concurrent sync jobs across instances.
-
 ### GitHub
 
 Connect a personal access token to import public repositories as published projects. ExploreCMS maps repository metadata, README Markdown, topics or primary language, homepage links, and archive status into the project model. Linked projects can be refreshed from GitHub later.
@@ -202,7 +192,6 @@ flowchart LR
     Services --> Prisma[Prisma + LibSQL adapter]
     Prisma --> DB[(SQLite / hosted LibSQL)]
 
-    Services --> Craft[Craft.do]
     Services --> GitHub[GitHub]
     Services --> Media[Bunny Storage]
     Services --> Email[Resend / SMTP]
@@ -219,7 +208,7 @@ ExploreCMS/
 ├── src/
 │   ├── app/                # Public routes, admin workspace, and APIs
 │   ├── components/         # Shared public, admin, editor, and gallery UI
-│   ├── lib/                # Auth, data, caching, SEO, sync, and integrations
+│   ├── lib/                # Auth, data, caching, SEO, and integrations
 │   └── middleware.ts       # Admin route protection
 ├── tests/                  # Shared test setup and integration-focused tests
 ├── docs/                   # API reference and design documentation

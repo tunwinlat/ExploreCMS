@@ -6,13 +6,10 @@
 
 'use server'
 
-import { prisma } from '@/lib/db'
 import { getPostDb } from '@/lib/bunnyDb'
 import { verifySession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { revalidatePath, revalidateTag } from 'next/cache'
-import { after } from 'next/server'
-import { pushPostToCraft, getCraftSyncMode, deletePostFromCraft } from '@/lib/craftSync'
 import { normalizeUrl } from '@/lib/urlUtils'
 
 function generateSlug(title: string) {
@@ -67,15 +64,6 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
   let slug = slugInput ? generateSlug(slugInput) : generateSlug(title)
 
   if (id) {
-    // Guard: prevent editing Craft-linked posts in read-only mode only
-    const craftCheck = await postDb.post.findUnique({ where: { id }, select: { craftDocumentId: true, craftUnlinked: true } })
-    if (craftCheck?.craftDocumentId && !craftCheck?.craftUnlinked) {
-      const syncMode = await getCraftSyncMode()
-      if (syncMode === 'read-only') {
-        return { error: 'This post is synced from Craft.do and cannot be edited. Unlink it first.' }
-      }
-    }
-
     // If slug changed, verify uniqueness
     const existing = await postDb.post.findFirst({ where: { slug, id: { not: id } } })
     if (existing) slug = `${slug}-${Date.now()}`
@@ -133,20 +121,6 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
   revalidatePath('/admin/dashboard')
   revalidateTag('blog-posts', 'default')
 
-  // Push to Craft in backup/full-sync mode (runs after response)
-  if (published) {
-    const postIdForCraft = id || (await postDb.post.findUnique({ where: { slug } }))?.id
-    if (postIdForCraft) {
-      after(async () => {
-        try {
-          await pushPostToCraft(postIdForCraft)
-        } catch {
-          // Non-critical
-        }
-      })
-    }
-  }
-
   if (options.redirect) {
     redirect('/admin/dashboard')
   }
@@ -167,20 +141,7 @@ export async function deletePost(id: string) {
     throw new Error('Permission denied')
   }
 
-  // Store craft document ID before deleting
-  const craftDocumentId = post.craftDocumentId
-
   await postDb.post.delete({ where: { id } })
-
-  // In full-sync mode, also delete from Craft (run before redirect)
-  if (craftDocumentId) {
-    try {
-      await deletePostFromCraft(craftDocumentId)
-    } catch (err) {
-      console.error('[CraftSync] Failed to delete from Craft:', err)
-      // Non-critical - post is already deleted locally
-    }
-  }
 
   revalidatePath('/')
   revalidatePath('/blog')

@@ -9,7 +9,7 @@
  * 
  * Automatically migrates existing plain-text sensitive data to encrypted format
  * when ENCRYPTION_KEY is newly configured. This eliminates the UX pain of having
- * to reconfigure all integrations after enabling encryption.
+ * to reconfigure external services after enabling encryption.
  */
 
 import { prisma } from './db'
@@ -22,7 +22,6 @@ const ENCRYPTABLE_FIELDS: { field: string; label: string }[] = [
   { field: 'githubAccessToken', label: 'GitHub Access Token' },
   { field: 'bunnyToken', label: 'BunnyDB Token (DB Connection)' },
   { field: 'bunnyStorageApiKey', label: 'Bunny Storage API Key' },
-  { field: 'craftApiToken', label: 'Craft.do API Token' },
 ]
 
 export interface MigrationResult {

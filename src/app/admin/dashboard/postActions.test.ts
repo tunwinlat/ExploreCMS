@@ -25,15 +25,6 @@ vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
   revalidateTag: vi.fn(),
 }))
-vi.mock('next/server', () => ({
-  after: vi.fn((cb) => cb()),
-}))
-vi.mock('@/lib/craftSync', () => ({
-  pushPostToCraft: vi.fn(),
-  getCraftSyncMode: vi.fn().mockResolvedValue('read-only'),
-  deletePostFromCraft: vi.fn()
-}))
-
 describe('savePost action', () => {
   let mockUpdate: ReturnType<typeof vi.fn>
   let mockCreate: ReturnType<typeof vi.fn>

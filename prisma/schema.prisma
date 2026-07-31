@@ -64,11 +64,6 @@ model Post {
   tags          Tag[]
   views         PostView?
 
-  // Craft.do integration
-  craftDocumentId     String? // Craft document ID, null for local posts
-  craftLastModifiedAt String? // ISO timestamp of last Craft modification
-  craftUnlinked       Boolean @default(false) // true = was from Craft but user unlinked it
-
   // Localization
   language            String  @default("en") // ISO 639-1 language code
   translationGroupId  String? // Links translated posts together (shares same ID)
@@ -94,14 +89,6 @@ model PostIdempotencyKey {
 
   @@unique([authorId, keyHash])
   @@index([postId])
-}
-
-model BackgroundJobLock {
-  name       String   @id
-  ownerToken String
-  leaseUntil DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
 }
 
 model Tag {
@@ -139,24 +126,12 @@ model SiteSettings {
   bunnyStorageApiKey   String?
   bunnyStorageUrl      String? // CDN URL like https://my-zone.b-cdn.net
 
-  // Craft.do Integration
-  craftServerUrl String? // https://connect.craft.do/links/{serverID}/api/v1
-  craftApiToken  String? // Bearer token
-  craftFolderId  String? // Selected folder ID
-
   // GitHub Integration
   githubEnabled     Boolean @default(false)
   githubAccessToken String? // OAuth access token
   githubUsername    String? // Connected GitHub username
   githubSyncMode    String? @default("manual") // "all" or "manual"
   githubLastSyncAt  String? // ISO timestamp
-  craftFolderName   String? // Folder name for display
-  craftSyncMode     String? // "read-only" | "backup" | "full-sync"
-  craftEnabled      Boolean @default(false)
-  craftWriteAccess  Boolean @default(false) // true if API has write permissions
-  craftError        String? // error message if integration broke
-  craftLastSyncAt   String? // ISO timestamp
-
   // Email Provider Config
   emailProvider   String? // "resend" | "smtp" | null
   emailFromName   String?

@@ -4,7 +4,7 @@ This document provides essential information for AI coding agents working on Exp
 
 ## Project Overview
 
-ExploreCMS is a self-hosted minimalistic blogging platform built with Next.js App Router and Prisma + LibSQL. It features a glassmorphic UI design system, 41 dynamic themes, rich WYSIWYG editing via TipTap, and integrations with Craft.do, GitHub, Bunny Storage, and S3-compatible storage providers.
+ExploreCMS is a self-hosted minimalistic blogging platform built with Next.js App Router and Prisma + LibSQL. It features a glassmorphic UI design system, 41 dynamic themes, rich WYSIWYG editing via TipTap, and integrations with GitHub, Bunny Storage, and S3-compatible storage providers.
 
 ## Technology Stack
 
@@ -98,8 +98,6 @@ npx prisma migrate dev  # Create and apply migration
 
 | Variable | Description |
 |----------|-------------|
-| `CRAFT_SERVER_URL` | Craft.do Connect API URL |
-| `CRAFT_API_TOKEN` | Craft.do Bearer token |
 | `GITHUB_ACCESS_TOKEN` | GitHub Personal Access Token |
 
 ## Code Style Guidelines
@@ -259,7 +257,6 @@ Configured in `next.config.ts`:
 ### Encryption
 Sensitive tokens encrypted with AES-256-GCM when `ENCRYPTION_KEY` is set:
 - Bunny Storage API key
-- Craft.do API token
 - GitHub access token
 
 ## Key Conventions

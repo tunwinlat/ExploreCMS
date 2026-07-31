@@ -18,7 +18,7 @@ export async function renderPostContent(
 ): Promise<string> {
   // Explicit format takes priority
   if (contentFormat === 'markdown') {
-    // Dedent: Craft indents blocks which makes marked treat them as code blocks
+    // Dedent indented Markdown so marked does not treat it as a code block.
     const dedented = content.replace(/^[ \t]+/gm, '')
     const html = await marked(dedented)
     return sanitizeContent(html)

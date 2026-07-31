@@ -8,7 +8,6 @@
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { savePost, deletePost } from './postActions'
-import { unlinkCraftPost } from './integrations/craftActions'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import TipTapEditor from '@/components/editor/TipTapEditor'
@@ -30,8 +29,6 @@ const ALL_LANGUAGES: { code: string; name: string }[] = iso6391
 export default function PostEditor({
   post,
   availableTags = [],
-  readOnly = false,
-  craftPostId,
   siblingTranslations = [],
   initialTranslationGroupId,
   parentPostTitle,
@@ -42,8 +39,6 @@ export default function PostEditor({
     isFeatured?: boolean
   }
   availableTags?: {name: string, slug: string}[]
-  readOnly?: boolean
-  craftPostId?: string
   siblingTranslations?: { id: string, language: string, title: string, slug: string }[]
   initialTranslationGroupId?: string
   parentPostTitle?: string
@@ -56,7 +51,6 @@ export default function PostEditor({
   const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>('idle')
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
-  const [unlinkLoading, setUnlinkLoading] = useState(false)
   const [showAddTranslation, setShowAddTranslation] = useState(false)
   const [selectedLang, setSelectedLang] = useState('')
   const [langFilter, setLangFilter] = useState('')
@@ -79,19 +73,6 @@ export default function PostEditor({
     const used = new Set([currentLanguage, ...siblingTranslations.map(t => t.language)])
     return ALL_LANGUAGES.filter(l => !used.has(l.code))
   }, [currentLanguage, siblingTranslations])
-
-  const handleUnlink = useCallback(async () => {
-    if (!craftPostId) return
-    setUnlinkLoading(true)
-    const res = await unlinkCraftPost(craftPostId)
-    if (res.success) {
-      toast('Post unlinked from Craft. Reloading...', 'success')
-      setTimeout(() => window.location.reload(), 1000)
-    } else {
-      toast(res.error || 'Failed to unlink.', 'error')
-      setUnlinkLoading(false)
-    }
-  }, [craftPostId, toast])
 
   const handleSeoImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -116,7 +97,6 @@ export default function PostEditor({
 
   // Background Auto-Save (Debounced 5 seconds after typing stops)
   useEffect(() => {
-    if (readOnly) return // Don't autosave read-only Craft posts
     const timer = setTimeout(async () => {
       if (!formRef.current || !post?.id) return
 
@@ -229,7 +209,7 @@ export default function PostEditor({
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
-      <form ref={formRef} onSubmit={readOnly ? (e) => e.preventDefault() : handleSubmit} className="fade-in-up glass" style={{ display: 'flex', flexDirection: 'column', padding: '2rem' }}>
+      <form ref={formRef} onSubmit={handleSubmit} className="fade-in-up glass" style={{ display: 'flex', flexDirection: 'column', padding: '2rem' }}>
         {post && <input type="hidden" name="id" value={post.id} />}
         <input type="hidden" name="translationGroupId" value={translationGroupId} />
 
@@ -279,37 +259,6 @@ export default function PostEditor({
           </div>
         )}
 
-        {readOnly && (
-          <div style={{
-            padding: '1rem 1.25rem',
-            marginBottom: '1.5rem',
-            background: 'rgba(99, 102, 241, 0.1)',
-            border: '1px solid #6366f1',
-            borderRadius: 'var(--radius-md)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '0.75rem',
-          }}>
-            <div>
-              <strong style={{ color: '#6366f1', fontSize: '0.9rem' }}>Synced from Craft.do</strong>
-              <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                This post is managed by Craft. Editing is disabled. Unlink to enable editing (sync will stop for this post).
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleUnlink}
-              disabled={unlinkLoading}
-              className="btn"
-              style={{ background: '#6366f1', color: 'white', border: 'none', whiteSpace: 'nowrap' }}
-            >
-              {unlinkLoading ? 'Unlinking...' : 'Unlink from Craft'}
-            </button>
-          </div>
-        )}
-
         <div className="editor-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', alignItems: 'center', gap: '1rem' }}>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <Link href="/admin/dashboard" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} aria-label="Back to dashboard">
@@ -318,10 +267,9 @@ export default function PostEditor({
             <h1 style={{ fontSize: '1.25rem', fontWeight: 500, margin: 0, color: 'var(--text-primary)' }}>
               {post?.title ? post.title : post?.published ? 'Editing Published Post' : 'New Post'}
             </h1>
-            {!readOnly && renderAutosaveIndicator()}
+            {renderAutosaveIndicator()}
           </div>
-          {!readOnly && (
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 onClick={() => setShowAdvanced(!showAdvanced)}
@@ -364,8 +312,7 @@ export default function PostEditor({
                   Delete
                 </button>
               )}
-            </div>
-          )}
+          </div>
         </div>
 
         {error && (
@@ -383,7 +330,6 @@ export default function PostEditor({
               placeholder="Start with a brilliant title..."
               required
               defaultValue={post?.title ?? parentPostTitle ?? ''}
-              readOnly={readOnly}
               aria-label="Post title"
               style={{
                 flex: 1,
@@ -395,12 +341,10 @@ export default function PostEditor({
                 padding: '0.5rem 0',
                 outline: 'none',
                 letterSpacing: '-0.5px',
-                opacity: readOnly ? 0.7 : 1,
               }}
             />
             {/* Inline language selector — always visible */}
-            {!readOnly && (
-              <div style={{ flexShrink: 0, paddingTop: '0.6rem' }}>
+            <div style={{ flexShrink: 0, paddingTop: '0.6rem' }}>
                 <select
                   name="language"
                   defaultValue={currentLanguage}
@@ -425,26 +369,10 @@ export default function PostEditor({
                     <option value={currentLanguage}>{currentLanguage.toUpperCase()}</option>
                   )}
                 </select>
-              </div>
-            )}
-            {readOnly && currentLanguage && (
-              <span style={{
-                flexShrink: 0,
-                paddingTop: '0.6rem',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                color: 'var(--text-secondary)',
-                background: 'var(--bg-color-secondary)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '6px',
-                padding: '0.3rem 0.5rem',
-              }}>
-                {currentLanguage.toUpperCase()}
-              </span>
-            )}
+            </div>
           </div>
 
-          {showAdvanced && !readOnly && (
+          {showAdvanced && (
             <div id="advanced-settings" className="fade-in-up" style={{
               background: 'var(--bg-color-secondary)',
               padding: '1.5rem',
@@ -474,13 +402,12 @@ export default function PostEditor({
 
           <TipTapEditor
             initialContent={post?.content || ''}
-            onChange={readOnly ? () => {} : setContent}
-            editable={!readOnly}
+            onChange={setContent}
           />
         </div>
 
         {/* ── Translations panel — always visible when post exists ── */}
-        {post && !readOnly && (
+        {post && (
           <div style={{
             marginTop: '2rem',
             padding: '1.25rem 1.5rem',
@@ -648,8 +575,7 @@ export default function PostEditor({
         )}
 
         {/* Tags panel — always visible (moved out of Settings) */}
-        {!readOnly && (
-          <div style={{
+        <div style={{
             marginTop: '1rem',
             padding: '1.25rem 1.5rem',
             background: 'var(--bg-color-secondary)',
@@ -667,12 +593,10 @@ export default function PostEditor({
               </label>
             </div>
             <TagSelector availableTags={availableTags} initialTags={initialTags} />
-          </div>
-        )}
+        </div>
 
         {/* SEO panel — per-post overrides; empty fields auto-derive from content */}
-        {!readOnly && (
-          <div style={{
+        <div style={{
             marginTop: '1rem',
             padding: '1.25rem 1.5rem',
             background: 'var(--bg-color-secondary)',
@@ -793,8 +717,7 @@ export default function PostEditor({
                   Hide this post from search engines (noindex)
                 </label>
             </div>
-          </div>
-        )}
+        </div>
       </form>
 
       <ConfirmDialog

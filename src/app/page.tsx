@@ -7,7 +7,6 @@
 import { BlogHome } from "@/components/blog/BlogHome";
 import { parseComponentConfig } from "@/lib/components-config";
 import { redirect } from "next/navigation";
-import { after } from "next/server";
 import { getBlogPageData } from "@/lib/blog-cache";
 import { getSettings, getPopupConfig } from "@/lib/settings-cache";
 
@@ -35,16 +34,6 @@ export default async function Home({
   if (defaultComponent !== 'blog') {
     redirect(defaultComponent === 'projects' ? '/projects' : '/photos');
   }
-
-  // Trigger Craft sync in the background after the response is sent
-  after(async () => {
-    try {
-      const { runCraftSync } = await import("@/lib/craftSync");
-      await runCraftSync();
-    } catch {
-      // Non-critical: sync failures should not affect the page
-    }
-  });
 
   return (
     <BlogHome

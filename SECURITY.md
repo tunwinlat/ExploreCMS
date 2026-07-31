@@ -36,9 +36,6 @@ DATABASE_AUTH_TOKEN=your-turso-auth-token
 # Bunny Storage (optional)
 BUNNY_STORAGE_API_KEY=your-bunny-api-key
 
-# Craft.do (optional)
-CRAFT_API_TOKEN=your-craft-token
-
 # GitHub (optional)
 GITHUB_ACCESS_TOKEN=your-github-token
 ```
@@ -61,7 +58,6 @@ Sensitive tokens stored in the database are automatically encrypted when `ENCRYP
 
 - `bunnyToken` (Bunny.net database token)
 - `bunnyStorageApiKey` (Bunny Storage API key)
-- `craftApiToken` (Craft.do API token)
 - `githubAccessToken` (GitHub personal access token)
 
 ### How It Works
@@ -146,7 +142,6 @@ All user inputs are validated:
 | Endpoint | Auth Required | Rate Limited |
 |----------|---------------|--------------|
 | `/api/upload` | ✅ Yes | ✅ Yes |
-| `/api/craft/*` | ✅ Owner only | ✅ Manual sync only |
 | `/api/search` | ❌ No | ✅ Yes |
 | `/api/views` | ❌ No | ✅ Yes |
 | `/api/posts` | ❌ No | ❌ No |

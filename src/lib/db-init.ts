@@ -28,9 +28,23 @@ export async function runSchemaMigrations(): Promise<void> {
     // for the NEWEST table/column — otherwise existing deployments never receive it.
     try {
       await client.execute({ sql: "SELECT id FROM \"PostIdempotencyKey\" WHERE 1=0", args: [] });
-      await client.execute({ sql: "SELECT name FROM \"BackgroundJobLock\" WHERE 1=0", args: [] });
       await client.execute({ sql: "SELECT \"seoLlmsTxtEnabled\" FROM \"SiteSettings\" WHERE 1=0", args: [] });
       await client.execute({ sql: "SELECT \"seoNoIndex\" FROM \"Post\" WHERE 1=0", args: [] });
+      const postCraftColumns = await client.execute({
+        sql: "SELECT name FROM pragma_table_info('Post') WHERE name IN ('craftDocumentId', 'craftLastModifiedAt', 'craftUnlinked')",
+        args: [],
+      });
+      const settingsCraftColumns = await client.execute({
+        sql: "SELECT name FROM pragma_table_info('SiteSettings') WHERE name LIKE 'craft%'",
+        args: [],
+      });
+      const legacyJobLock = await client.execute({
+        sql: "SELECT name FROM sqlite_master WHERE type='table' AND name='BackgroundJobLock'",
+        args: [],
+      });
+      if (postCraftColumns.rows.length > 0 || settingsCraftColumns.rows.length > 0 || legacyJobLock.rows.length > 0) {
+        throw new Error('Legacy integration artifacts still exist');
+      }
       // Latest artifacts exist → all migrations have been applied, nothing to do.
       return;
     } catch {
@@ -41,20 +55,8 @@ export async function runSchemaMigrations(): Promise<void> {
     const migrations = [
       `ALTER TABLE "SiteSettings" ADD COLUMN "enabledComponents" TEXT NOT NULL DEFAULT '["blog"]'`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "defaultComponent" TEXT NOT NULL DEFAULT 'blog'`,
-      // v3 → Craft.do integration columns
+      // v3 → post content formats
       `ALTER TABLE "Post" ADD COLUMN "contentFormat" TEXT NOT NULL DEFAULT 'html'`,
-      `ALTER TABLE "Post" ADD COLUMN "craftDocumentId" TEXT`,
-      `ALTER TABLE "Post" ADD COLUMN "craftLastModifiedAt" TEXT`,
-      `ALTER TABLE "Post" ADD COLUMN "craftUnlinked" BOOLEAN NOT NULL DEFAULT false`,
-      `ALTER TABLE "SiteSettings" ADD COLUMN "craftServerUrl" TEXT`,
-      `ALTER TABLE "SiteSettings" ADD COLUMN "craftApiToken" TEXT`,
-      `ALTER TABLE "SiteSettings" ADD COLUMN "craftFolderId" TEXT`,
-      `ALTER TABLE "SiteSettings" ADD COLUMN "craftFolderName" TEXT`,
-      `ALTER TABLE "SiteSettings" ADD COLUMN "craftSyncMode" TEXT`,
-      `ALTER TABLE "SiteSettings" ADD COLUMN "craftEnabled" BOOLEAN NOT NULL DEFAULT false`,
-      `ALTER TABLE "SiteSettings" ADD COLUMN "craftWriteAccess" BOOLEAN NOT NULL DEFAULT false`,
-      `ALTER TABLE "SiteSettings" ADD COLUMN "craftError" TEXT`,
-      `ALTER TABLE "SiteSettings" ADD COLUMN "craftLastSyncAt" TEXT`,
       // v4 → GitHub integration columns
       `ALTER TABLE "SiteSettings" ADD COLUMN "githubEnabled" BOOLEAN NOT NULL DEFAULT false`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "githubAccessToken" TEXT`,
@@ -105,7 +107,7 @@ export async function runSchemaMigrations(): Promise<void> {
       )`,
       `CREATE UNIQUE INDEX "ApiKey_keyHash_key" ON "ApiKey"("keyHash")`,
       `CREATE INDEX "ApiKey_createdById_idx" ON "ApiKey"("createdById")`,
-      // v9 → durable POST idempotency and cross-instance background-job leases
+      // v9 → durable POST idempotency
       `CREATE TABLE "PostIdempotencyKey" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "authorId" TEXT NOT NULL,
@@ -118,13 +120,6 @@ export async function runSchemaMigrations(): Promise<void> {
       )`,
       `CREATE UNIQUE INDEX "PostIdempotencyKey_authorId_keyHash_key" ON "PostIdempotencyKey"("authorId", "keyHash")`,
       `CREATE INDEX "PostIdempotencyKey_postId_idx" ON "PostIdempotencyKey"("postId")`,
-      `CREATE TABLE "BackgroundJobLock" (
-        "name" TEXT NOT NULL PRIMARY KEY,
-        "ownerToken" TEXT NOT NULL,
-        "leaseUntil" DATETIME NOT NULL,
-        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        "updatedAt" DATETIME NOT NULL
-      )`,
       // New tables — CREATE IF NOT EXISTS is not supported by LibSQL, so we use CREATE TABLE and ignore "already exists"
       `CREATE TABLE "Project" (
         "id" TEXT NOT NULL PRIMARY KEY,
@@ -198,6 +193,20 @@ export async function runSchemaMigrations(): Promise<void> {
       `ALTER TABLE "Post" ADD COLUMN "seoOgImageUrl" TEXT`,
       `ALTER TABLE "Post" ADD COLUMN "seoCanonicalUrl" TEXT`,
       `ALTER TABLE "Post" ADD COLUMN "seoNoIndex" BOOLEAN NOT NULL DEFAULT false`,
+      // v11 → remove the retired content-sync integration
+      `ALTER TABLE "Post" DROP COLUMN "craftDocumentId"`,
+      `ALTER TABLE "Post" DROP COLUMN "craftLastModifiedAt"`,
+      `ALTER TABLE "Post" DROP COLUMN "craftUnlinked"`,
+      `ALTER TABLE "SiteSettings" DROP COLUMN "craftServerUrl"`,
+      `ALTER TABLE "SiteSettings" DROP COLUMN "craftApiToken"`,
+      `ALTER TABLE "SiteSettings" DROP COLUMN "craftFolderId"`,
+      `ALTER TABLE "SiteSettings" DROP COLUMN "craftFolderName"`,
+      `ALTER TABLE "SiteSettings" DROP COLUMN "craftSyncMode"`,
+      `ALTER TABLE "SiteSettings" DROP COLUMN "craftEnabled"`,
+      `ALTER TABLE "SiteSettings" DROP COLUMN "craftWriteAccess"`,
+      `ALTER TABLE "SiteSettings" DROP COLUMN "craftError"`,
+      `ALTER TABLE "SiteSettings" DROP COLUMN "craftLastSyncAt"`,
+      `DROP TABLE "BackgroundJobLock"`,
     ];
 
     for (const stmt of migrations) {
@@ -293,9 +302,6 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
           "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
           "updatedAt" DATETIME NOT NULL,
           "authorId" TEXT NOT NULL,
-          "craftDocumentId" TEXT,
-          "craftLastModifiedAt" TEXT,
-          "craftUnlinked" BOOLEAN NOT NULL DEFAULT false,
           "language" TEXT NOT NULL DEFAULT 'en',
           "translationGroupId" TEXT,
           CONSTRAINT "Post_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
@@ -467,13 +473,6 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
       CREATE UNIQUE INDEX "PostIdempotencyKey_authorId_keyHash_key" ON "PostIdempotencyKey"("authorId", "keyHash");
       CREATE INDEX "PostIdempotencyKey_postId_idx" ON "PostIdempotencyKey"("postId");
 
-      CREATE TABLE "BackgroundJobLock" (
-          "name" TEXT NOT NULL PRIMARY KEY,
-          "ownerToken" TEXT NOT NULL,
-          "leaseUntil" DATETIME NOT NULL,
-          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          "updatedAt" DATETIME NOT NULL
-      );
     `;
 
     // Split and execute statements one by one (CREATE TABLE/INDEX are no-ops if already exist)
@@ -493,25 +492,12 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
       }
     }
 
-    // Always run ALTER TABLE migrations — safely ignored if columns already exist.
+    // Always run schema migrations — safely ignored when already applied.
     // This handles existing deployments upgrading to a new schema version.
     const alterStatements = [
       `ALTER TABLE "SiteSettings" ADD COLUMN "enabledComponents" TEXT NOT NULL DEFAULT '["blog"]'`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "defaultComponent" TEXT NOT NULL DEFAULT 'blog'`,
-      // Craft.do integration
       `ALTER TABLE "Post" ADD COLUMN "contentFormat" TEXT NOT NULL DEFAULT 'html'`,
-      `ALTER TABLE "Post" ADD COLUMN "craftDocumentId" TEXT`,
-      `ALTER TABLE "Post" ADD COLUMN "craftLastModifiedAt" TEXT`,
-      `ALTER TABLE "Post" ADD COLUMN "craftUnlinked" BOOLEAN NOT NULL DEFAULT false`,
-      `ALTER TABLE "SiteSettings" ADD COLUMN "craftServerUrl" TEXT`,
-      `ALTER TABLE "SiteSettings" ADD COLUMN "craftApiToken" TEXT`,
-      `ALTER TABLE "SiteSettings" ADD COLUMN "craftFolderId" TEXT`,
-      `ALTER TABLE "SiteSettings" ADD COLUMN "craftFolderName" TEXT`,
-      `ALTER TABLE "SiteSettings" ADD COLUMN "craftSyncMode" TEXT`,
-      `ALTER TABLE "SiteSettings" ADD COLUMN "craftEnabled" BOOLEAN NOT NULL DEFAULT false`,
-      `ALTER TABLE "SiteSettings" ADD COLUMN "craftWriteAccess" BOOLEAN NOT NULL DEFAULT false`,
-      `ALTER TABLE "SiteSettings" ADD COLUMN "craftError" TEXT`,
-      `ALTER TABLE "SiteSettings" ADD COLUMN "craftLastSyncAt" TEXT`,
       // Multilingual support
       `ALTER TABLE "Post" ADD COLUMN "language" TEXT NOT NULL DEFAULT 'en'`,
       `ALTER TABLE "Post" ADD COLUMN "translationGroupId" TEXT`,
@@ -546,6 +532,20 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
       `ALTER TABLE "Post" ADD COLUMN "seoOgImageUrl" TEXT`,
       `ALTER TABLE "Post" ADD COLUMN "seoCanonicalUrl" TEXT`,
       `ALTER TABLE "Post" ADD COLUMN "seoNoIndex" BOOLEAN NOT NULL DEFAULT false`,
+      // Remove the retired content-sync integration from existing databases.
+      `ALTER TABLE "Post" DROP COLUMN "craftDocumentId"`,
+      `ALTER TABLE "Post" DROP COLUMN "craftLastModifiedAt"`,
+      `ALTER TABLE "Post" DROP COLUMN "craftUnlinked"`,
+      `ALTER TABLE "SiteSettings" DROP COLUMN "craftServerUrl"`,
+      `ALTER TABLE "SiteSettings" DROP COLUMN "craftApiToken"`,
+      `ALTER TABLE "SiteSettings" DROP COLUMN "craftFolderId"`,
+      `ALTER TABLE "SiteSettings" DROP COLUMN "craftFolderName"`,
+      `ALTER TABLE "SiteSettings" DROP COLUMN "craftSyncMode"`,
+      `ALTER TABLE "SiteSettings" DROP COLUMN "craftEnabled"`,
+      `ALTER TABLE "SiteSettings" DROP COLUMN "craftWriteAccess"`,
+      `ALTER TABLE "SiteSettings" DROP COLUMN "craftError"`,
+      `ALTER TABLE "SiteSettings" DROP COLUMN "craftLastSyncAt"`,
+      `DROP TABLE "BackgroundJobLock"`,
     ];
     for (const stmt of alterStatements) {
       try {

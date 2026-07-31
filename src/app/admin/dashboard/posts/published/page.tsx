@@ -5,28 +5,19 @@
  */
 
 import { getPostDb } from '@/lib/bunnyDb'
-import { prisma } from '@/lib/db'
-import { getSettings } from '@/lib/settings-cache'
 import Link from 'next/link'
 import { DeletePostButton } from '../DeletePostButton'
-import { UnlinkCraftButton } from './UnlinkCraftButton'
 import { isPrimaryPost } from '@/lib/translationUtils'
 
 export const metadata = { title: "Published Posts | ExploreCMS" }
 
 export default async function PublishedPostsPage() {
   const postDb = await getPostDb() as any;
-  const [posts, settings] = await Promise.all([
-    postDb.post.findMany({
-      where: { published: true },
-      orderBy: { createdAt: 'desc' },
-      include: { author: true }
-    }),
-    getSettings()
-  ])
-
-  const craftEnabled = settings?.craftEnabled || false
-  const craftMode = settings?.craftSyncMode || 'read-only'
+  const posts = await postDb.post.findMany({
+    where: { published: true },
+    orderBy: { createdAt: 'desc' },
+    include: { author: true }
+  })
 
   // Separate primary posts from translation variants
   const primaryPosts = posts.filter(isPrimaryPost)
@@ -41,23 +32,6 @@ export default async function PublishedPostsPage() {
   }
 
   const renderPostRow = (post: any, isTranslation = false) => {
-    const isCraftLinked = post.craftDocumentId && !post.craftUnlinked
-    const isReadOnlyMode = craftMode === 'read-only'
-    const isWriteMode = craftMode === 'backup' || craftMode === 'full-sync'
-
-    let craftBadge = null
-    if (craftEnabled) {
-      if (isCraftLinked && isReadOnlyMode) {
-        craftBadge = <span style={{ fontSize: '0.65rem', background: '#6366f1', color: 'white', padding: '0.1rem 0.4rem', borderRadius: '9999px', whiteSpace: 'nowrap', flexShrink: 0 }}>Craft</span>
-      } else if (isCraftLinked && isWriteMode) {
-        craftBadge = <span style={{ fontSize: '0.65rem', background: '#22c55e', color: 'white', padding: '0.1rem 0.4rem', borderRadius: '9999px', whiteSpace: 'nowrap', flexShrink: 0 }}>Synced</span>
-      } else if (!post.craftDocumentId && isWriteMode) {
-        craftBadge = <span style={{ fontSize: '0.65rem', background: 'var(--border-color)', color: 'var(--text-secondary)', padding: '0.1rem 0.4rem', borderRadius: '9999px', whiteSpace: 'nowrap', flexShrink: 0 }}>Not synced</span>
-      }
-    }
-
-    const isLocked = isCraftLinked && isReadOnlyMode
-
     return (
       <tr key={post.id} style={{ borderBottom: '1px solid var(--border-color)', background: isTranslation ? 'rgba(99,102,241,0.03)' : undefined }}>
         <td style={{ padding: '1rem', maxWidth: '300px' }}>
@@ -73,7 +47,6 @@ export default async function PublishedPostsPage() {
                 {post.language.toUpperCase()}
               </span>
             )}
-            {craftBadge}
           </div>
         </td>
         <td style={{ padding: '1rem' }}>
@@ -86,11 +59,7 @@ export default async function PublishedPostsPage() {
         <td style={{ padding: '1rem', textAlign: 'right' }}>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', alignItems: 'center' }}>
             <a href={`/post/${post.slug}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>View</a>
-            {isLocked ? (
-              <UnlinkCraftButton id={post.id} title={post.title} />
-            ) : (
-              <Link href={`/admin/dashboard/edit/${post.id}`} prefetch={false} style={{ color: 'var(--accent-hover)', fontSize: '0.9rem', fontWeight: 500 }}>Edit</Link>
-            )}
+            <Link href={`/admin/dashboard/edit/${post.id}`} prefetch={false} style={{ color: 'var(--accent-hover)', fontSize: '0.9rem', fontWeight: 500 }}>Edit</Link>
             <DeletePostButton id={post.id} title={post.title} />
           </div>
         </td>
