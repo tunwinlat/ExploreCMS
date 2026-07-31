@@ -8,7 +8,7 @@
 
 import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 
 export async function updateSiteSettings(
   title: string, 
@@ -32,6 +32,7 @@ export async function updateSiteSettings(
       create: { id: 'singleton', title, faviconUrl, headerTitle, headerDescription, theme, footerText, sidebarAbout, dynamicPattern }
     })
     
+    updateTag('site-settings')
     revalidatePath('/', 'layout')
     return { success: true }
   } catch (error) {

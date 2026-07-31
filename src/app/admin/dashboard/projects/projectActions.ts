@@ -8,7 +8,7 @@
 
 import { prisma } from '@/lib/db'
 import { verifySession } from '@/lib/auth'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { normalizeUrl } from '@/lib/urlUtils'
 
@@ -70,6 +70,7 @@ export async function saveProject(formData: FormData) {
       })
     }
 
+    updateTag('projects')
     revalidatePath('/projects')
     revalidatePath('/admin/dashboard/projects')
   } catch (error) {
@@ -86,6 +87,7 @@ export async function deleteProject(id: string) {
 
   try {
     await (prisma as any).project.delete({ where: { id } })
+    updateTag('projects')
     revalidatePath('/projects')
     revalidatePath('/admin/dashboard/projects')
   } catch {
@@ -112,6 +114,7 @@ export async function addProjectImage(projectId: string, url: string, caption: s
     })
     const order = (maxOrder?.order ?? -1) + 1
     await (prisma as any).projectImage.create({ data: { projectId, url: normalizedUrl, caption, order } })
+    updateTag('projects')
     revalidatePath('/admin/dashboard/projects')
     return { success: true }
   } catch {
@@ -125,6 +128,7 @@ export async function deleteProjectImage(imageId: string) {
 
   try {
     await (prisma as any).projectImage.delete({ where: { id: imageId } })
+    updateTag('projects')
     revalidatePath('/admin/dashboard/projects')
     return { success: true }
   } catch {

@@ -18,7 +18,12 @@ import { buildPageMetadata } from "@/lib/seo";
 
 import { unstable_cache } from "next/cache";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
+export const dynamicParams = true;
+
+export function generateStaticParams(): { albumSlug: string }[] {
+  return [];
+}
 
 const getAlbum = unstable_cache(
   async (slug: string) => {
@@ -41,7 +46,7 @@ const getAlbum = unstable_cache(
     } catch { return null; }
   },
   ['album-detail'],
-  { revalidate: 60 }
+  { revalidate: 60, tags: ['albums'] }
 );
 
 export async function generateMetadata({ params }: { params: Promise<{ albumSlug: string }> }): Promise<Metadata> {

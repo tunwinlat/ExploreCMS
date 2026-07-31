@@ -8,7 +8,7 @@
 
 import { verifySession } from '@/lib/auth'
 import { getPostDb } from '@/lib/bunnyDb'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag as updateCacheTag } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 export async function updateTag(id: string, newName: string) {
@@ -38,6 +38,7 @@ export async function updateTag(id: string, newName: string) {
       data: { name: trimmed, slug }
     })
 
+    updateCacheTag('blog-posts')
     revalidatePath('/admin/dashboard/tags')
     revalidatePath('/')
     return { success: true }
@@ -57,6 +58,7 @@ export async function deleteTag(id: string) {
       where: { id }
     })
 
+    updateCacheTag('blog-posts')
     revalidatePath('/admin/dashboard/tags')
     revalidatePath('/')
     return { success: true }

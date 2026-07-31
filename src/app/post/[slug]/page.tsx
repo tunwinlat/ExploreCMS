@@ -4,8 +4,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { cache } from 'react'
-import { prisma } from '@/lib/db'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -19,33 +17,16 @@ import { getFirstImage } from '@/lib/renderContent'
 import { getSettings } from '@/lib/settings-cache'
 import { buildPostMetadata, blogPostingJsonLd, breadcrumbJsonLd } from '@/lib/seo'
 import { parseComponentConfig, COMPONENTS } from '@/lib/components-config'
+import { getPost, getRelatedPosts, getTranslations } from '@/lib/post-cache'
 import './post.css'
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60
+export const dynamicParams = true
 
-// ⚡ Bolt: Memoize the post query to avoid duplicate database calls
-const getPost = cache(async (slug: string) => {
-  return await prisma.post.findUnique({
-    where: { slug },
-    include: {
-      author: true,
-      tags: true,
-    }
-  })
-})
-
-const getTranslations = cache(async (translationGroupId: string | null, currentSlug: string) => {
-  if (!translationGroupId) return [];
-
-  return await prisma.post.findMany({
-    where: {
-      translationGroupId,
-      published: true,
-      slug: { not: currentSlug }
-    },
-    select: { language: true, slug: true }
-  })
-})
+// Allow new slugs to be generated and cached on their first request.
+export function generateStaticParams(): { slug: string }[] {
+  return []
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -70,12 +51,18 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     getSettings()
   ])
 
-  if (!post || !post.published) notFound()
+  if (!post) notFound()
 
   // ⚡ Bolt: Parallelize content rendering and translation fetching
-  const [renderedContent, translations] = await Promise.all([
+  const [renderedContent, translations, relatedPosts] = await Promise.all([
     renderPostContent(post.content, (post as any).contentFormat),
-    getTranslations((post as any).translationGroupId, post.slug)
+    getTranslations((post as any).translationGroupId, post.slug),
+    getRelatedPosts(
+      post.id,
+      post.tags.map((tag) => tag.id),
+      post.translationGroupId,
+      3
+    ),
   ])
 
   const coverImage = getFirstImage(post.content, (post as any).contentFormat)
@@ -124,6 +111,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               alt={post.title}
               fill
               priority
+              sizes="100vw"
               className="post-hero-image"
               style={{ objectFit: 'cover' }}
             />
@@ -213,7 +201,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
         </article>
 
         {/* Related Posts Section */}
-        <RelatedPosts currentSlug={slug} />
+        <RelatedPosts posts={relatedPosts} />
       </main>
 
       <SiteFooter title={settings?.title} footerText={settings?.footerText} />

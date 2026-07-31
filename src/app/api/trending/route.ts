@@ -7,6 +7,10 @@
 import { NextResponse } from 'next/server'
 import { getPostDb } from '@/lib/bunnyDb'
 
+const publicCacheHeaders = {
+  'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const parsedLimit = parseInt(searchParams.get('limit') || '6')
@@ -56,10 +60,12 @@ export async function GET(request: Request) {
       views: post.views ? [post.views] : []
     }))
 
-    return NextResponse.json({ posts: normalizedPosts, period })
+    return NextResponse.json(
+      { posts: normalizedPosts, period },
+      { headers: publicCacheHeaders }
+    )
   } catch (error) {
     console.error('Trending API Error:', error)
     return NextResponse.json({ error: 'Failed to load trending posts' }, { status: 500 })
   }
 }
-

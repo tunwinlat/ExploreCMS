@@ -9,6 +9,10 @@ import { getPostDb } from '@/lib/bunnyDb'
 import { isPrimaryPost } from '@/lib/translationUtils'
 import { getExcerpt, getFirstImage } from '@/lib/renderContent'
 
+const publicCacheHeaders = {
+  'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const cursor = searchParams.get('cursor')
@@ -64,10 +68,10 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json({
-      posts: optimizedPosts,
-      nextCursor
-    })
+    return NextResponse.json(
+      { posts: optimizedPosts, nextCursor },
+      { headers: publicCacheHeaders }
+    )
   } catch (error) {
     console.error("Pagination API Error:", error)
     return NextResponse.json({ error: 'Failed to load posts' }, { status: 500 })

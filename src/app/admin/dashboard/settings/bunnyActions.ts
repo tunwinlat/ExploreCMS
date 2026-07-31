@@ -14,6 +14,7 @@ import { PrismaLibSQL } from '@prisma/adapter-libsql'
 import { createClient } from '@libsql/client'
 import { syncRemoteSchema } from '@/lib/schemaSyncer'
 import { encrypt, decrypt } from '@/lib/crypto'
+import { updateTag } from 'next/cache'
 
 /**
  * Validates the Bunny connection and triggers a full upward Migration (Local -> Remote)
@@ -85,6 +86,8 @@ export async function connectBunnyDb(url: string, token: string) {
       where: { id: 'singleton' },
       data: { bunnyEnabled: true, bunnyUrl: safeUrl, bunnyToken: encryptedToken }
     })
+    updateTag('site-settings')
+    updateTag('blog-posts')
 
     return { success: true }
   } catch (error: any) {
@@ -137,6 +140,8 @@ export async function disconnectBunnyDb() {
       where: { id: 'singleton' },
       data: { bunnyEnabled: false }
     })
+    updateTag('site-settings')
+    updateTag('blog-posts')
 
     return { success: true }
   } catch (error: any) {

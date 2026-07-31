@@ -5,32 +5,49 @@
  */
 
 import { cache } from 'react'
+import { unstable_cache } from 'next/cache'
 import { prisma } from '@/lib/db'
 
 /**
- * Shared, per-request memoized getSettings.
- * React cache() deduplicates calls within a single render pass,
- * so layout.tsx and page.tsx both importing this will only hit
- * the database once per request.
+ * Persist settings across requests while React cache() also deduplicates calls
+ * made by metadata, the root layout, and the page during one render pass.
  */
+const getCachedSettings = unstable_cache(
+  async () => {
+    if (!process.env.DATABASE_URL) return null
+    const settings = await prisma.siteSettings.findUnique({ where: { id: 'singleton' } })
+    return settings
+      ? { ...settings, updatedAt: settings.updatedAt.toISOString() }
+      : null
+  },
+  ['site-settings'],
+  { revalidate: 300, tags: ['site-settings'] }
+)
+
 export const getSettings = cache(async () => {
-  if (!process.env.DATABASE_URL) return null;
   try {
-    return await prisma.siteSettings.findUnique({ where: { id: 'singleton' } })
+    return await getCachedSettings()
   } catch {
     return null
   }
 })
 
 /**
- * Shared, per-request memoized getPopupConfig.
- * ⚡ Bolt: Deduplicates database queries for the singleton popup config
- * across the main frontend pages to prevent redundant round-trips.
+ * Popup configuration changes rarely and is invalidated by its admin actions.
  */
+const getCachedPopupConfig = unstable_cache(
+  async () => {
+    if (!process.env.DATABASE_URL) return null
+    const popup = await prisma.popupConfig.findUnique({ where: { id: 'singleton' } })
+    return popup ? { ...popup, updatedAt: popup.updatedAt.toISOString() } : null
+  },
+  ['popup-config'],
+  { revalidate: 300, tags: ['popup-config'] }
+)
+
 export const getPopupConfig = cache(async () => {
-  if (!process.env.DATABASE_URL) return null;
   try {
-    return await prisma.popupConfig.findUnique({ where: { id: 'singleton' } })
+    return await getCachedPopupConfig()
   } catch {
     return null
   }

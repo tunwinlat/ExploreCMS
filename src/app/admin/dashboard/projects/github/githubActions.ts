@@ -12,6 +12,7 @@ import { GitHubClient, GitHubRepo, generateRepoCoverImage } from '@/lib/github'
 import { getPostDb } from '@/lib/bunnyDb'
 import { getSettings } from '@/lib/settings-cache'
 import { encrypt, decrypt } from '@/lib/crypto'
+import { updateTag } from 'next/cache'
 
 function generateSlug(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
@@ -83,6 +84,7 @@ export async function saveGitHubToken(token: string) {
         githubUsername: test.username,
       },
     })
+    updateTag('site-settings')
 
     return { success: true, username: test.username }
   } catch (err: unknown) {
@@ -107,6 +109,7 @@ export async function disconnectGitHub() {
         githubSyncMode: 'manual',
       },
     })
+    updateTag('site-settings')
 
     return { success: true }
   } catch (err: unknown) {
@@ -258,6 +261,8 @@ export async function importGitHubRepos(repoFullNames: string[]) {
       where: { id: 'singleton' },
       data: { githubLastSyncAt: now },
     })
+    updateTag('site-settings')
+    updateTag('projects')
 
     return { results }
   } catch (err: unknown) {
@@ -315,6 +320,7 @@ export async function syncGitHubProject(projectId: string) {
         githubDefaultBranch: repo.default_branch,
       },
     })
+    updateTag('projects')
 
     return { success: true }
   } catch (err: unknown) {
@@ -334,6 +340,7 @@ export async function updateGitHubSyncMode(mode: 'all' | 'manual') {
       where: { id: 'singleton' },
       data: { githubSyncMode: mode },
     })
+    updateTag('site-settings')
 
     return { success: true }
   } catch (err: unknown) {
@@ -417,6 +424,8 @@ export async function syncAllGitHubProjects() {
       where: { id: 'singleton' },
       data: { githubLastSyncAt: now },
     })
+    updateTag('site-settings')
+    updateTag('projects')
 
     return { results }
   } catch (err: unknown) {

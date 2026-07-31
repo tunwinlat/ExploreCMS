@@ -20,14 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({ title: 'Blog', path: '/blog' }, settings);
 }
 
-export default async function BlogPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ tag?: string | string[] }>
-}) {
-  const query = await searchParams;
-  const initialTag = typeof query.tag === 'string' ? query.tag : undefined;
-
+export default async function BlogPage() {
   // Fetch data in parallel with caching
   const [settings, popupConfig, blogData] = await Promise.all([
     getSettings(),
@@ -45,7 +38,6 @@ export default async function BlogPage({
       settings={settings}
       popupConfig={popupConfig}
       blogData={blogData}
-      initialTag={initialTag}
     />
   );
 }

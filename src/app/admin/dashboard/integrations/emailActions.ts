@@ -10,6 +10,7 @@ import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { encrypt, decrypt } from '@/lib/crypto'
 import { sendEmail } from '@/lib/email'
+import { updateTag } from 'next/cache'
 
 type EmailProvider = 'resend' | 'smtp' | null
 
@@ -82,6 +83,7 @@ export async function saveEmailSettings(input: SaveEmailSettingsInput) {
         smtpPassword: encryptedSmtpPassword,
       }
     })
+    updateTag('site-settings')
 
     return { success: true }
   } catch (error) {

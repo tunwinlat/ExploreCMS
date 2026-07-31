@@ -4,74 +4,15 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-'use client'
-
-import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { getExcerpt, getFirstImage } from '@/lib/renderContent'
-
-interface RelatedPost {
-  id: string
-  title: string
-  slug: string
-  content: string
-  contentFormat?: string
-  createdAt: string
-  author: { username: string; firstName: string | null }
-  tags: { name: string; slug: string }[]
-  views?: { uniqueViews: number }[]
-}
+import type { RelatedPost } from '@/lib/post-cache'
 
 interface RelatedPostsProps {
-  currentSlug: string
+  posts: RelatedPost[]
 }
 
-export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
-  const [posts, setPosts] = useState<RelatedPost[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchRelatedPosts = async () => {
-      setLoading(true)
-      try {
-        const res = await fetch(`/api/related?slug=${encodeURIComponent(currentSlug)}&limit=3`)
-        const data = await res.json()
-        if (data.posts) {
-          setPosts(data.posts)
-        }
-      } catch (err) {
-        console.error('Failed to fetch related posts:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchRelatedPosts()
-  }, [currentSlug])
-
-  const processedPosts = useMemo(() => {
-    return posts.map(post => {
-      const excerpt = getExcerpt(post.content, post.contentFormat, 120)
-      const coverImage = getFirstImage(post.content, post.contentFormat)
-      return { ...post, excerpt, coverImage }
-    })
-  }, [posts])
-
-  if (loading) {
-    return (
-      <section className="related-posts">
-        <div className="related-posts-header">
-          <h3 className="related-posts-title">You Might Also Like</h3>
-        </div>
-        <div className="related-posts-grid">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="related-post-card skeleton" />
-          ))}
-        </div>
-      </section>
-    )
-  }
-
+export function RelatedPosts({ posts }: RelatedPostsProps) {
   if (posts.length === 0) return null
 
   return (
@@ -88,7 +29,7 @@ export function RelatedPosts({ currentSlug }: RelatedPostsProps) {
       </div>
 
       <div className="related-posts-grid">
-        {processedPosts.map((post) => {
+        {posts.map((post) => {
           const primaryTag = post.tags[0]
 
           return (

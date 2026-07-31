@@ -10,6 +10,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 import { BlogContent } from '@/components/blog/BlogContent'
 
+const navigationState = vi.hoisted(() => ({ search: '' }))
+
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => new URLSearchParams(navigationState.search),
+}))
+
 vi.mock('next/link', () => ({
   default: ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
     <a href={href} {...props}>{children}</a>
@@ -17,6 +23,7 @@ vi.mock('next/link', () => ({
 }))
 
 afterEach(() => {
+  navigationState.search = ''
   cleanup()
   vi.unstubAllGlobals()
 })
@@ -52,6 +59,7 @@ describe('BlogContent', () => {
   })
 
   it('loads posts matching the tag from the post link', async () => {
+    navigationState.search = 'tag=technology'
     const fetchMock = vi.fn().mockResolvedValue({
       json: async () => ({ posts: [basePost] }),
     })
@@ -71,7 +79,6 @@ describe('BlogContent', () => {
           },
         ]}
         navItems={[]}
-        initialTag="technology"
       />
     )
 

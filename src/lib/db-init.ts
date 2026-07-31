@@ -20,6 +20,14 @@ export async function runSchemaMigrations(): Promise<void> {
 
   try {
     const client = createClient({ url, authToken: authToken || undefined });
+    const performanceIndexes = [
+      `CREATE INDEX IF NOT EXISTS "Post_published_createdAt_idx" ON "Post"("published", "createdAt")`,
+      `CREATE INDEX IF NOT EXISTS "Post_translationGroupId_published_idx" ON "Post"("translationGroupId", "published")`,
+      `CREATE INDEX IF NOT EXISTS "Project_published_featured_order_createdAt_idx" ON "Project"("published", "featured", "order", "createdAt")`,
+      `CREATE INDEX IF NOT EXISTS "ProjectImage_projectId_order_idx" ON "ProjectImage"("projectId", "order")`,
+      `CREATE INDEX IF NOT EXISTS "PhotoAlbum_published_featured_order_createdAt_idx" ON "PhotoAlbum"("published", "featured", "order", "createdAt")`,
+      `CREATE INDEX IF NOT EXISTS "Photo_albumId_order_idx" ON "Photo"("albumId", "order")`,
+    ];
 
     // Fast path: check if the latest migration artifact already exists.
     // This avoids running 30+ sequential ALTER TABLE statements on every cold start
@@ -27,23 +35,79 @@ export async function runSchemaMigrations(): Promise<void> {
     // IMPORTANT: whenever you add a new migration below, update this probe to check
     // for the NEWEST table/column — otherwise existing deployments never receive it.
     try {
-      await client.execute({ sql: "SELECT id FROM \"PostIdempotencyKey\" WHERE 1=0", args: [] });
-      await client.execute({ sql: "SELECT \"seoLlmsTxtEnabled\" FROM \"SiteSettings\" WHERE 1=0", args: [] });
-      await client.execute({ sql: "SELECT \"seoNoIndex\" FROM \"Post\" WHERE 1=0", args: [] });
-      // Keep the retired integration's DB shape temporarily so older Vercel
-      // functions can coexist safely during a rolling deployment. No runtime
-      // code reads or writes these fields in the current application.
-      await client.execute({ sql: "SELECT \"craftDocumentId\", \"craftLastModifiedAt\", \"craftUnlinked\" FROM \"Post\" WHERE 1=0", args: [] });
-      await client.execute({ sql: "SELECT \"craftServerUrl\", \"craftApiToken\", \"craftFolderId\", \"craftFolderName\", \"craftSyncMode\", \"craftEnabled\", \"craftWriteAccess\", \"craftError\", \"craftLastSyncAt\" FROM \"SiteSettings\" WHERE 1=0", args: [] });
-      await client.execute({ sql: "SELECT \"name\" FROM \"BackgroundJobLock\" WHERE 1=0", args: [] });
+      // One request verifies every compatibility artifact plus the newest
+      // performance index. INDEXED BY makes SQLite fail if that index is absent.
+      await client.execute({
+        sql: `SELECT
+          (SELECT "id" FROM "PostIdempotencyKey" WHERE 1=0),
+          (SELECT "seoLlmsTxtEnabled" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "seoNoIndex" FROM "Post" WHERE 1=0),
+          (SELECT "craftDocumentId" FROM "Post" WHERE 1=0),
+          (SELECT "craftLastModifiedAt" FROM "Post" WHERE 1=0),
+          (SELECT "craftUnlinked" FROM "Post" WHERE 1=0),
+          (SELECT "craftServerUrl" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "craftApiToken" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "craftFolderId" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "craftFolderName" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "craftSyncMode" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "craftEnabled" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "craftWriteAccess" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "craftError" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "craftLastSyncAt" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "name" FROM "BackgroundJobLock" WHERE 1=0),
+          (SELECT "id" FROM "Post" INDEXED BY "Post_published_createdAt_idx" WHERE 1=0),
+          (SELECT "id" FROM "Post" INDEXED BY "Post_translationGroupId_published_idx" WHERE 1=0),
+          (SELECT "id" FROM "Project" INDEXED BY "Project_published_featured_order_createdAt_idx" WHERE 1=0),
+          (SELECT "id" FROM "ProjectImage" INDEXED BY "ProjectImage_projectId_order_idx" WHERE 1=0),
+          (SELECT "id" FROM "PhotoAlbum" INDEXED BY "PhotoAlbum_published_featured_order_createdAt_idx" WHERE 1=0),
+          (SELECT "id" FROM "Photo" INDEXED BY "Photo_albumId_order_idx" WHERE 1=0)`,
+        args: [],
+      });
       // Latest artifacts exist → all migrations have been applied, nothing to do.
       return;
     } catch {
       // Artifact missing → proceed with migrations below.
     }
 
+    // Most upgrades only lack the newest indexes. Confirm the prior schema in
+    // one request, then install all indexes in one LibSQL batch instead of
+    // replaying every historical ALTER TABLE across the network.
+    try {
+      await client.execute({
+        sql: `SELECT
+          (SELECT "id" FROM "PostIdempotencyKey" WHERE 1=0),
+          (SELECT "seoLlmsTxtEnabled" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "seoNoIndex" FROM "Post" WHERE 1=0),
+          (SELECT "craftDocumentId" FROM "Post" WHERE 1=0),
+          (SELECT "craftLastModifiedAt" FROM "Post" WHERE 1=0),
+          (SELECT "craftUnlinked" FROM "Post" WHERE 1=0),
+          (SELECT "craftServerUrl" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "craftApiToken" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "craftFolderId" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "craftFolderName" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "craftSyncMode" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "craftEnabled" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "craftWriteAccess" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "craftError" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "craftLastSyncAt" FROM "SiteSettings" WHERE 1=0),
+          (SELECT "name" FROM "BackgroundJobLock" WHERE 1=0)`,
+        args: [],
+      });
+      await client.batch(
+        performanceIndexes.map((sql) => ({ sql, args: [] })),
+        'write'
+      );
+      console.log('[DB Migrate] Public query indexes applied');
+      return;
+    } catch {
+      // Older schema → use the complete idempotent migration list below.
+    }
+
     // v2 → component system columns
     const migrations = [
+      // v1 compatibility for the earliest production schemas
+      `ALTER TABLE "Post" ADD COLUMN "published" BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE "Post" ADD COLUMN "isFeatured" BOOLEAN NOT NULL DEFAULT false`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "enabledComponents" TEXT NOT NULL DEFAULT '["blog"]'`,
       `ALTER TABLE "SiteSettings" ADD COLUMN "defaultComponent" TEXT NOT NULL DEFAULT 'blog'`,
       // v3 → post content formats
@@ -206,6 +270,8 @@ export async function runSchemaMigrations(): Promise<void> {
         "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" DATETIME NOT NULL
       )`,
+      // v13 → indexes for public listing, translation, and ordered media queries
+      ...performanceIndexes,
     ];
 
     for (const stmt of migrations) {
@@ -307,6 +373,8 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
       );
 
       CREATE UNIQUE INDEX "Post_slug_key" ON "Post"("slug");
+      CREATE INDEX "Post_published_createdAt_idx" ON "Post"("published", "createdAt");
+      CREATE INDEX "Post_translationGroupId_published_idx" ON "Post"("translationGroupId", "published");
 
       CREATE TABLE "Tag" (
           "id" TEXT NOT NULL PRIMARY KEY,
@@ -400,6 +468,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
       );
 
       CREATE UNIQUE INDEX "Project_slug_key" ON "Project"("slug");
+      CREATE INDEX "Project_published_featured_order_createdAt_idx" ON "Project"("published", "featured", "order", "createdAt");
 
       CREATE TABLE "ProjectImage" (
           "id" TEXT NOT NULL PRIMARY KEY,
@@ -409,6 +478,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
           "order" INTEGER NOT NULL DEFAULT 0,
           CONSTRAINT "ProjectImage_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id") ON DELETE CASCADE ON UPDATE CASCADE
       );
+      CREATE INDEX "ProjectImage_projectId_order_idx" ON "ProjectImage"("projectId", "order");
 
       CREATE TABLE "PhotoAlbum" (
           "id" TEXT NOT NULL PRIMARY KEY,
@@ -424,6 +494,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
       );
 
       CREATE UNIQUE INDEX "PhotoAlbum_slug_key" ON "PhotoAlbum"("slug");
+      CREATE INDEX "PhotoAlbum_published_featured_order_createdAt_idx" ON "PhotoAlbum"("published", "featured", "order", "createdAt");
 
       CREATE TABLE "Photo" (
           "id" TEXT NOT NULL PRIMARY KEY,
@@ -439,6 +510,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
           "updatedAt" DATETIME NOT NULL,
           CONSTRAINT "Photo_albumId_fkey" FOREIGN KEY ("albumId") REFERENCES "PhotoAlbum" ("id") ON DELETE CASCADE ON UPDATE CASCADE
       );
+      CREATE INDEX "Photo_albumId_order_idx" ON "Photo"("albumId", "order");
 
       CREATE TABLE "ApiKey" (
           "id" TEXT NOT NULL PRIMARY KEY,

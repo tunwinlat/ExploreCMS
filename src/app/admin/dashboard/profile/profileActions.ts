@@ -8,7 +8,7 @@
 
 import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 import bcrypt from 'bcryptjs'
 import { randomBytes } from 'crypto'
 import { sendEmail, getVerificationEmailHtml } from '@/lib/email'
@@ -73,6 +73,7 @@ export async function updateUserProfile(formData: FormData) {
       where: { id: userId },
       data: updateData
     })
+    updateTag('blog-posts')
     revalidatePath('/admin/dashboard/profile')
     revalidatePath('/')
     return { success: true, emailChanged: email !== currentUser?.email }

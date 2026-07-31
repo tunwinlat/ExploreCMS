@@ -8,7 +8,7 @@
 
 import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 import { normalizeUrl } from '@/lib/urlUtils'
 
 export interface SeoSettingsInput {
@@ -65,6 +65,7 @@ export async function updateSeoSettings(input: SeoSettingsInput) {
       create: { id: 'singleton', ...data },
     })
 
+    updateTag('site-settings')
     revalidatePath('/', 'layout')
     return { success: true }
   } catch (error) {

@@ -6,9 +6,10 @@
 
 'use client'
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { Suspense, useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useSearchParams } from 'next/navigation'
 
 import { NavItem } from '@/app/admin/dashboard/navigation/NavBuilder'
 
@@ -26,33 +27,42 @@ type Post = {
   coverImage?: string | null
 }
 
+function SearchParamTagSync({ onChange }: { onChange: (tag?: string) => void }) {
+  const searchParams = useSearchParams()
+  const tag = searchParams?.get('tag')?.trim() || undefined
+
+  useEffect(() => {
+    onChange(tag)
+  }, [onChange, tag])
+
+  return null
+}
+
 export default function DynamicPostGrid({
   initialPosts,
   navItems,
   initialCursor,
-  initialTag,
 }: {
   initialPosts: Post[],
   navItems: NavItem[],
   initialCursor?: string,
-  initialTag?: string,
 }) {
   const [posts, setPosts] = useState<Post[]>(initialPosts)
   const [activeFilter, setActiveFilter] = useState<{type: 'latest'|'featured'|'tag', target?: string}>(
-    initialTag ? { type: 'tag', target: initialTag } : { type: 'latest' }
+    { type: 'latest' }
   )
 
   // Pagination State
   const [cursor, setCursor] = useState<string | undefined>(initialCursor)
-  const [loading, setLoading] = useState(!!initialTag)
-  const [hasMore, setHasMore] = useState(initialTag ? false : !!initialCursor)
+  const [loading, setLoading] = useState(false)
+  const [hasMore, setHasMore] = useState(!!initialCursor)
 
   const observerRef = useRef<IntersectionObserver | null>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    setActiveFilter(initialTag ? { type: 'tag', target: initialTag } : { type: 'latest' })
-  }, [initialTag])
+  const syncTagFromUrl = useCallback((tag?: string) => {
+    setActiveFilter(tag ? { type: 'tag', target: tag } : { type: 'latest' })
+  }, [])
 
   useEffect(() => {
     if (activeFilter.type !== 'tag' || !activeFilter.target) {
@@ -156,6 +166,10 @@ export default function DynamicPostGrid({
 
   return (
     <div>
+      <Suspense fallback={null}>
+        <SearchParamTagSync onChange={syncTagFromUrl} />
+      </Suspense>
+
       {/* Filter tabs (dropdown nav items are flattened into their tag children) */}
       <div className="filter-tabs" role="group" aria-label="Filter posts">
         {navItems.flatMap((item) => {

@@ -13,14 +13,7 @@ import { getSettings, getPopupConfig } from "@/lib/settings-cache";
 // Use ISR with 60 second revalidation for better performance
 export const revalidate = 60;
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: Promise<{ tag?: string | string[] }>
-}) {
-  const query = await searchParams;
-  const initialTag = typeof query.tag === 'string' ? query.tag : undefined;
-
+export default async function Home() {
   // Fetch data in parallel with caching
   const [settings, popupConfig, blogData] = await Promise.all([
     getSettings(),
@@ -40,7 +33,6 @@ export default async function Home({
       settings={settings}
       popupConfig={popupConfig}
       blogData={blogData}
-      initialTag={initialTag}
     />
   );
 }

@@ -9,7 +9,7 @@
 import { getPrismaClient } from '@/lib/db'
 import { hash } from 'bcryptjs'
 import { createSession } from '@/lib/auth'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 
 // Get a fresh Prisma client for each server action
 const prisma = getPrismaClient()
@@ -271,6 +271,7 @@ export async function completeSetup(data: SetupData) {
       role: user.role 
     })
 
+    updateTag('site-settings')
     revalidatePath('/', 'layout')
     
     return { success: true }

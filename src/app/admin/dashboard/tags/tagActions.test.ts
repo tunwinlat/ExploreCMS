@@ -25,7 +25,9 @@ vi.mock('@/lib/bunnyDb', () => ({
 }))
 
 vi.mock('next/cache', () => ({
-  revalidatePath: vi.fn()
+  revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
+  updateTag: vi.fn(),
 }))
 
 describe('tagActions', () => {

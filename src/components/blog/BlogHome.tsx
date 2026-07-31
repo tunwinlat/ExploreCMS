@@ -60,11 +60,10 @@ function normalizePosts(posts: BlogListingPost[]) {
  * component) and `/blog`. The route files only differ in their
  * redirect/404 guard; everything else lives here.
  */
-export function BlogHome({ settings, popupConfig, blogData, initialTag }: {
+export function BlogHome({ settings, popupConfig, blogData }: {
   settings: BlogHomeSettings | null
   popupConfig: BlogHomePopup | null
   blogData: BlogHomeData
-  initialTag?: string
 }) {
   const { enabledComponents, defaultComponent } = parseComponentConfig(settings);
   const enabledMeta = COMPONENTS.filter(c => enabledComponents.includes(c.id));
@@ -99,7 +98,6 @@ export function BlogHome({ settings, popupConfig, blogData, initialTag }: {
           nextCursor={nextCursor}
           navItems={navItems}
           sidebarAbout={settings?.sidebarAbout ?? undefined}
-          initialTag={initialTag}
         />
       </div>
 

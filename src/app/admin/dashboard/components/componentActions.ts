@@ -8,7 +8,7 @@
 
 import { prisma } from '@/lib/db'
 import { verifySession } from '@/lib/auth'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 import type { ComponentId } from '@/lib/components-config'
 
 export async function updateComponentConfig(
@@ -39,6 +39,7 @@ export async function updateComponentConfig(
       },
     })
 
+    updateTag('site-settings')
     revalidatePath('/', 'layout')
     revalidatePath('/blog')
     revalidatePath('/projects')

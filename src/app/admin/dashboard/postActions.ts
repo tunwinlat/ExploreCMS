@@ -9,7 +9,7 @@
 import { getPostDb } from '@/lib/bunnyDb'
 import { verifySession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 import { normalizeUrl } from '@/lib/urlUtils'
 
 function generateSlug(title: string) {
@@ -119,7 +119,7 @@ export async function savePost(formData: FormData, options: { redirect?: boolean
   revalidatePath('/')
   revalidatePath('/blog')
   revalidatePath('/admin/dashboard')
-  revalidateTag('blog-posts', 'default')
+  updateTag('blog-posts')
 
   if (options.redirect) {
     redirect('/admin/dashboard')
@@ -146,6 +146,6 @@ export async function deletePost(id: string) {
   revalidatePath('/')
   revalidatePath('/blog')
   revalidatePath('/admin/dashboard')
-  revalidateTag('blog-posts', 'default')
+  updateTag('blog-posts')
   redirect('/admin/dashboard')
 }

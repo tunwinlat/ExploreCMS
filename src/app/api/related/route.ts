@@ -7,6 +7,10 @@
 import { NextResponse } from 'next/server'
 import { getPostDb } from '@/lib/bunnyDb'
 
+const publicCacheHeaders = {
+  'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const slug = searchParams.get('slug')
@@ -93,7 +97,10 @@ export async function GET(request: Request) {
     // Limit to requested amount
     posts = posts.slice(0, limit)
 
-    return NextResponse.json({ posts, currentSlug: slug })
+    return NextResponse.json(
+      { posts, currentSlug: slug },
+      { headers: publicCacheHeaders }
+    )
   } catch (error) {
     console.error('Related Posts API Error:', error)
     return NextResponse.json({ error: 'Failed to load related posts' }, { status: 500 })

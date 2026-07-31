@@ -267,7 +267,7 @@ export async function POST(request: Request) {
         revalidatePath('/')
         revalidatePath('/blog')
         revalidatePath('/admin/dashboard')
-        revalidateTag('blog-posts', 'default')
+        revalidateTag('blog-posts', 'max')
 
         return NextResponse.json({ post }, { status: 201 })
       } catch (error) {

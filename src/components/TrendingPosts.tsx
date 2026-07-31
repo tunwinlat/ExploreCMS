@@ -6,7 +6,7 @@
 
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import Link from 'next/link'
 
 interface ViewCount {
@@ -44,7 +44,7 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
 
     if (showLoading) setLoading(true)
     try {
-      const res = await fetch(`/api/trending?period=${p}&limit=8`, { cache: 'no-store' })
+      const res = await fetch(`/api/trending?period=${p}&limit=8`)
       const data = await res.json()
       if (currentRequest === requestId.current && data.posts) {
         // Normalize `views` into an array regardless of API payload shape
@@ -59,10 +59,6 @@ export function TrendingPosts({ initialPosts = [] }: TrendingPostsProps) {
       if (currentRequest === requestId.current && showLoading) setLoading(false)
     }
   }, [])
-
-  useEffect(() => {
-    void fetchTrending('7d', false)
-  }, [fetchTrending])
 
   if (posts.length === 0 && !loading) return null
 

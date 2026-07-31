@@ -5,6 +5,7 @@
  */
 
 import type { Metadata, Viewport } from "next";
+import { Fraunces } from "next/font/google";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 import "./themes.css";
@@ -14,6 +15,13 @@ import { ensureMigrations } from "@/lib/db-init";
 import { getSettings } from "@/lib/settings-cache";
 import { buildBaseMetadata, webSiteJsonLd, DEFAULT_SITE_DESCRIPTION, DEFAULT_SITE_TITLE } from "@/lib/seo";
 import { ParticleBackground } from "@/components/ParticleBackground";
+
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+  variable: '--font-fraunces',
+});
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -43,6 +51,16 @@ function faviconType(url: string) {
   return 'image/x-icon'
 }
 
+function getOrigin(url?: string | null): string | null {
+  if (!url) return null
+  try {
+    const parsed = new URL(url)
+    return parsed.protocol === 'https:' ? parsed.origin : null
+  } catch {
+    return null
+  }
+}
+
 export default async function RootLayout({
   children,
 }: {
@@ -65,9 +83,10 @@ export default async function RootLayout({
   }
 
   const activeTheme = getThemeConfig(themeId);
+  const storageOrigin = getOrigin(siteSettings?.bunnyStorageUrl);
 
   return (
-    <html lang="en" suppressHydrationWarning data-theme={activeTheme.id}>
+    <html lang="en" suppressHydrationWarning data-theme={activeTheme.id} className={fraunces.variable}>
       <head>
         <meta charSet="utf-8" />
         <link rel="icon" href={faviconUrl} type={faviconType(faviconUrl)} sizes="any" />
@@ -76,9 +95,7 @@ export default async function RootLayout({
         <meta name="msapplication-TileImage" content={faviconUrl} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Editorial display face (theme-independent); serif themes override --font-display in themes.css */}
-        {/* eslint-disable-next-line @next/next/no-page-custom-font -- App Router root layout loads this site-wide; rule targets Pages Router */}
-        <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&display=swap" rel="stylesheet" />
+        {storageOrigin && <link rel="preconnect" href={storageOrigin} crossOrigin="anonymous" />}
         {activeTheme.fontUrl && (
           <link href={activeTheme.fontUrl} rel="stylesheet" />
         )}

@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { requireApiPermission } from '@/lib/apiAuth'
 import {
@@ -14,6 +14,7 @@ import {
 } from '@/lib/apiV1Utils'
 
 function revalidateGallery() {
+  revalidateTag('albums', 'max')
   revalidatePath('/photos')
   revalidatePath('/admin/dashboard/photos')
 }

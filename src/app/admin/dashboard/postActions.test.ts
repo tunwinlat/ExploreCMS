@@ -24,6 +24,7 @@ vi.mock('next/navigation', () => ({
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
   revalidateTag: vi.fn(),
+  updateTag: vi.fn(),
 }))
 describe('savePost action', () => {
   let mockUpdate: ReturnType<typeof vi.fn>

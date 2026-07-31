@@ -30,7 +30,6 @@ interface BlogContentProps {
   nextCursor?: string
   navItems: any[]
   sidebarAbout?: string
-  initialTag?: string
 }
 
 export function BlogContent({
@@ -40,7 +39,6 @@ export function BlogContent({
   nextCursor,
   navItems,
   sidebarAbout,
-  initialTag,
 }: BlogContentProps) {
   const visibleNavItems = featuredPosts.length > 0
     ? navItems
@@ -65,7 +63,6 @@ export function BlogContent({
             initialPosts={latestPosts}
             navItems={visibleNavItems}
             initialCursor={nextCursor}
-            initialTag={initialTag}
           />
         </section>
       </main>

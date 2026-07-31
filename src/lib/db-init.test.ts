@@ -59,6 +59,14 @@ describe('runSchemaMigrations (production auto-migration)', () => {
     return r.rows.some(row => (row as unknown as { name: string }).name === column)
   }
 
+  const indexExists = async (name: string): Promise<boolean> => {
+    const r = await db.execute({
+      sql: "SELECT name FROM sqlite_master WHERE type='index' AND name=?",
+      args: [name],
+    })
+    return r.rows.length > 0
+  }
+
   it('does nothing when DATABASE_URL is not set', async () => {
     delete process.env.DATABASE_URL
     await runSchemaMigrations()
@@ -109,7 +117,9 @@ describe('runSchemaMigrations (production auto-migration)', () => {
     expect(await columnExists('Post', 'seoNoIndex')).toBe(true)
     expect(await columnExists('Post', 'craftDocumentId')).toBe(true)
     expect(await columnExists('SiteSettings', 'craftApiToken')).toBe(true)
-  })
+    expect(await indexExists('Post_published_createdAt_idx')).toBe(true)
+    expect(await indexExists('Post_translationGroupId_published_idx')).toBe(true)
+  }, 10_000)
 
   it('does not short-circuit when the DB has an older artifact but lacks the newest tables', async () => {
     // Regression guard: the fast-path probe must check the NEWEST migration
@@ -276,8 +286,8 @@ describe('runSchemaMigrations (production auto-migration)', () => {
     expect(await tableExists('PostIdempotencyKey')).toBe(true)
     expect(await tableExists('BackgroundJobLock')).toBe(true)
 
-    // Track subsequent statements: the fast path should run only its probes
-    // and no DDL.
+    // Track subsequent statements: the fast path should use one consolidated
+    // probe and no DDL, even on serverless cold starts.
     const statements: string[] = []
     const spy = vi.spyOn(db, 'execute').mockImplementation(async (stmt) => {
       statements.push(typeof stmt === 'string' ? stmt : stmt.sql)
@@ -286,15 +296,31 @@ describe('runSchemaMigrations (production auto-migration)', () => {
 
     await runSchemaMigrations()
 
-    expect(statements).toHaveLength(6)
+    expect(statements).toHaveLength(1)
     expect(statements[0]).toContain('PostIdempotencyKey')
-    expect(statements[1]).toContain('seoLlmsTxtEnabled')
-    expect(statements[2]).toContain('seoNoIndex')
-    expect(statements[3]).toContain('craftDocumentId')
-    expect(statements[4]).toContain('craftServerUrl')
-    expect(statements[5]).toContain('BackgroundJobLock')
+    expect(statements[0]).toContain('seoLlmsTxtEnabled')
+    expect(statements[0]).toContain('seoNoIndex')
+    expect(statements[0]).toContain('craftDocumentId')
+    expect(statements[0]).toContain('craftServerUrl')
+    expect(statements[0]).toContain('BackgroundJobLock')
+    expect(statements[0]).toContain('Post_published_createdAt_idx')
     spy.mockRestore()
   })
+
+  it('installs only the newest indexes as a batch on an otherwise current schema', async () => {
+    await initializeDatabase()
+    await db.execute('DROP INDEX "Post_published_createdAt_idx"')
+
+    const executeSpy = vi.spyOn(db, 'execute')
+    const batchSpy = vi.spyOn(db, 'batch')
+    await runSchemaMigrations()
+
+    expect(executeSpy).toHaveBeenCalledTimes(2)
+    expect(batchSpy).toHaveBeenCalledTimes(1)
+    expect(await indexExists('Post_published_createdAt_idx')).toBe(true)
+    executeSpy.mockRestore()
+    batchSpy.mockRestore()
+  }, 10_000)
 
   it('includes the newest tables in fresh remote database initialization', async () => {
     const result = await initializeDatabase()
@@ -306,5 +332,7 @@ describe('runSchemaMigrations (production auto-migration)', () => {
     expect(await columnExists('Post', 'seoNoIndex')).toBe(true)
     expect(await columnExists('Post', 'craftDocumentId')).toBe(true)
     expect(await columnExists('SiteSettings', 'craftApiToken')).toBe(true)
+    expect(await indexExists('Post_published_createdAt_idx')).toBe(true)
+    expect(await indexExists('Photo_albumId_order_idx')).toBe(true)
   })
 })

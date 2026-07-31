@@ -8,7 +8,7 @@
 
 import { prisma } from '@/lib/db'
 import { verifySession } from '@/lib/auth'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { normalizeUrl } from '@/lib/urlUtils'
 
@@ -53,6 +53,7 @@ export async function saveAlbum(formData: FormData) {
       })
     }
 
+    updateTag('albums')
     revalidatePath('/photos')
     revalidatePath('/admin/dashboard/photos')
   } catch {
@@ -68,6 +69,7 @@ export async function deleteAlbum(id: string) {
 
   try {
     await (prisma as any).photoAlbum.delete({ where: { id } })
+    updateTag('albums')
     revalidatePath('/photos')
     revalidatePath('/admin/dashboard/photos')
   } catch {
@@ -115,6 +117,7 @@ export async function addPhoto(formData: FormData) {
       },
     })
 
+    updateTag('albums')
     revalidatePath('/photos')
     revalidatePath('/admin/dashboard/photos')
     return { success: true }
@@ -129,6 +132,7 @@ export async function deletePhoto(photoId: string, _albumId: string) {
 
   try {
     await (prisma as any).photo.delete({ where: { id: photoId } })
+    updateTag('albums')
     revalidatePath('/photos')
     revalidatePath('/admin/dashboard/photos')
     return { success: true }
@@ -146,6 +150,7 @@ export async function updateAlbumCover(albumId: string, coverImage: string) {
 
   try {
     await (prisma as any).photoAlbum.update({ where: { id: albumId }, data: { coverImage: normalizedUrl } })
+    updateTag('albums')
     revalidatePath('/photos')
     revalidatePath('/admin/dashboard/photos')
     return { success: true }

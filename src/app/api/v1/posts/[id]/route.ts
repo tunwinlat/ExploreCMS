@@ -19,7 +19,7 @@ function revalidateBlog() {
   revalidatePath('/')
   revalidatePath('/blog')
   revalidatePath('/admin/dashboard')
-  revalidateTag('blog-posts', 'default')
+  revalidateTag('blog-posts', 'max')
 }
 
 // GET /api/v1/posts/[id] — get a single post (requires posts:read)

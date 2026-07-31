@@ -75,6 +75,9 @@ model Post {
   seoNoIndex      Boolean @default(false) // true = hide this post from search engines
 
   idempotencyKeys PostIdempotencyKey[]
+
+  @@index([published, createdAt], map: "Post_published_createdAt_idx")
+  @@index([translationGroupId, published], map: "Post_translationGroupId_published_idx")
 }
 
 model PostIdempotencyKey {
@@ -181,6 +184,8 @@ model Project {
   githubSyncEnabled   Boolean @default(false) // Auto-sync enabled
   githubLastSyncAt    String? // ISO timestamp of last sync
   githubDefaultBranch String? @default("main") // Branch to fetch README from
+
+  @@index([published, featured, order, createdAt], map: "Project_published_featured_order_createdAt_idx")
 }
 
 model ProjectImage {
@@ -190,6 +195,8 @@ model ProjectImage {
   url       String
   caption   String  @default("")
   order     Int     @default(0)
+
+  @@index([projectId, order], map: "ProjectImage_projectId_order_idx")
 }
 
 model PhotoAlbum {
@@ -204,6 +211,8 @@ model PhotoAlbum {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   photos      Photo[]
+
+  @@index([published, featured, order, createdAt], map: "PhotoAlbum_published_featured_order_createdAt_idx")
 }
 
 model Photo {
@@ -219,6 +228,8 @@ model Photo {
   featured    Boolean    @default(false)
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+
+  @@index([albumId, order], map: "Photo_albumId_order_idx")
 }
 
 model PopupConfig {

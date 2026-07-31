@@ -8,7 +8,7 @@
 
 import { getPostDb } from '@/lib/bunnyDb'
 import { verifySession } from '@/lib/auth'
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 
 export async function deletePostById(id: string) {
   const session = await verifySession()
@@ -29,7 +29,7 @@ export async function deletePostById(id: string) {
     revalidatePath('/admin/dashboard')
     revalidatePath('/')
     revalidatePath('/blog')
-    revalidateTag('blog-posts', 'default')
+    updateTag('blog-posts')
     
     return { success: true }
   } catch (error) {

@@ -9,7 +9,7 @@
 import { verifySession } from '@/lib/auth'
 import { prisma as localPrisma } from '@/lib/db'
 import { getPostDb } from '@/lib/bunnyDb'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 import { readFile, writeFile, mkdir } from 'fs/promises'
 import { join, dirname } from 'path'
 import { encrypt, decrypt } from '@/lib/crypto'
@@ -576,6 +576,7 @@ export async function migrateStorage(
       create: { id: 'singleton', ...updateData }
     })
 
+    updateTag('site-settings')
     revalidatePath('/', 'layout')
 
     // Add warnings
@@ -639,6 +640,7 @@ export async function disconnectBunnyStorage() {
           bunnyStorageEnabled: false,
         }
       })
+      updateTag('site-settings')
       return { success: true, stats: results }
     }
 
@@ -707,6 +709,8 @@ export async function disconnectBunnyStorage() {
       }
     })
 
+    updateTag('site-settings')
+    updateTag('blog-posts')
     revalidatePath('/', 'layout')
     return { success: true, stats: results }
 
@@ -802,6 +806,7 @@ export async function saveStorageSettings(
       }
     })
 
+    updateTag('site-settings')
     revalidatePath('/', 'layout')
     return { success: true }
   } catch (error: any) {

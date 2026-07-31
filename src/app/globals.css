@@ -29,7 +29,7 @@
   --base-size: 16px;
 
   /* Editorial design tokens (public pages) */
-  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-display: var(--font-fraunces), Georgia, 'Times New Roman', serif;
   --font-body: var(--font-primary); /* themes keep owning the body face */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;

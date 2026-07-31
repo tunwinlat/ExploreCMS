@@ -7,7 +7,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { TrendingPosts } from '@/components/TrendingPosts'
 
 vi.mock('next/link', () => ({
@@ -22,7 +22,7 @@ afterEach(() => {
 })
 
 describe('TrendingPosts', () => {
-  it('shows total views and refreshes the cached initial data', async () => {
+  it('shows the cached initial data without an extra request on mount', () => {
     const post = {
       id: 'post-1',
       title: 'Popular Post',
@@ -33,26 +33,12 @@ describe('TrendingPosts', () => {
       tags: [],
       views: [{ totalViews: 37, uniqueViews: 2 }],
     }
-    const fetchMock = vi.fn().mockResolvedValue({
-      json: async () => ({
-        posts: [{ ...post, views: { totalViews: 42, uniqueViews: 3 } }],
-      }),
-    })
+    const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
 
     render(<TrendingPosts initialPosts={[post]} />)
 
     expect(screen.getByText('37')).toBeTruthy()
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        '/api/trending?period=7d&limit=8',
-        { cache: 'no-store' }
-      )
-    })
-    // API returns `views` as a single object (to-one relation); the component
-    // must normalize it and show the fresh view count
-    await waitFor(() => {
-      expect(screen.getByText('42')).toBeTruthy()
-    })
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 })

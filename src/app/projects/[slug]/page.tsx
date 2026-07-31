@@ -22,7 +22,12 @@ import { unstable_cache } from "next/cache";
 // Shared rich-content typography (deduplication with post.css tracked for Phase 6/8)
 import "../../post/[slug]/post.css";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
+export const dynamicParams = true;
+
+export function generateStaticParams(): { slug: string }[] {
+  return [];
+}
 
 const getProject = unstable_cache(
   async (slug: string) => {
@@ -42,7 +47,7 @@ const getProject = unstable_cache(
     } catch { return null; }
   },
   ['project-detail'],
-  { revalidate: 60 }
+  { revalidate: 60, tags: ['projects'] }
 );
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

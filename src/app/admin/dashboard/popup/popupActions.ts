@@ -8,7 +8,7 @@
 
 import { verifySession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 
 export async function getPopupConfig() {
   const config = await prisma.popupConfig.findUnique({
@@ -29,6 +29,7 @@ export async function togglePopupEnabled(enabled: boolean) {
       update: { enabled },
       create: { id: 'singleton', enabled }
     })
+    updateTag('popup-config')
     revalidatePath('/')
     return { success: true }
   } catch (error) {
@@ -65,6 +66,7 @@ export async function updatePopupConfig(
       update: { enabled, title, content, displayMode },
       create: { id: 'singleton', enabled, title, content, displayMode }
     })
+    updateTag('popup-config')
     revalidatePath('/')
     return { success: true }
   } catch (error) {
