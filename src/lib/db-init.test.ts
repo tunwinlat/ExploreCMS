@@ -104,11 +104,11 @@ describe('runSchemaMigrations (production auto-migration)', () => {
     expect(await tableExists('Project')).toBe(true)
     expect(await tableExists('PhotoAlbum')).toBe(true)
     expect(await tableExists('PostIdempotencyKey')).toBe(true)
-    expect(await tableExists('BackgroundJobLock')).toBe(false)
+    expect(await tableExists('BackgroundJobLock')).toBe(true)
     expect(await columnExists('SiteSettings', 'seoLlmsTxtEnabled')).toBe(true)
     expect(await columnExists('Post', 'seoNoIndex')).toBe(true)
-    expect(await columnExists('Post', 'craftDocumentId')).toBe(false)
-    expect(await columnExists('SiteSettings', 'craftApiToken')).toBe(false)
+    expect(await columnExists('Post', 'craftDocumentId')).toBe(true)
+    expect(await columnExists('SiteSettings', 'craftApiToken')).toBe(true)
   })
 
   it('does not short-circuit when the DB has an older artifact but lacks the newest tables', async () => {
@@ -132,7 +132,7 @@ describe('runSchemaMigrations (production auto-migration)', () => {
 
     expect(await tableExists('ApiKey')).toBe(true)
     expect(await tableExists('PostIdempotencyKey')).toBe(true)
-    expect(await tableExists('BackgroundJobLock')).toBe(false)
+    expect(await tableExists('BackgroundJobLock')).toBe(true)
   })
 
   it('does not short-circuit after a partial newest migration', async () => {
@@ -147,7 +147,7 @@ describe('runSchemaMigrations (production auto-migration)', () => {
 
     await runSchemaMigrations()
 
-    expect(await tableExists('BackgroundJobLock')).toBe(false)
+    expect(await tableExists('BackgroundJobLock')).toBe(true)
   })
 
   it('does not short-circuit when the DB has v9 tables but lacks the newest SEO columns', async () => {
@@ -190,7 +190,7 @@ describe('runSchemaMigrations (production auto-migration)', () => {
     expect(await columnExists('Post', 'seoNoIndex')).toBe(true)
   })
 
-  it('removes legacy integration metadata without deleting post content', async () => {
+  it('preserves content while keeping legacy columns inert for rolling deployments', async () => {
     await db.execute(`CREATE TABLE "SiteSettings" (
       "id" TEXT NOT NULL PRIMARY KEY DEFAULT 'singleton',
       "title" TEXT NOT NULL DEFAULT 'ExploreCMS',
@@ -224,13 +224,13 @@ describe('runSchemaMigrations (production auto-migration)', () => {
 
     await runSchemaMigrations()
 
-    expect(await columnExists('Post', 'craftDocumentId')).toBe(false)
-    expect(await columnExists('SiteSettings', 'craftApiToken')).toBe(false)
-    expect(await tableExists('BackgroundJobLock')).toBe(false)
-    const post = await db.execute({ sql: `SELECT title, content FROM "Post" WHERE id = 'p1'`, args: [] })
-    expect(post.rows[0]).toMatchObject({ title: 'Kept post', content: '# Content stays' })
-    const settings = await db.execute({ sql: `SELECT title FROM "SiteSettings" WHERE id = 'singleton'`, args: [] })
-    expect(settings.rows[0]).toMatchObject({ title: 'My Site' })
+    expect(await columnExists('Post', 'craftDocumentId')).toBe(true)
+    expect(await columnExists('SiteSettings', 'craftApiToken')).toBe(true)
+    expect(await tableExists('BackgroundJobLock')).toBe(true)
+    const post = await db.execute({ sql: `SELECT title, content, craftDocumentId FROM "Post" WHERE id = 'p1'`, args: [] })
+    expect(post.rows[0]).toMatchObject({ title: 'Kept post', content: '# Content stays', craftDocumentId: 'craft-doc-1' })
+    const settings = await db.execute({ sql: `SELECT title, craftApiToken FROM "SiteSettings" WHERE id = 'singleton'`, args: [] })
+    expect(settings.rows[0]).toMatchObject({ title: 'My Site', craftApiToken: 'enc:legacy-token' })
   })
 
   it('is idempotent — running twice succeeds and preserves data', async () => {
@@ -274,7 +274,7 @@ describe('runSchemaMigrations (production auto-migration)', () => {
     await runSchemaMigrations()
     expect(await tableExists('ApiKey')).toBe(true)
     expect(await tableExists('PostIdempotencyKey')).toBe(true)
-    expect(await tableExists('BackgroundJobLock')).toBe(false)
+    expect(await tableExists('BackgroundJobLock')).toBe(true)
 
     // Track subsequent statements: the fast path should run only its probes
     // and no DDL.
@@ -290,8 +290,8 @@ describe('runSchemaMigrations (production auto-migration)', () => {
     expect(statements[0]).toContain('PostIdempotencyKey')
     expect(statements[1]).toContain('seoLlmsTxtEnabled')
     expect(statements[2]).toContain('seoNoIndex')
-    expect(statements[3]).toContain("pragma_table_info('Post')")
-    expect(statements[4]).toContain("pragma_table_info('SiteSettings')")
+    expect(statements[3]).toContain('craftDocumentId')
+    expect(statements[4]).toContain('craftServerUrl')
     expect(statements[5]).toContain('BackgroundJobLock')
     spy.mockRestore()
   })
@@ -301,10 +301,10 @@ describe('runSchemaMigrations (production auto-migration)', () => {
 
     expect(result.success).toBe(true)
     expect(await tableExists('PostIdempotencyKey')).toBe(true)
-    expect(await tableExists('BackgroundJobLock')).toBe(false)
+    expect(await tableExists('BackgroundJobLock')).toBe(true)
     expect(await columnExists('SiteSettings', 'seoLlmsTxtEnabled')).toBe(true)
     expect(await columnExists('Post', 'seoNoIndex')).toBe(true)
-    expect(await columnExists('Post', 'craftDocumentId')).toBe(false)
-    expect(await columnExists('SiteSettings', 'craftApiToken')).toBe(false)
+    expect(await columnExists('Post', 'craftDocumentId')).toBe(true)
+    expect(await columnExists('SiteSettings', 'craftApiToken')).toBe(true)
   })
 })
