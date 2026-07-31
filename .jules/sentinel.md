@@ -12,3 +12,7 @@
 **Vulnerability:** Duplicated URL sanitization logic across components increases the risk of logical drift and inconsistent validation.
 **Learning:** Centralizing security functions is a best practice that prevents future inconsistencies in URL validation.
 **Prevention:** Extract shared URL validation into a centralized utility and update all call-sites to use it.
+## 2024-05-18 - Fix Plaintext Storage Fallback for Sensitive Data
+**Vulnerability:** The `encrypt` function in `src/lib/crypto.ts` fell back to storing data as plaintext (with a `plain:` prefix) if `ENCRYPTION_KEY` was missing from the environment.
+**Learning:** This insecure fallback existed likely to prevent complete crashes when the key was missing, but it prioritized uptime over data security.
+**Prevention:** Encryption utilities must fail securely. If a required encryption key is absent, the function must throw an error or crash the process, never silently degrade to plaintext storage for sensitive fields.

@@ -9,7 +9,7 @@
  * Uses AES-256-GCM via Node.js crypto module.
  * 
  * NOTE: The encryption key must be set via ENCRYPTION_KEY environment variable.
- * If not set, tokens will be stored in plain text (not recommended for production).
+ * If not set, encryption operations will throw an error to prevent accidental plain text storage of sensitive data.
  */
 
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto'
@@ -23,7 +23,7 @@ function getKey(): Buffer | null {
   const encryptionKey = process.env.ENCRYPTION_KEY
   if (!encryptionKey) {
     if (process.env.NODE_ENV === 'production') {
-      console.warn('[Crypto] Warning: ENCRYPTION_KEY not set. Sensitive data will be stored in plain text.')
+      console.warn('[Crypto] Warning: ENCRYPTION_KEY not set. Encryption operations will fail.')
     }
     return null
   }
@@ -34,15 +34,14 @@ function getKey(): Buffer | null {
 /**
  * Encrypt sensitive data.
  * Returns the encrypted string in format: salt:iv:authTag:ciphertext (base64 encoded)
- * Returns plain text if encryption key is not set.
+ * Throws an error if encryption key is not set.
  */
 export function encrypt(text: string | null | undefined): string | null {
   if (!text) return null
   
   const key = getKey()
   if (!key) {
-    // No encryption key configured, store as plain text with a prefix
-    return `plain:${text}`
+    throw new Error('Encryption failed: ENCRYPTION_KEY environment variable is not set')
   }
 
   try {
