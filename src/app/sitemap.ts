@@ -28,7 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       select: { slug: true, updatedAt: true },
       orderBy: { updatedAt: 'desc' },
     }),
-    enabledComponents.includes('projects')
+    enabledComponents.includes('projects') || enabledComponents.includes('profile')
       ? prisma.project.findMany({
           where: { published: true },
           select: { slug: true, updatedAt: true },

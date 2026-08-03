@@ -82,7 +82,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
   const componentConfig = parseComponentConfig(settings);
   const { enabledComponents, defaultComponent } = componentConfig;
-  if (!enabledComponents.includes('projects')) notFound();
+  // Project detail pages are reachable from both the Projects section and the
+  // Profile page, so allow them when either component is enabled.
+  if (!enabledComponents.includes('projects') && !enabledComponents.includes('profile')) notFound();
 
   const enabledMeta = COMPONENTS.filter(c => enabledComponents.includes(c.id));
   const statusLabel = STATUS_LABELS[project.status] || STATUS_LABELS.completed;
