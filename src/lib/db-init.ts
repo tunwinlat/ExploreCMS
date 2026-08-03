@@ -55,6 +55,7 @@ export async function runSchemaMigrations(): Promise<void> {
           (SELECT "craftError" FROM "SiteSettings" WHERE 1=0),
           (SELECT "craftLastSyncAt" FROM "SiteSettings" WHERE 1=0),
           (SELECT "name" FROM "BackgroundJobLock" WHERE 1=0),
+          (SELECT "id" FROM "Profile" WHERE 1=0),
           (SELECT "id" FROM "Post" INDEXED BY "Post_published_createdAt_idx" WHERE 1=0),
           (SELECT "id" FROM "Post" INDEXED BY "Post_translationGroupId_published_idx" WHERE 1=0),
           (SELECT "id" FROM "Project" INDEXED BY "Project_published_featured_order_createdAt_idx" WHERE 1=0),
@@ -90,7 +91,8 @@ export async function runSchemaMigrations(): Promise<void> {
           (SELECT "craftWriteAccess" FROM "SiteSettings" WHERE 1=0),
           (SELECT "craftError" FROM "SiteSettings" WHERE 1=0),
           (SELECT "craftLastSyncAt" FROM "SiteSettings" WHERE 1=0),
-          (SELECT "name" FROM "BackgroundJobLock" WHERE 1=0)`,
+          (SELECT "name" FROM "BackgroundJobLock" WHERE 1=0),
+          (SELECT "id" FROM "Profile" WHERE 1=0)`,
         args: [],
       });
       await client.batch(
@@ -269,6 +271,30 @@ export async function runSchemaMigrations(): Promise<void> {
         "leaseUntil" DATETIME NOT NULL,
         "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" DATETIME NOT NULL
+      )`,
+      // v14 → Profile component: public biography singleton
+      `CREATE TABLE "Profile" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "fullName" TEXT NOT NULL DEFAULT '',
+        "headline" TEXT NOT NULL DEFAULT '',
+        "avatarUrl" TEXT,
+        "location" TEXT NOT NULL DEFAULT '',
+        "email" TEXT NOT NULL DEFAULT '',
+        "phone" TEXT NOT NULL DEFAULT '',
+        "website" TEXT NOT NULL DEFAULT '',
+        "summary" TEXT NOT NULL DEFAULT '',
+        "availability" TEXT NOT NULL DEFAULT '',
+        "resumeUrl" TEXT,
+        "links" TEXT NOT NULL DEFAULT '[]',
+        "experience" TEXT NOT NULL DEFAULT '[]',
+        "education" TEXT NOT NULL DEFAULT '[]',
+        "skills" TEXT NOT NULL DEFAULT '[]',
+        "certifications" TEXT NOT NULL DEFAULT '[]',
+        "languages" TEXT NOT NULL DEFAULT '[]',
+        "interests" TEXT NOT NULL DEFAULT '[]',
+        "showProjects" BOOLEAN NOT NULL DEFAULT true,
+        "projectsHeading" TEXT NOT NULL DEFAULT 'Projects',
+        "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
       )`,
       // v13 → indexes for public listing, translation, and ordered media queries
       ...performanceIndexes,
@@ -624,6 +650,29 @@ export async function initializeDatabase(): Promise<{ success: boolean; error?: 
         "leaseUntil" DATETIME NOT NULL,
         "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" DATETIME NOT NULL
+      )`,
+      `CREATE TABLE "Profile" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "fullName" TEXT NOT NULL DEFAULT '',
+        "headline" TEXT NOT NULL DEFAULT '',
+        "avatarUrl" TEXT,
+        "location" TEXT NOT NULL DEFAULT '',
+        "email" TEXT NOT NULL DEFAULT '',
+        "phone" TEXT NOT NULL DEFAULT '',
+        "website" TEXT NOT NULL DEFAULT '',
+        "summary" TEXT NOT NULL DEFAULT '',
+        "availability" TEXT NOT NULL DEFAULT '',
+        "resumeUrl" TEXT,
+        "links" TEXT NOT NULL DEFAULT '[]',
+        "experience" TEXT NOT NULL DEFAULT '[]',
+        "education" TEXT NOT NULL DEFAULT '[]',
+        "skills" TEXT NOT NULL DEFAULT '[]',
+        "certifications" TEXT NOT NULL DEFAULT '[]',
+        "languages" TEXT NOT NULL DEFAULT '[]',
+        "interests" TEXT NOT NULL DEFAULT '[]',
+        "showProjects" BOOLEAN NOT NULL DEFAULT true,
+        "projectsHeading" TEXT NOT NULL DEFAULT 'Projects',
+        "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
       )`,
     ];
     for (const stmt of alterStatements) {
