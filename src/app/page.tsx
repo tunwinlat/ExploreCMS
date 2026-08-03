@@ -25,7 +25,11 @@ export default async function Home() {
 
   // If default component is not blog, redirect to its canonical path
   if (defaultComponent !== 'blog') {
-    redirect(defaultComponent === 'projects' ? '/projects' : '/photos');
+    redirect(
+    defaultComponent === 'projects' ? '/projects'
+    : defaultComponent === 'photos' ? '/photos'
+    : '/profile'
+  );
   }
 
   return (

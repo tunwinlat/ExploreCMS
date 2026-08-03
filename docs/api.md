@@ -36,6 +36,7 @@ Each key carries its own permission set in `resource:action` format:
 | `projects` | `projects:read` `projects:create` `projects:update` `projects:delete` |
 | `gallery` | `gallery:read` `gallery:create` `gallery:update` `gallery:delete` |
 | `media` | `media:create` (only action currently enforced) |
+| `profile` | `profile:read` `profile:update` (only actions enforced) |
 
 Wildcards: `posts:*` grants all post actions; `*` grants full access.
 
@@ -123,6 +124,57 @@ curl -X PATCH https://your-site.com/api/v1/posts/POST_ID \
   "slug": "custom-slug"
 }
 ```
+
+## Profile
+
+The site profile is a singleton — the public biography shown by the Profile
+component at `/profile`. There is exactly one profile per site.
+
+| Method | Endpoint | Permission |
+|--------|----------|------------|
+| GET | `/api/v1/profile` | `profile:read` |
+| PUT | `/api/v1/profile` | `profile:update` |
+| PATCH | `/api/v1/profile` | `profile:update` |
+
+`GET` returns the profile with all section arrays parsed. If no profile has
+been saved yet, it returns defaults (empty strings/arrays, `showProjects: true`).
+
+`PUT` replaces the **entire** profile — omitted fields are reset to defaults.
+`PATCH` updates only the fields provided.
+
+**Body fields (PUT/PATCH):**
+
+```json
+{
+  "fullName": "Tun Win Lat",
+  "headline": "Tier 2 Operations Technician",
+  "avatarUrl": "https://…",              // null to clear
+  "location": "Coquitlam, BC, Canada",
+  "email": "public-contact@example.com",
+  "phone": "+1 …",
+  "website": "https://…",
+  "summary": "Bio in Markdown or HTML",
+  "availability": "Open to opportunities",
+  "resumeUrl": "https://…/cv.pdf",       // null to clear
+  "showProjects": true,                  // showcase published projects on the page
+  "projectsHeading": "Projects",         // heading for the projects section
+
+  "links":          [{ "label": "GitHub", "url": "https://github.com/…" }],
+  "experience":     [{ "title": "…", "company": "…", "location": "…",
+                       "startDate": "Jan 2023", "endDate": "…", "current": false,
+                       "description": "…" }],
+  "education":      [{ "school": "…", "degree": "…", "field": "…",
+                       "startDate": "…", "endDate": "…", "description": "…" }],
+  "skills":         [{ "name": "Intune", "category": "Endpoint Management" }],
+  "certifications": [{ "name": "AZ-104", "issuer": "Microsoft", "date": "Mar 2024", "url": "https://…" }],
+  "languages":      [{ "name": "Burmese", "proficiency": "Native" }],
+  "interests":      [{ "name": "Photography" }]
+}
+```
+
+All fields are optional in a `PATCH`. Section arrays replace the whole array
+when provided — send the full list, not just the delta. Empty sections are
+hidden on the public page.
 
 ## Gallery
 
