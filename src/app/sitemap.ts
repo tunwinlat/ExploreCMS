@@ -52,6 +52,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     })
   }
+  if (enabledComponents.includes('profile')) {
+    staticRoutes.push({
+      url: `${siteUrl}/profile`,
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    })
+  }
   if (enabledComponents.includes('projects')) {
     staticRoutes.push({
       url: `${siteUrl}/projects`,

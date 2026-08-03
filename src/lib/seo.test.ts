@@ -15,6 +15,8 @@ import {
   webSiteJsonLd,
   blogPostingJsonLd,
   breadcrumbJsonLd,
+  profilePageJsonLd,
+  profileMetaDescription,
   DEFAULT_SITE_TITLE,
   DEFAULT_SITE_DESCRIPTION,
   type SeoPostInput,
@@ -285,5 +287,90 @@ describe('JSON-LD builders', () => {
         item: 'https://blog.example.com/post/hello-world',
       },
     ])
+  })
+})
+
+describe('profilePageJsonLd', () => {
+  const profile = {
+    fullName: 'Tun Win Lat',
+    headline: 'Tier 2 Operations Technician',
+    avatarUrl: '/uploads/avatar.png',
+    location: 'Coquitlam, BC, Canada',
+    summary: '# About\nTier 2 tech keeping **SMB** systems running.',
+  }
+  const sections = {
+    links: [{ label: 'GitHub', url: 'https://github.com/tunwinlat' }],
+    experience: [
+      { title: 'Tier 2 Ops Tech', company: 'Clearbridge Business Solutions', current: true },
+      { title: 'Older Role', company: 'OldCo', current: false },
+    ],
+    education: [{ school: 'Example University', degree: 'BSc' }],
+    skills: [{ name: 'Windows Server' }, { name: 'Microsoft 365' }],
+    languages: [{ name: 'Burmese' }, { name: 'English' }],
+  }
+
+  it('builds a ProfilePage whose mainEntity is a Person with a stable @id', () => {
+    const jsonLd = profilePageJsonLd(profile, sections, baseSettings) as any
+    expect(jsonLd['@type']).toBe('ProfilePage')
+    expect(jsonLd.url).toBe('https://blog.example.com/profile')
+
+    const person = jsonLd.mainEntity
+    expect(person['@type']).toBe('Person')
+    expect(person['@id']).toBe('https://blog.example.com/profile#person')
+    expect(person.name).toBe('Tun Win Lat')
+    expect(person.jobTitle).toBe('Tier 2 Operations Technician')
+    expect(person.image).toBe('https://blog.example.com/uploads/avatar.png')
+    expect(person.description).toBe('About Tier 2 tech keeping SMB systems running.')
+  })
+
+  it('uses the current employer, parsed address, links, skills and languages', () => {
+    const person = (profilePageJsonLd(profile, sections, baseSettings) as any).mainEntity
+    expect(person.worksFor).toEqual({ '@type': 'Organization', name: 'Clearbridge Business Solutions' })
+    expect(person.address).toEqual({
+      '@type': 'PostalAddress',
+      addressLocality: 'Coquitlam',
+      addressRegion: 'BC',
+      addressCountry: 'Canada',
+    })
+    expect(person.sameAs).toEqual(['https://github.com/tunwinlat'])
+    expect(person.knowsAbout).toEqual(['Windows Server', 'Microsoft 365'])
+    expect(person.knowsLanguage).toEqual(['Burmese', 'English'])
+    expect(person.alumniOf).toEqual([{ '@type': 'EducationalOrganization', name: 'Example University' }])
+  })
+
+  it('omits optional fields when data is missing', () => {
+    const minimal = { fullName: 'Ada', headline: '', avatarUrl: null, location: '', summary: '' }
+    const empty = { links: [], experience: [], education: [], skills: [], languages: [] }
+    const person = (profilePageJsonLd(minimal, empty, null) as any).mainEntity
+    expect(person.name).toBe('Ada')
+    expect(person.url).toBe('/profile')
+    expect(person.image).toBeUndefined()
+    expect(person.jobTitle).toBeUndefined()
+    expect(person.worksFor).toBeUndefined()
+    expect(person.address).toBeUndefined()
+    expect(person.sameAs).toBeUndefined()
+    expect(person.knowsAbout).toBeUndefined()
+    expect(person.knowsLanguage).toBeUndefined()
+    expect(person.alumniOf).toBeUndefined()
+  })
+})
+
+describe('profileMetaDescription', () => {
+  it('strips markdown and truncates the summary to ~160 chars', () => {
+    const longSummary = '**Bold** ' + 'word '.repeat(60)
+    const desc = profileMetaDescription(
+      { fullName: 'A', headline: 'B', avatarUrl: null, location: 'C', summary: longSummary },
+      { links: [], experience: [], education: [], skills: [], languages: [] }
+    )!
+    expect(desc.length).toBeLessThanOrEqual(161)
+    expect(desc).not.toContain('**')
+  })
+
+  it('falls back to headline and location when there is no summary', () => {
+    const desc = profileMetaDescription(
+      { fullName: 'A', headline: 'Technician', avatarUrl: null, location: 'Coquitlam, BC', summary: '' },
+      { links: [], experience: [], education: [], skills: [], languages: [] }
+    )
+    expect(desc).toBe('Technician — Coquitlam, BC')
   })
 })

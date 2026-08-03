@@ -89,7 +89,20 @@ describe('sitemap', () => {
     expect(urls).toContain('https://blog.example.com/blog')
     expect(urls).not.toContain('https://blog.example.com/projects')
     expect(urls).not.toContain('https://blog.example.com/photos')
+    expect(urls).not.toContain('https://blog.example.com/profile')
     expect(prisma.project.findMany).not.toHaveBeenCalled()
     expect(prisma.photoAlbum.findMany).not.toHaveBeenCalled()
+  })
+
+  it('includes /profile when the profile component is enabled', async () => {
+    vi.mocked(getSettings).mockResolvedValue({
+      ...settingsWithUrl,
+      enabledComponents: '["blog","profile"]',
+    } as any)
+
+    const result = await sitemap()
+    const urls = result.map((entry) => entry.url)
+
+    expect(urls).toContain('https://blog.example.com/profile')
   })
 })

@@ -15,7 +15,7 @@ import { PopupToast } from "@/components/PopupToast";
 import { getSettings, getPopupConfig } from "@/lib/settings-cache";
 import { getProfile } from "@/lib/profile-cache";
 import { getCachedProjects } from "@/lib/projects-cache";
-import { buildPageMetadata } from "@/lib/seo";
+import { buildPageMetadata, profilePageJsonLd, profileMetaDescription, breadcrumbJsonLd } from "@/lib/seo";
 import { parseProfileSections } from "@/lib/profile-sections";
 import { renderPostContent } from "@/lib/renderContent";
 
@@ -23,8 +23,15 @@ export const revalidate = 60
 
 export async function generateMetadata(): Promise<Metadata> {
   const [settings, profile] = await Promise.all([getSettings(), getProfile()]);
-  const title = profile?.fullName ? `Profile — ${profile.fullName}` : 'Profile';
-  return buildPageMetadata({ title, path: '/profile' }, settings);
+  if (!profile?.fullName) return buildPageMetadata({ title: 'Profile', path: '/profile' }, settings);
+  const sections = parseProfileSections(profile);
+  const shortLocation = profile.location.split(',').slice(0, 2).map(p => p.trim()).filter(Boolean).join(', ');
+  const titleParts = [profile.fullName, profile.headline, shortLocation].filter(Boolean);
+  return buildPageMetadata({
+    title: titleParts.join(' — '),
+    description: profileMetaDescription(profile, sections),
+    path: '/profile',
+  }, settings);
 }
 
 const sectionTitleStyle: React.CSSProperties = {
@@ -78,6 +85,15 @@ export default async function ProfilePage() {
 
   return (
     <div className="main-content fade-in-up">
+      {/* Structured data: ProfilePage + Person entity, plus breadcrumb */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(profilePageJsonLd(p, sections, settings)) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: 'Profile', path: '/profile' }], settings)) }}
+      />
       <SiteHeader
         title={settings?.title || 'ExploreCMS'}
         enabledComponents={enabledMeta}

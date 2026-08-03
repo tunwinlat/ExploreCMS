@@ -309,3 +309,103 @@ export function breadcrumbJsonLd(
     })),
   }
 }
+
+/** Coarse markdown/html stripper for meta descriptions. */
+function toPlainText(value: string, maxLen = 300): string {
+  const text = value
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[#>*_~`\-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (text.length <= maxLen) return text
+  const cut = text.slice(0, maxLen)
+  return cut.slice(0, cut.lastIndexOf(' ')).trimEnd() + '…'
+}
+
+export interface ProfileEntityInput {
+  fullName: string
+  headline: string
+  avatarUrl: string | null
+  location: string
+  summary: string
+}
+
+export interface ProfileEntitySections {
+  links: { label: string; url: string }[]
+  experience: { title: string; company: string; current: boolean }[]
+  education: { school: string; degree: string }[]
+  skills: { name: string }[]
+  languages: { name: string }[]
+}
+
+/**
+ * schema.org ProfilePage whose mainEntity is a Person — the canonical entity
+ * record for the site owner. Emitted on /profile; other content should
+ * reference the same stable @id (e.g. as Article author) so Google sees one
+ * consistent person across the site.
+ */
+export function profilePageJsonLd(
+  profile: ProfileEntityInput,
+  sections: ProfileEntitySections,
+  settings?: SeoSiteConfig | null
+): JsonLd {
+  const siteUrl = getSiteUrl(settings)
+  const pageUrl = absoluteUrl(siteUrl, '/profile') ?? '/profile'
+
+  const person: JsonLd = {
+    '@type': 'Person',
+    '@id': `${pageUrl}#person`,
+    name: profile.fullName,
+    url: pageUrl,
+  }
+  if (profile.avatarUrl) {
+    person.image = absoluteUrl(siteUrl, profile.avatarUrl) ?? profile.avatarUrl
+  }
+  if (profile.headline) person.jobTitle = profile.headline
+  if (profile.summary) person.description = toPlainText(profile.summary)
+
+  const current = sections.experience.find(e => e.current)
+  if (current?.company) {
+    person.worksFor = { '@type': 'Organization', name: current.company }
+  }
+
+  const locationParts = profile.location.split(',').map(part => part.trim()).filter(Boolean)
+  if (locationParts.length > 0) {
+    person.address = {
+      '@type': 'PostalAddress',
+      addressLocality: locationParts[0],
+      ...(locationParts[1] ? { addressRegion: locationParts[1] } : {}),
+      ...(locationParts[2] ? { addressCountry: locationParts[2] } : {}),
+    }
+  }
+
+  if (sections.links.length > 0) person.sameAs = sections.links.map(l => l.url)
+  if (sections.skills.length > 0) person.knowsAbout = sections.skills.map(s => s.name)
+  if (sections.languages.length > 0) person.knowsLanguage = sections.languages.map(l => l.name)
+  if (sections.education.length > 0) {
+    person.alumniOf = sections.education.map(e => ({
+      '@type': 'EducationalOrganization',
+      name: e.school,
+    }))
+  }
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    name: profile.fullName ? `${profile.fullName} — Profile` : 'Profile',
+    url: pageUrl,
+    mainEntity: person,
+  }
+}
+
+/** Truncate a plain-text summary for meta descriptions (~160 chars). */
+export function profileMetaDescription(
+  profile: ProfileEntityInput,
+  sections: ProfileEntitySections
+): string | undefined {
+  if (profile.summary) return toPlainText(profile.summary, 160)
+  const parts = [profile.headline, profile.location].filter(Boolean)
+  return parts.length ? parts.join(' — ') : undefined
+}
