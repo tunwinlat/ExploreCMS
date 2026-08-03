@@ -2,7 +2,7 @@
 
 # ExploreCMS
 
-**A self-hosted publishing platform for writing, projects, and photography.**
+**A self-hosted publishing platform for writing, projects, photography, and a public profile.**
 
 Built with Next.js, TypeScript, Prisma, and LibSQL.
 
@@ -15,7 +15,7 @@ Built with Next.js, TypeScript, Prisma, and LibSQL.
 
 </div>
 
-ExploreCMS combines an editorial public site with a focused administration workspace. Publish rich articles, present software projects, curate photo albums, customize the visual identity, and automate content through integrations or a permission-scoped API—all while retaining control of the application and its data.
+ExploreCMS combines an editorial public site with a focused administration workspace. Publish rich articles, present software projects, curate photo albums, publish an online biography, customize the visual identity, and automate content and SEO through integrations or a permission-scoped API—all while retaining control of the application and its data.
 
 ## Features
 
@@ -26,12 +26,13 @@ ExploreCMS combines an editorial public site with a focused administration works
 | Multilingual content | ISO 639-1 language selection, translation groups, translation creation from the editor, and a reader-facing language switcher. |
 | Projects | Manual portfolio management plus GitHub import and sync for public repositories, README content, topics, links, status, and generated cover art. |
 | Photo gallery | Publish ordered albums with cover images, photo metadata, featured items, and an accessible keyboard-enabled lightbox. |
-| Site composition | Enable Blog, Projects, and Photos independently, choose the homepage section, and build tag-based navigation with dropdowns. |
+| Public profile | Online biography with experience, education, skills, certifications, languages, interests, and links. Empty sections stay hidden. Optionally showcase published projects. Editable in admin and via API. |
+| Site composition | Enable Blog, Projects, Photos, and Profile independently, choose the homepage section, and build tag-based navigation with dropdowns. |
 | Design system | 41 visual themes, per-theme typography, light/dark variants, custom branding and favicon, editorial public surfaces, and an optional interactive particle background. |
-| SEO | Site-wide and per-post metadata, canonical URLs, Open Graph/Twitter cards, generated share images, JSON-LD, dynamic `sitemap.xml`, `robots.txt`, search verification, indexing controls, and optional `llms.txt`. |
+| SEO | Site-wide and per-post metadata, canonical URLs, Open Graph/Twitter cards, generated share images, WebSite/BlogPosting/Breadcrumb/ProfilePage+Person JSON-LD, dynamic `sitemap.xml` (including `/profile` when enabled), `robots.txt`, search verification, indexing controls, and optional `llms.txt`. Site SEO and per-post overrides are agent-manageable via the REST API. |
 | Integrations | GitHub project import; Bunny Storage; Resend or SMTP email; and database/storage migration tools. |
 | Administration | Analytics overview, post/project/album management, popup announcements, user roles, encrypted integration credentials, and a first-run setup wizard. |
-| Developer API | Key-authenticated REST API for posts, projects, albums, photos, and media uploads with granular permissions, expiry, revocation, pagination, rate limits, and idempotent post creation. |
+| Developer API | Key-authenticated REST API for posts, projects, albums, photos, media uploads, site profile, and site SEO with granular permissions, expiry, revocation, pagination, rate limits, and idempotent post creation. |
 
 ## Technology stack
 
@@ -136,6 +137,8 @@ The owner dashboard provides:
 - Analytics for total, unique, and per-post views
 - Draft, published, featured, tagged, multilingual, and SEO-aware post workflows
 - Project and photo-album management
+- Public profile editor (biography, experience, education, skills, and related sections)
+- Site SEO controls (canonical base URL, default description, social image, robots, verification tokens, `llms.txt`)
 - Theme, branding, homepage, component, navigation, and popup controls
 - GitHub, email, database, and storage integrations
 - API key lifecycle and permission management
@@ -153,6 +156,10 @@ ExploreCMS exposes a JSON API at `/api/v1` for external tools and applications.
 | Projects | `/api/v1/projects`, `/api/v1/projects/{id}` | `projects:read`, `projects:create`, `projects:update`, `projects:delete` |
 | Gallery | Album and photo endpoints under `/api/v1/gallery` | `gallery:read`, `gallery:create`, `gallery:update`, `gallery:delete` |
 | Media | `/api/v1/media` image uploads for embedding in post content | `media:create` |
+| Profile | `/api/v1/profile` (GET/PUT/PATCH singleton) | `profile:read`, `profile:update` |
+| SEO | `/api/v1/seo` (GET/PATCH site-level settings) | `seo:read`, `seo:update` |
+
+Posts also accept optional SEO overrides on create/update: `seoDescription`, `seoOgImageUrl`, `seoCanonicalUrl`, and `seoNoIndex`.
 
 Create a key under **Admin → Management → API Keys**. The plaintext key is shown once and never stored; a SHA-256 hash and short display prefix are retained.
 
@@ -164,7 +171,7 @@ curl -X POST https://example.com/api/v1/posts \
   -d '{"title":"Hello API","content":"# Hello","published":true,"tags":["api"]}'
 ```
 
-See the [complete API reference](docs/api.md) for request schemas, pagination, permissions, response codes, idempotency behavior, and gallery endpoints.
+See the [complete API reference](docs/api.md) for request schemas, pagination, permissions, response codes, idempotency behavior, gallery endpoints, profile fields, and SEO settings.
 
 ## Integrations
 
@@ -241,7 +248,8 @@ For a serverless deployment:
 2. Deploy the repository and set `DATABASE_URL`, `DATABASE_AUTH_TOKEN`, `JWT_SECRET`, `ENCRYPTION_KEY`, and `NEXT_PUBLIC_APP_URL`.
 3. Visit `/setup` on the deployed site to initialize the schema and create the owner.
 4. Configure Bunny Storage in the setup wizard or owner dashboard before uploading production media.
-5. Set the canonical site URL under **Admin → SEO** to activate absolute canonicals, sitemap URLs, social metadata, and `llms.txt`.
+5. Set the canonical site URL under **Admin → SEO** (or `PATCH /api/v1/seo`) to activate absolute canonicals, sitemap URLs, social metadata, and `llms.txt`.
+6. Optional: enable the Profile component, fill **Admin → Public Profile** (or `PATCH /api/v1/profile`), and submit `sitemap.xml` in Search Console so `/profile` is discoverable.
 
 Do not use a `file:` database or local uploads on an ephemeral serverless filesystem. A traditional Node.js host with persistent storage can use both.
 
