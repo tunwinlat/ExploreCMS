@@ -10,7 +10,7 @@ import { prisma } from '@/lib/db'
 import { requireApiPermission } from '@/lib/apiAuth'
 import {
   generateSlug, parseJsonBody, parsePagination,
-  badRequest, serverError, validateOptionalUrl, isUrlError,
+  badRequest, serverError, validateOptionalUrl, validateOptionalImageUrl, isUrlError,
 } from '@/lib/apiV1Utils'
 
 const PROJECT_STATUSES = ['planning', 'in_progress', 'active', 'on_hold', 'completed', 'archived'] as const
@@ -42,7 +42,9 @@ function validateProjectFields(body: Record<string, unknown>, partial: boolean):
   if (techTags !== undefined && (!Array.isArray(techTags) || techTags.some(t => typeof t !== 'string'))) {
     return { error: 'techTags must be an array of strings' }
   }
-  for (const [field, value] of [['coverImage', coverImage], ['githubUrl', githubUrl], ['liveUrl', liveUrl]] as const) {
+  const coverResult = validateOptionalImageUrl(coverImage, 'coverImage')
+  if (isUrlError(coverResult)) return coverResult
+  for (const [field, value] of [['githubUrl', githubUrl], ['liveUrl', liveUrl]] as const) {
     const result = validateOptionalUrl(value, field)
     if (isUrlError(result)) return result
   }

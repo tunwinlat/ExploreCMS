@@ -76,6 +76,17 @@ export function isUrlError(result: unknown): result is { error: string } {
 }
 
 /**
+ * Like validateOptionalUrl, but also accepts data:image/* URIs. Used for
+ * project cover images, since GitHub-imported projects store generated
+ * cover art as inline data:image/svg+xml URIs.
+ */
+export function validateOptionalImageUrl(value: unknown, field: string): string | null | { error: string } {
+  if (value === undefined || value === null || value === '') return null
+  if (typeof value === 'string' && value.startsWith('data:image/')) return value
+  return validateOptionalUrl(value, field)
+}
+
+/**
  * Validate per-post SEO override fields. Returns an error message or null.
  * seoOgImageUrl allows absolute http(s) URLs or site-relative paths (/uploads/…);
  * seoCanonicalUrl must be an absolute http(s) URL.

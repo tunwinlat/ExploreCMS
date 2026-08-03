@@ -10,7 +10,7 @@ import { prisma } from '@/lib/db'
 import { verifySession } from '@/lib/auth'
 import { revalidatePath, updateTag } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { normalizeUrl } from '@/lib/urlUtils'
+import { normalizeUrl, normalizeCoverImageUrl } from '@/lib/urlUtils'
 
 function generateSlug(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
@@ -25,7 +25,7 @@ export async function saveProject(formData: FormData) {
   const tagline = (formData.get('tagline') as string) || ''
   const content = (formData.get('content') as string) || ''
   const coverImageInput = (formData.get('coverImage') as string) || null
-  const coverImage = coverImageInput ? normalizeUrl(coverImageInput) : null
+  const coverImage = coverImageInput ? normalizeCoverImageUrl(coverImageInput) : null
   const status = (formData.get('status') as string) || 'completed'
   const featured = formData.get('featured') === 'true'
   const published = formData.get('published') === 'true'

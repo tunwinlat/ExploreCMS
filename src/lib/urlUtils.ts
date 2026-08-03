@@ -23,3 +23,14 @@ export function normalizeUrl(url: string | null | undefined): string | null {
     return null
   }
 }
+
+/**
+ * Like normalizeUrl, but also accepts data:image/* URIs. Used for project
+ * cover images, since GitHub-imported projects store generated cover art
+ * as inline data:image/svg+xml URIs.
+ */
+export function normalizeCoverImageUrl(url: string | null | undefined): string | null {
+  if (!url) return null
+  if (url.startsWith('data:image/')) return url
+  return normalizeUrl(url)
+}

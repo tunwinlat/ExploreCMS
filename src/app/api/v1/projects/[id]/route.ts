@@ -10,7 +10,7 @@ import { prisma } from '@/lib/db'
 import { requireApiPermission } from '@/lib/apiAuth'
 import {
   generateSlug, parseJsonBody, badRequest, notFound, serverError,
-  validateOptionalUrl, isUrlError,
+  validateOptionalUrl, validateOptionalImageUrl, isUrlError,
 } from '@/lib/apiV1Utils'
 
 const PROJECT_STATUSES = ['planning', 'in_progress', 'active', 'on_hold', 'completed', 'archived'] as const
@@ -69,7 +69,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (techTags !== undefined && (!Array.isArray(techTags) || techTags.some(t => typeof t !== 'string'))) {
     return badRequest('techTags must be an array of strings')
   }
-  for (const [field, value] of [['coverImage', coverImage], ['githubUrl', githubUrl], ['liveUrl', liveUrl]] as const) {
+  const coverResult = validateOptionalImageUrl(coverImage, 'coverImage')
+  if (isUrlError(coverResult)) return badRequest(coverResult.error)
+  for (const [field, value] of [['githubUrl', githubUrl], ['liveUrl', liveUrl]] as const) {
     const result = validateOptionalUrl(value, field)
     if (isUrlError(result)) return badRequest(result.error)
   }

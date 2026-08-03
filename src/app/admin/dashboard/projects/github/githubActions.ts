@@ -227,7 +227,7 @@ export async function importGitHubRepos(repoFullNames: string[]) {
               githubUrl: validateUrl(repo.html_url),
               liveUrl: validateUrl(repo.homepage || ''),
               techTags: JSON.stringify(repo.topics.length > 0 ? repo.topics : repo.language ? [repo.language] : []),
-              status: repo.archived ? 'archived' : 'completed',
+              status: repo.archived ? 'archived' : 'in_progress',
               published: true,
               githubRepoId: String(repo.id),
               githubRepoFullName: repo.full_name,
