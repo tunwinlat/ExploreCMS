@@ -13,7 +13,7 @@ import {
   validateOptionalUrl, isUrlError,
 } from '@/lib/apiV1Utils'
 
-const PROJECT_STATUSES = ['completed', 'in_progress', 'archived'] as const
+const PROJECT_STATUSES = ['planning', 'in_progress', 'active', 'on_hold', 'completed', 'archived'] as const
 
 function revalidateProjects() {
   revalidateTag('projects', 'max')

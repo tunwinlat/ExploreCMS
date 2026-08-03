@@ -22,8 +22,11 @@ export interface ProjectCardData {
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  completed: 'Completed',
+  planning: 'Planning',
   in_progress: 'In Progress',
+  active: 'Actively Maintained',
+  on_hold: 'On Hold',
+  completed: 'Completed',
   archived: 'Archived',
 }
 

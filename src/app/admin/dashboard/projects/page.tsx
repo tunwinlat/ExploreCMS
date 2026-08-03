@@ -25,8 +25,11 @@ export default async function ProjectsAdminPage() {
   } catch {}
 
   const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-    completed:   { label: 'Completed', color: '#22c55e' },
+    planning:    { label: 'Planning', color: '#a78bfa' },
     in_progress: { label: 'In Progress', color: 'var(--accent-color)' },
+    active:      { label: 'Actively Maintained', color: '#22c55e' },
+    on_hold:     { label: 'On Hold', color: '#f59e0b' },
+    completed:   { label: 'Completed', color: '#3b82f6' },
     archived:    { label: 'Archived', color: '#94a3b8' },
   }
 

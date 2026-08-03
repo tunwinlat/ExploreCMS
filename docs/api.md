@@ -119,7 +119,7 @@ curl -X PATCH https://your-site.com/api/v1/posts/POST_ID \
   "content": "<p>Long description</p>",
   "contentFormat": "html",            // "html" (default) | "markdown"
   "coverImage": "https://…",
-  "status": "completed",              // completed | in_progress | archived
+  "status": "completed",              // planning | in_progress | active | on_hold | completed | archived
   "featured": false,
   "published": true,
   "githubUrl": "https://github.com/…",

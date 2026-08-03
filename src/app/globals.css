@@ -983,8 +983,11 @@ h1, h2, h3, h4 {
   flex-shrink: 0;
 }
 
-.status-completed { background: #22c55e; }
+.status-planning { background: #a78bfa; }
 .status-in_progress { background: var(--accent-color); }
+.status-active { background: #22c55e; }
+.status-on_hold { background: #f59e0b; }
+.status-completed { background: #3b82f6; }
 .status-archived { background: #94a3b8; }
 
 .tag-list {

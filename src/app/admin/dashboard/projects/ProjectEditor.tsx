@@ -189,8 +189,11 @@ export default function ProjectEditor({ initialData }: { initialData?: ProjectDa
             <div>
               <label style={labelStyle}>Status</label>
               <select value={status} onChange={e => setStatus(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
-                <option value="completed">Completed</option>
+                <option value="planning">Planning</option>
                 <option value="in_progress">In Progress</option>
+                <option value="active">Actively Maintained</option>
+                <option value="on_hold">On Hold</option>
+                <option value="completed">Completed</option>
                 <option value="archived">Archived</option>
               </select>
             </div>
