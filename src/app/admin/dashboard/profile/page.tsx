@@ -22,7 +22,7 @@ export default async function UsersPage() {
   return (
     <div className="fade-in-up">
       <header style={{ marginBottom: '2.5rem' }}>
-        <h1 className="admin-page-title">My Profile</h1>
+        <h1 className="admin-page-title">My Account</h1>
         <p className="admin-page-subtitle">Update your personal information, email address, and password.</p>
       </header>
 

@@ -150,12 +150,7 @@ export default function AdminSidebarNav({ role }: { role: string }) {
         {navItem('/admin/dashboard/photos/new-album', 'New Album')}
       </NavGroup>
 
-      <NavGroup
-        title="Account"
-        isActive={pathname.startsWith('/admin/dashboard/profile')}
-      >
-        {navItem('/admin/dashboard/profile', 'My Profile')}
-      </NavGroup>
+      {role === 'OWNER' && navItem('/admin/dashboard/site-profile', 'Public Profile')}
 
       {role === 'OWNER' && (
         <NavGroup
@@ -165,7 +160,7 @@ export default function AdminSidebarNav({ role }: { role: string }) {
             pathname.startsWith('/admin/dashboard/tags') ||
             pathname.startsWith('/admin/dashboard/navigation') ||
             pathname.startsWith('/admin/dashboard/popup') ||
-            pathname.startsWith('/admin/dashboard/site-profile') ||
+            pathname.startsWith('/admin/dashboard/profile') ||
             pathname.startsWith('/admin/dashboard/components') ||
             pathname.startsWith('/admin/dashboard/integrations') ||
             pathname.startsWith('/admin/dashboard/api-keys') ||
@@ -173,11 +168,11 @@ export default function AdminSidebarNav({ role }: { role: string }) {
             pathname.startsWith('/admin/dashboard/settings')
           }
         >
+          {navItem('/admin/dashboard/profile', 'My Account')}
           {navItem('/admin/dashboard/users', 'Manage Users')}
           {navItem('/admin/dashboard/tags', 'Manage Tags')}
           {navItem('/admin/dashboard/navigation', 'Nav Builder')}
           {navItem('/admin/dashboard/popup', 'Popup Toast')}
-          {navItem('/admin/dashboard/site-profile', 'Site Profile')}
           {navItem('/admin/dashboard/components', 'Components')}
           {navItem('/admin/dashboard/integrations', 'Integrations')}
           {navItem('/admin/dashboard/api-keys', 'API Keys')}
