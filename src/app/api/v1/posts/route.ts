@@ -9,7 +9,7 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 import { createHash } from 'crypto'
 import { prisma } from '@/lib/db'
 import { requireApiPermission } from '@/lib/apiAuth'
-import { generateSlug, parseJsonBody, parsePagination, badRequest, serverError } from '@/lib/apiV1Utils'
+import { generateSlug, parseJsonBody, parsePagination, badRequest, serverError, validatePostSeoFields, postSeoData } from '@/lib/apiV1Utils'
 
 const postInclude = {
   author: { select: { username: true, firstName: true, lastName: true } },

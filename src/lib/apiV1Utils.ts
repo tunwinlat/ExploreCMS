@@ -74,3 +74,54 @@ export function validateOptionalUrl(value: unknown, field: string): string | nul
 export function isUrlError(result: unknown): result is { error: string } {
   return typeof result === 'object' && result !== null && 'error' in result
 }
+
+/**
+ * Validate per-post SEO override fields. Returns an error message or null.
+ * seoOgImageUrl allows absolute http(s) URLs or site-relative paths (/uploads/…);
+ * seoCanonicalUrl must be an absolute http(s) URL.
+ */
+export function validatePostSeoFields(fields: {
+  seoDescription?: unknown
+  seoOgImageUrl?: unknown
+  seoCanonicalUrl?: unknown
+  seoNoIndex?: unknown
+}): string | null {
+  const { seoDescription, seoOgImageUrl, seoCanonicalUrl, seoNoIndex } = fields
+  if (seoDescription !== undefined && seoDescription !== null) {
+    if (typeof seoDescription !== 'string') return 'seoDescription must be a string or null'
+    if (seoDescription.length > 1000) return 'seoDescription must be 1000 characters or fewer'
+  }
+  for (const [field, value] of [['seoOgImageUrl', seoOgImageUrl], ['seoCanonicalUrl', seoCanonicalUrl]] as const) {
+    if (value === undefined || value === null) continue
+    if (typeof value !== 'string') return `${field} must be a string or null`
+    if (value.length > 2000) return `${field} must be 2000 characters or fewer`
+    const isRelative = value.startsWith('/')
+    if (field === 'seoCanonicalUrl' && isRelative) return 'seoCanonicalUrl must be an absolute URL'
+    if (!isRelative) {
+      try {
+        const url = new URL(value)
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') return `${field} must be an http(s) URL`
+      } catch {
+        return `${field} must be a valid URL`
+      }
+    }
+  }
+  if (seoNoIndex !== undefined && typeof seoNoIndex !== 'boolean') return 'seoNoIndex must be a boolean'
+  return null
+}
+
+/** Map per-post SEO override fields to Prisma create/update data (null clears). */
+export function postSeoData(fields: {
+  seoDescription?: unknown
+  seoOgImageUrl?: unknown
+  seoCanonicalUrl?: unknown
+  seoNoIndex?: unknown
+}): Record<string, unknown> {
+  const data: Record<string, unknown> = {}
+  for (const field of ['seoDescription', 'seoOgImageUrl', 'seoCanonicalUrl'] as const) {
+    const value = fields[field]
+    if (value !== undefined) data[field] = value === null || value === '' ? null : (value as string).trim() || null
+  }
+  if (fields.seoNoIndex !== undefined) data.seoNoIndex = fields.seoNoIndex
+  return data
+}

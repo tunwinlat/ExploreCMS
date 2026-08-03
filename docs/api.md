@@ -37,6 +37,7 @@ Each key carries its own permission set in `resource:action` format:
 | `gallery` | `gallery:read` `gallery:create` `gallery:update` `gallery:delete` |
 | `media` | `media:create` (only action currently enforced) |
 | `profile` | `profile:read` `profile:update` (only actions enforced) |
+| `seo` | `seo:read` `seo:update` (only actions enforced) |
 
 Wildcards: `posts:*` grants all post actions; `*` grants full access.
 
@@ -65,6 +66,10 @@ Wildcards: `posts:*` grants all post actions; `*` grants full access.
   "tags": ["api", "news"],            // created automatically if new
   "language": "en",
   "translationGroupId": null,
+  "seoDescription": null,             // meta description override; null/empty auto-derives
+  "seoOgImageUrl": null,              // share image override: absolute URL or site-relative path
+  "seoCanonicalUrl": null,            // canonical URL override: must be absolute http(s)
+  "seoNoIndex": false,                // true = exclude this post from search engines
   "idempotencyKey": "018f6f4d-..."  // optional; header is preferred
 }
 ```
@@ -175,6 +180,40 @@ been saved yet, it returns defaults (empty strings/arrays, `showProjects: true`)
 All fields are optional in a `PATCH`. Section arrays replace the whole array
 when provided — send the full list, not just the delta. Empty sections are
 hidden on the public page.
+
+## SEO
+
+Site-level SEO settings (singleton). Per-post overrides live on posts via the
+`seoDescription` / `seoOgImageUrl` / `seoCanonicalUrl` / `seoNoIndex` fields above.
+
+| Method | Endpoint | Permission |
+|--------|----------|------------|
+| GET | `/api/v1/seo` | `seo:read` |
+| PATCH | `/api/v1/seo` | `seo:update` |
+
+**GET response `200 OK`:**
+
+```json
+{
+  "seo": {
+    "seoSiteUrl": "https://www.tun.lat",
+    "seoDescription": "Tun's Random Thoughts",
+    "seoOgImageUrl": null,
+    "seoTwitterHandle": null,
+    "seoRobotsIndex": true,
+    "seoGoogleVerification": null,
+    "seoBingVerification": null,
+    "seoLlmsTxtEnabled": true
+  }
+}
+```
+
+**PATCH body:** any subset of the same fields — omitting a field leaves it unchanged;
+`""` or `null` clears a field. `seoSiteUrl` must be an absolute http(s) URL (it drives
+canonical URLs and the sitemap); `seoOgImageUrl` may be absolute or site-relative.
+⚠️ `seoRobotsIndex: false` no-indexes the **entire** site.
+
+**PATCH response `200 OK`:** `{ "seo": { ...updated settings } }`
 
 ## Gallery
 

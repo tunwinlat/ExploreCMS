@@ -14,7 +14,7 @@
  * server code and client components.
  */
 
-export const API_RESOURCES = ['posts', 'projects', 'gallery', 'media', 'profile'] as const
+export const API_RESOURCES = ['posts', 'projects', 'gallery', 'media', 'profile', 'seo'] as const
 export const API_ACTIONS = ['read', 'create', 'update', 'delete'] as const
 
 export type ApiResource = (typeof API_RESOURCES)[number]

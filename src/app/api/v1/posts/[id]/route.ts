@@ -8,7 +8,7 @@ import { NextResponse } from 'next/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { requireApiPermission } from '@/lib/apiAuth'
-import { generateSlug, parseJsonBody, badRequest, notFound, serverError } from '@/lib/apiV1Utils'
+import { generateSlug, parseJsonBody, badRequest, notFound, serverError, validatePostSeoFields, postSeoData } from '@/lib/apiV1Utils'
 
 const postInclude = {
   author: { select: { username: true, firstName: true, lastName: true } },
@@ -47,7 +47,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { id } = await params
   const body = await parseJsonBody(request)
   if (body.error) return body.error
-  const { title, content, slug: slugInput, published, isFeatured, tags, contentFormat, language, translationGroupId } = body.data
+  const { title, content, slug: slugInput, published, isFeatured, tags, contentFormat, language, translationGroupId, seoDescription, seoOgImageUrl, seoCanonicalUrl, seoNoIndex } = body.data
 
   if (title !== undefined && (typeof title !== 'string' || title.trim().length === 0 || title.length > 500)) {
     return badRequest('title must be a non-empty string of 500 characters or fewer')
@@ -64,6 +64,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (slugInput !== undefined && typeof slugInput !== 'string') {
     return badRequest('slug must be a string')
   }
+  {
+    const seoError = validatePostSeoFields({ seoDescription, seoOgImageUrl, seoCanonicalUrl, seoNoIndex })
+    if (seoError) return badRequest(seoError)
+  }
 
   try {
     const existing = await prisma.post.findUnique({ where: { id }, select: { slug: true } })
@@ -77,6 +81,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (isFeatured !== undefined) data.isFeatured = isFeatured === true
     if (language !== undefined) data.language = language
     if (translationGroupId !== undefined) data.translationGroupId = translationGroupId
+    Object.assign(data, postSeoData({ seoDescription, seoOgImageUrl, seoCanonicalUrl, seoNoIndex }))
 
     if (typeof slugInput === 'string' && slugInput.trim()) {
       let slug = generateSlug(slugInput)
