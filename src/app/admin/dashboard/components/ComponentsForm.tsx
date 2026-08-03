@@ -32,6 +32,12 @@ const COMPONENT_ICONS: Record<ComponentId, React.ReactNode> = {
       <path d="M9 18h3"/>
     </svg>
   ),
+  profile: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="4"/>
+      <path d="M4 21v-1a8 8 0 0 1 16 0v1"/>
+    </svg>
+  ),
   photos: (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>

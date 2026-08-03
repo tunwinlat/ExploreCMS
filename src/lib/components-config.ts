@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-export type ComponentId = 'blog' | 'projects' | 'photos'
+export type ComponentId = 'blog' | 'projects' | 'photos' | 'profile'
 
 export interface ComponentMeta {
   id: ComponentId
@@ -28,6 +28,13 @@ export const COMPONENTS: ComponentMeta[] = [
     description: 'Showcase your work, side projects and portfolio pieces.',
     path: '/projects',
     icon: 'projects',
+  },
+  {
+    id: 'profile',
+    label: 'Profile',
+    description: 'An online biography — your professional story for reviewers and visitors.',
+    path: '/profile',
+    icon: 'profile',
   },
   {
     id: 'photos',

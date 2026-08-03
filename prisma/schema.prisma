@@ -23,14 +23,14 @@ model User {
   posts     Post[]
 
   // Email
-  email                    String?   @unique
-  emailVerified            Boolean   @default(false)
-  emailVerificationToken   String?
-  emailVerificationExpiry  DateTime?
-  passwordResetToken       String?
-  passwordResetExpiry      DateTime?
+  email                   String?   @unique
+  emailVerified           Boolean   @default(false)
+  emailVerificationToken  String?
+  emailVerificationExpiry DateTime?
+  passwordResetToken      String?
+  passwordResetExpiry     DateTime?
 
-  apiKeys ApiKey[]
+  apiKeys             ApiKey[]
   postIdempotencyKeys PostIdempotencyKey[]
 }
 
@@ -65,8 +65,8 @@ model Post {
   views         PostView?
 
   // Localization
-  language            String  @default("en") // ISO 639-1 language code
-  translationGroupId  String? // Links translated posts together (shares same ID)
+  language           String  @default("en") // ISO 639-1 language code
+  translationGroupId String? // Links translated posts together (shares same ID)
 
   // SEO overrides (null/empty = auto-derive from content + site settings)
   seoDescription  String? // meta description override
@@ -136,15 +136,15 @@ model SiteSettings {
   githubSyncMode    String? @default("manual") // "all" or "manual"
   githubLastSyncAt  String? // ISO timestamp
   // Email Provider Config
-  emailProvider   String? // "resend" | "smtp" | null
-  emailFromName   String?
-  emailFromAddress String?
-  resendApiKey    String? // Encrypted
-  smtpHost        String?
-  smtpPort        Int?    @default(587)
-  smtpSecure      Boolean @default(false)
-  smtpUser        String?
-  smtpPassword    String? // Encrypted
+  emailProvider     String? // "resend" | "smtp" | null
+  emailFromName     String?
+  emailFromAddress  String?
+  resendApiKey      String? // Encrypted
+  smtpHost          String?
+  smtpPort          Int?    @default(587)
+  smtpSecure        Boolean @default(false)
+  smtpUser          String?
+  smtpPassword      String? // Encrypted
 
   // SEO Config
   seoSiteUrl            String? // canonical base URL, e.g. https://blog.example.com
@@ -239,6 +239,37 @@ model PopupConfig {
   content     String   @default("")
   displayMode String   @default("once") // "once" = once per visitor, "always" = once per browsing session
   updatedAt   DateTime @updatedAt
+}
+
+model Profile {
+  id String @id @default("singleton")
+
+  // Basics — empty strings are hidden on the public page
+  fullName     String  @default("")
+  headline     String  @default("") // e.g. "Tier 2 Operations Technician"
+  avatarUrl    String?
+  location     String  @default("")
+  email        String  @default("") // public contact email
+  phone        String  @default("")
+  website      String  @default("")
+  summary      String  @default("") // long bio (html or markdown, like posts)
+  availability String  @default("") // e.g. "Open to opportunities"
+  resumeUrl    String? // downloadable CV
+
+  // Sections — JSON arrays; an empty array hides the section on the public page
+  links          String @default("[]") // [{label, url}]
+  experience     String @default("[]") // [{title, company, location, startDate, endDate, current, description}]
+  education      String @default("[]") // [{school, degree, field, startDate, endDate, description}]
+  skills         String @default("[]") // [{name, category}]
+  certifications String @default("[]") // [{name, issuer, date, url}]
+  languages      String @default("[]") // [{name, proficiency}]
+  interests      String @default("[]") // [{name}]
+
+  // Projects integration — showcase published projects on the profile page
+  showProjects    Boolean @default(true)
+  projectsHeading String  @default("Projects")
+
+  updatedAt DateTime @updatedAt
 }
 
 model SiteAnalytics {
