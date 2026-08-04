@@ -4,4 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-export { GET, revalidate } from '../feed.xml/route'
+export { GET } from '../feed.xml/route'
+
+// Route segment config must be declared in this file (not re-exported).
+export const revalidate = 300
