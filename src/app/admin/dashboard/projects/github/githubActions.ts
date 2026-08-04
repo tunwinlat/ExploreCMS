@@ -8,7 +8,7 @@
 
 import { prisma } from '@/lib/db'
 import { verifySession } from '@/lib/auth'
-import { GitHubClient, GitHubRepo, generateRepoCoverImage } from '@/lib/github'
+import { GitHubClient, GitHubRepo, generateRepoCoverImage, resolveGitHubRelativeUrls } from '@/lib/github'
 import { getPostDb } from '@/lib/bunnyDb'
 import { getSettings } from '@/lib/settings-cache'
 import { encrypt, decrypt } from '@/lib/crypto'
@@ -16,6 +16,13 @@ import { updateTag } from 'next/cache'
 
 function generateSlug(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
+}
+
+// Fetch README and rewrite relative image/link URLs to absolute GitHub URLs so
+// the synced content renders correctly on the public site.
+async function fetchResolvedReadme(client: GitHubClient, owner: string, repoName: string, branch: string) {
+  const readme = await client.getReadme(owner, repoName, branch)
+  return readme ? resolveGitHubRelativeUrls(readme, owner, repoName, branch) : readme
 }
 
 function validateUrl(urlStr?: string | null) {
@@ -203,7 +210,7 @@ export async function importGitHubRepos(repoFullNames: string[]) {
           // Parallelize fetching repo details and readme where possible,
           // but we need repo details first to get the default branch.
           const repo = await client.getRepo(owner, repoName)
-          const readme = await client.getReadme(owner, repoName, repo.default_branch)
+          const readme = await fetchResolvedReadme(client, owner, repoName, repo.default_branch)
 
           // Generate slug
           let slug = generateSlug(repo.name)
@@ -301,7 +308,7 @@ export async function syncGitHubProject(projectId: string) {
     const repo = await client.getRepo(owner, repoName)
     
     // Get README content
-    const readme = await client.getReadme(owner, repoName, repo.default_branch)
+    const readme = await fetchResolvedReadme(client, owner, repoName, repo.default_branch)
     
     const now = new Date().toISOString()
 
@@ -385,7 +392,7 @@ export async function syncAllGitHubProjects() {
 
           const [owner, repoName] = project.githubRepoFullName.split('/')
           const repo = await client.getRepo(owner, repoName)
-          const readme = await client.getReadme(owner, repoName, repo.default_branch)
+          const readme = await fetchResolvedReadme(client, owner, repoName, repo.default_branch)
 
           await db.project.update({
             where: { id: project.id },

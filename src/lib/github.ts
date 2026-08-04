@@ -170,3 +170,32 @@ function getLanguageColors(language?: string | null): [string, string] {
   
   return colors[language || ''] || ['#6366F1', '#4F46E5'] // Default indigo gradient
 }
+
+/**
+ * Rewrites relative image and link URLs in README content (markdown + HTML) to
+ * absolute GitHub URLs, so synced content renders correctly off github.com.
+ * Images point at raw.githubusercontent.com; other relative links at the
+ * github.com blob view. Absolute URLs, data: URIs, anchors, and mailto: are
+ * left untouched.
+ */
+export function resolveGitHubRelativeUrls(content: string, owner: string, repo: string, branch: string): string {
+  const rawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/`
+  const blobBase = `https://github.com/${owner}/${repo}/blob/${branch}/`
+  const isRelative = (u: string) => u.trim() !== '' && !/^(https?:|data:|mailto:|#|\/\/)/.test(u)
+  const clean = (u: string) => u.replace(/^\.?\//, '')
+
+  let out = content
+  // Markdown images -> raw file host
+  out = out.replace(/!\[([^\]]*)\]\(([^)\s]+)((?:\s+"[^"]*")?)\)/g,
+    (m, alt, url, title) => isRelative(url) ? `![${alt}](${rawBase}${clean(url)}${title})` : m)
+  // Remaining markdown link targets ](url) -> blob view (image URLs are already absolute)
+  out = out.replace(/\]\(([^)\s]+)((?:\s+"[^"]*")?)\)/g,
+    (m, url, title) => isRelative(url) ? `](${blobBase}${clean(url)}${title})` : m)
+  // HTML <img src="..."> -> raw file host
+  out = out.replace(/(<img\b[^>]*?\bsrc=")([^"]+)(")/gi,
+    (m, pre, url, post) => isRelative(url) ? `${pre}${rawBase}${clean(url)}${post}` : m)
+  // HTML <a href="..."> -> blob view
+  out = out.replace(/(<a\b[^>]*?\bhref=")([^"]+)(")/gi,
+    (m, pre, url, post) => isRelative(url) ? `${pre}${blobBase}${clean(url)}${post}` : m)
+  return out
+}
