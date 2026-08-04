@@ -10,14 +10,44 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getBlogPageData } from "@/lib/blog-cache";
 import { getSettings, getPopupConfig } from "@/lib/settings-cache";
-import { buildPageMetadata } from "@/lib/seo";
+import { prisma } from "@/lib/db";
+import { buildPageMetadata, getSiteUrl } from "@/lib/seo";
 
 // Use ISR with 60 second revalidation for better performance
 export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
-  return buildPageMetadata({ title: 'Blog', path: '/blog' }, settings);
+  const meta = buildPageMetadata({ title: 'Blog', path: '/blog' }, settings);
+
+  // RSS autodiscovery: main feed + one alternate per published language.
+  const siteUrl = getSiteUrl(settings);
+  if (siteUrl) {
+    const title = settings?.title || 'ExploreCMS';
+    const types: Record<string, { url: string; title: string }[]> = {
+      'application/rss+xml': [{ url: `${siteUrl}/feed.xml`, title: `${title} RSS Feed` }],
+    };
+    try {
+      const rows = await prisma.post.findMany({
+        where: { published: true },
+        select: { language: true },
+        distinct: ['language'],
+      });
+      for (const row of rows) {
+        const lang = (row.language || '').trim().toLowerCase();
+        if (/^[a-z]{2}$/.test(lang)) {
+          types['application/rss+xml'].push({
+            url: `${siteUrl}/feed/${lang}.xml`,
+            title: `${title} RSS Feed (${lang})`,
+          });
+        }
+      }
+    } catch {
+      // DB not ready — main feed link is enough
+    }
+    meta.alternates = { ...meta.alternates, types };
+  }
+  return meta;
 }
 
 export default async function BlogPage() {

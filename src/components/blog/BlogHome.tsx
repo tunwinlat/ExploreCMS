@@ -22,6 +22,7 @@ interface BlogHomeSettings {
   navigationConfig?: string | null
   enabledComponents?: string | null
   defaultComponent?: string | null
+  seoSiteUrl?: string | null
 }
 
 interface BlogHomePopup {
@@ -69,6 +70,13 @@ export function BlogHome({ settings, popupConfig, blogData }: {
   const enabledMeta = COMPONENTS.filter(c => enabledComponents.includes(c.id));
   const { featuredPosts, trendingPosts, latestPosts, nextCursor } = blogData;
 
+  // RSS subscribe link — only when the feed would actually resolve (absolute
+  // site URL configured in Admin → SEO, same gate as the /feed.xml route).
+  const rawSiteUrl = settings?.seoSiteUrl?.trim() || null;
+  const rssFeedUrl = rawSiteUrl && /^https?:\/\//i.test(rawSiteUrl)
+    ? `${rawSiteUrl.replace(/\/+$/, '')}/feed.xml`
+    : null;
+
   let navItems: { id: string; type: string; label: string }[] = [];
   try {
     navItems = JSON.parse(settings?.navigationConfig || '[]');
@@ -89,6 +97,18 @@ export function BlogHome({ settings, popupConfig, blogData }: {
         title={settings?.headerTitle || "Explore. Create. Inspire."}
         description={settings?.headerDescription || "Welcome to my personal corner of the internet."}
       />
+
+      {rssFeedUrl && (
+        <div className="container" style={{ textAlign: 'center', marginTop: '-0.5rem', marginBottom: '1rem' }}>
+          <a
+            href={rssFeedUrl}
+            className="rss-subscribe-link"
+            style={{ fontSize: '0.85rem', opacity: 0.75 }}
+          >
+            📡 Subscribe via RSS
+          </a>
+        </div>
+      )}
 
       <div className="container">
         <BlogContent

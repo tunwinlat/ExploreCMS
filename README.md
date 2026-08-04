@@ -29,7 +29,7 @@ ExploreCMS combines an editorial public site with a focused administration works
 | Public profile | Online biography with experience, education, skills, certifications, languages, interests, and links. Empty sections stay hidden. Optionally showcase published projects. Editable in admin and via API. |
 | Site composition | Enable Blog, Projects, Photos, and Profile independently, choose the homepage section, and build tag-based navigation with dropdowns. |
 | Design system | 41 visual themes, per-theme typography, light/dark variants, custom branding and favicon, editorial public surfaces, and an optional interactive particle background. |
-| SEO | Site-wide and per-post metadata, canonical URLs, Open Graph/Twitter cards, generated share images, WebSite/BlogPosting/Breadcrumb/ProfilePage+Person JSON-LD, dynamic `sitemap.xml` (including `/profile` when enabled), `robots.txt`, search verification, indexing controls, and optional `llms.txt`. Site SEO and per-post overrides are agent-manageable via the REST API. |
+| SEO | Site-wide and per-post metadata, canonical URLs, Open Graph/Twitter cards, generated share images, WebSite/BlogPosting/Breadcrumb/ProfilePage+Person JSON-LD, dynamic `sitemap.xml` (including `/profile` when enabled), `robots.txt`, public RSS 2.0 at `/feed.xml` (alias `/rss.xml`) with per-language feeds (`/feed/en.xml`, `/feed/my.xml`) and full-content image enclosures, search verification, indexing controls, and optional `llms.txt`. Site SEO and per-post overrides are agent-manageable via the REST API. |
 | Integrations | GitHub project import; Bunny Storage; Resend or SMTP email; and database/storage migration tools. |
 | Administration | Analytics overview, post/project/album management, popup announcements, user roles, encrypted integration credentials, and a first-run setup wizard. |
 | Developer API | Key-authenticated REST API for posts, projects, albums, photos, media uploads, site profile, and site SEO with granular permissions, expiry, revocation, pagination, rate limits, and idempotent post creation. |
@@ -138,7 +138,7 @@ The owner dashboard provides:
 - Draft, published, featured, tagged, multilingual, and SEO-aware post workflows
 - Project and photo-album management
 - Public profile editor (biography, experience, education, skills, and related sections)
-- Site SEO controls (canonical base URL, default description, social image, robots, verification tokens, `llms.txt`)
+- Site SEO controls (canonical base URL, default description, social image, robots, verification tokens, `llms.txt`, RSS feed)
 - Theme, branding, homepage, component, navigation, and popup controls
 - GitHub, email, database, and storage integrations
 - API key lifecycle and permission management
@@ -248,7 +248,7 @@ For a serverless deployment:
 2. Deploy the repository and set `DATABASE_URL`, `DATABASE_AUTH_TOKEN`, `JWT_SECRET`, `ENCRYPTION_KEY`, and `NEXT_PUBLIC_APP_URL`.
 3. Visit `/setup` on the deployed site to initialize the schema and create the owner.
 4. Configure Bunny Storage in the setup wizard or owner dashboard before uploading production media.
-5. Set the canonical site URL under **Admin → SEO** (or `PATCH /api/v1/seo`) to activate absolute canonicals, sitemap URLs, social metadata, and `llms.txt`.
+5. Set the canonical site URL under **Admin → SEO** (or `PATCH /api/v1/seo`) to activate absolute canonicals, sitemap URLs, social metadata, RSS (`/feed.xml`), and `llms.txt`.
 6. Optional: enable the Profile component, fill **Admin → Public Profile** (or `PATCH /api/v1/profile`), and submit `sitemap.xml` in Search Console so `/profile` is discoverable.
 
 Do not use a `file:` database or local uploads on an ephemeral serverless filesystem. A traditional Node.js host with persistent storage can use both.
