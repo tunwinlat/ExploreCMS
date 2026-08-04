@@ -7,6 +7,15 @@ const nextConfig: NextConfig = {
     // (Bunny CDN or embedded third-party images), so allow any https origin.
     remotePatterns: [{ protocol: 'https', hostname: '**' }],
   },
+  async rewrites() {
+    return [
+      {
+        // Conventional feed URLs: /feed/en.xml → /feed/en (per-language RSS)
+        source: '/feed/:lang(en|my|[a-z]{2}).xml',
+        destination: '/feed/:lang',
+      },
+    ];
+  },
   async headers() {
     return [
       {

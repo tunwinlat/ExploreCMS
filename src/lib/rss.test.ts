@@ -140,4 +140,52 @@ describe('buildRssFeed', () => {
     expect(xml).toContain('<title>Burmese</title>')
     expect(xml).toContain('<dc:language>my</dc:language>')
   })
+
+  it('emits an enclosure + media:content for the lead image', async () => {
+    const xml = await buildRssFeed({
+      settings,
+      posts: [makePost()],
+      feedUrl: 'https://blog.example.com/feed.xml',
+    })
+    expect(xml).toContain('xmlns:media="http://search.yahoo.com/mrss/"')
+    expect(xml).toContain(
+      '<enclosure url="https://blog.example.com/uploads/cover.png" type="image/png" length="0" />'
+    )
+    expect(xml).toContain(
+      '<media:content url="https://blog.example.com/uploads/cover.png" medium="image" />'
+    )
+  })
+
+  it('prefers seoOgImageUrl over the first content image', async () => {
+    const xml = await buildRssFeed({
+      settings,
+      posts: [makePost({ seoOgImageUrl: '/og/custom.jpg' })],
+      feedUrl: 'https://blog.example.com/feed.xml',
+    })
+    expect(xml).toContain('url="https://blog.example.com/og/custom.jpg"')
+  })
+
+  it('omits enclosure when there is no image', async () => {
+    const xml = await buildRssFeed({
+      settings,
+      posts: [makePost({ content: '<p>No pictures here.</p>' })],
+      feedUrl: 'https://blog.example.com/feed.xml',
+    })
+    expect(xml).not.toContain('<enclosure')
+  })
+
+  it('honours channel language and title suffix for per-language feeds', async () => {
+    const xml = await buildRssFeed({
+      settings,
+      posts: [makePost({ language: 'my' })],
+      feedUrl: 'https://blog.example.com/feed/my.xml',
+      language: 'my',
+      titleSuffix: '(Burmese)',
+    })
+    expect(xml).toContain('<title>My Blog (Burmese)</title>')
+    expect(xml).toContain('<language>my</language>')
+    expect(xml).toContain(
+      '<atom:link href="https://blog.example.com/feed/my.xml" rel="self" type="application/rss+xml" />'
+    )
+  })
 })
