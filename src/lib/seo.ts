@@ -292,7 +292,11 @@ export function blogPostingJsonLd(
   }
 }
 
-/** schema.org BreadcrumbList. Items are `[name, path-or-url]` pairs in order. */
+/** schema.org BreadcrumbList. Items are `[name, path-or-url]` pairs in order.
+ * `item` is only emitted when it resolves to an absolute http(s) URL — Google
+ * rejects relative paths in itemListElement.item (@id). Without a configured
+ * site URL we still emit name/position (valid ListItem) and omit `item`.
+ */
 export function breadcrumbJsonLd(
   items: { name: string; path: string }[],
   settings?: SeoSiteConfig | null
@@ -301,12 +305,19 @@ export function breadcrumbJsonLd(
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
-    itemListElement: items.map((item, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      name: item.name,
-      item: absoluteUrl(siteUrl, item.path) ?? undefined,
-    })),
+    itemListElement: items.map((item, index) => {
+      const entry: Record<string, unknown> = {
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item.name,
+      }
+      const url = absoluteUrl(siteUrl, item.path)
+      // Only absolute http(s) URLs — never relative fallbacks from absoluteUrl.
+      if (url && /^https?:\/\//i.test(url)) {
+        entry.item = url
+      }
+      return entry
+    }),
   }
 }
 

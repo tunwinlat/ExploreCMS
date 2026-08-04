@@ -288,6 +288,23 @@ describe('JSON-LD builders', () => {
       },
     ])
   })
+
+  it('breadcrumbJsonLd omits item when site URL is missing (no relative URLs)', () => {
+    const jsonLd = breadcrumbJsonLd(
+      [
+        { name: 'Home', path: '/' },
+        { name: 'Blog', path: '/blog' },
+      ],
+      { title: 'My Blog' }
+    )
+    expect(jsonLd.itemListElement).toEqual([
+      { '@type': 'ListItem', position: 1, name: 'Home' },
+      { '@type': 'ListItem', position: 2, name: 'Blog' },
+    ])
+    for (const entry of jsonLd.itemListElement as Record<string, unknown>[]) {
+      expect(entry).not.toHaveProperty('item')
+    }
+  })
 })
 
 describe('profilePageJsonLd', () => {

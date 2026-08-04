@@ -14,7 +14,7 @@ import "./themes.css";
 import { getThemeConfig } from "@/lib/themes";
 import { ensureMigrations } from "@/lib/db-init";
 import { getSettings } from "@/lib/settings-cache";
-import { buildBaseMetadata, webSiteJsonLd, DEFAULT_SITE_DESCRIPTION, DEFAULT_SITE_TITLE } from "@/lib/seo";
+import { buildBaseMetadata, webSiteJsonLd, getSiteUrl, DEFAULT_SITE_DESCRIPTION, DEFAULT_SITE_TITLE } from "@/lib/seo";
 import { ParticleBackground } from "@/components/ParticleBackground";
 
 const fraunces = Fraunces({
@@ -85,6 +85,8 @@ export default async function RootLayout({
 
   const activeTheme = getThemeConfig(themeId);
   const storageOrigin = getOrigin(siteSettings?.bunnyStorageUrl);
+  const siteUrl = getSiteUrl(siteSettings);
+  const feedTitle = `${siteSettings?.title || DEFAULT_SITE_TITLE} RSS Feed`;
 
   return (
     <html lang="en" suppressHydrationWarning data-theme={activeTheme.id} className={fraunces.variable}>
@@ -94,6 +96,14 @@ export default async function RootLayout({
         <link rel="shortcut icon" href={faviconUrl} type={faviconType(faviconUrl)} />
         <link rel="apple-touch-icon" href={faviconUrl} sizes="180x180" />
         <meta name="msapplication-TileImage" content={faviconUrl} />
+        {siteUrl && (
+          <link
+            rel="alternate"
+            type="application/rss+xml"
+            title={feedTitle}
+            href={`${siteUrl}/feed.xml`}
+          />
+        )}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {storageOrigin && <link rel="preconnect" href={storageOrigin} crossOrigin="anonymous" />}
