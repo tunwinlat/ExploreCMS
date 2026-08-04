@@ -130,6 +130,21 @@ Local uploads are written to `public/uploads`, which is appropriate for local de
 
 The upload endpoint accepts validated image formats, enforces a 10 MB size limit, verifies file signatures, and falls back to local storage if Bunny Storage is unavailable.
 
+### RSS feeds
+
+Published posts are exposed as RSS 2.0 once the canonical site URL is set (Admin → SEO):
+
+| URL | Contents |
+| --- | --- |
+| `/feed.xml` (alias `/rss.xml`) | Latest 50 published posts, all languages |
+| `/feed/<lang>.xml` | Same, filtered to one language (e.g. `/feed/en.xml`, `/feed/my.xml`) |
+
+- Full sanitized HTML in `content:encoded`; relative links and images are rewritten to absolute URLs.
+- Every item includes an image `enclosure`/`media:content` (per-post SEO image, else first content image).
+- Posts marked noindex and drafts are excluded. Feeds 404 when no site URL is configured or the Blog component is disabled.
+- Readers auto-discover the feeds via `<link rel="alternate">` tags; the blog page also shows a Subscribe link.
+- Cached for 5 minutes (`revalidate = 300`).
+
 ## Administration
 
 The owner dashboard provides:
