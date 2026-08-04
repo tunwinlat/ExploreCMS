@@ -17,6 +17,13 @@ Built with Next.js, TypeScript, Prisma, and LibSQL.
 
 ExploreCMS combines an editorial public site with a focused administration workspace. Publish rich articles, present software projects, curate photo albums, publish an online biography, customize the visual identity, and automate content and SEO through integrations or a permission-scoped API—all while retaining control of the application and its data.
 
+## Screenshots
+
+| Public site | Administration |
+| --- | --- |
+| ![Blog home — editorial hero with search](docs/screenshots/blog-home.png) | ![Admin dashboard — analytics overview](docs/screenshots/admin-dashboard.png) |
+| ![Latest stories — post cards with tags and reading time](docs/screenshots/blog-posts.png) | ![Post editor — TipTap writing surface with autosave](docs/screenshots/editor.png) |
+
 ## Features
 
 | Area | What is included |
