@@ -150,7 +150,7 @@ export default async function ProfilePage() {
             {summaryHtml && (
               <section style={{ marginBottom: '2.5rem' }}>
                 <h2 style={sectionTitleStyle}>About</h2>
-                <div className="post-content" dangerouslySetInnerHTML={{ __html: summaryHtml }} />
+                <div className="post-content profile-about" dangerouslySetInnerHTML={{ __html: summaryHtml }} />
               </section>
             )}
 
