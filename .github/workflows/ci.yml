@@ -6,30 +6,128 @@ on:
   pull_request:
     branches: [master]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  verify:
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - name: Dependency audit (informational)
+        run: npm audit --audit-level=high
+        continue-on-error: true
 
-      - name: Install dependencies
-        run: npm ci
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
 
-      - name: Lint
-        run: npm run lint
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm test
 
-      - name: Test
-        run: npm test
-
-      - name: Build
-        run: npm run build
+  prisma:
+    name: Prisma schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # validate needs DATABASE_URL present (datasource url = env(...));
+      # any placeholder value satisfies it, nothing connects.
+      - run: npx prisma validate
         env:
           DATABASE_URL: file:./ci.db
-          JWT_SECRET: ci-build-placeholder-secret-not-a-real-secret
-          ENCRYPTION_KEY: ci-build-placeholder-secret-not-a-real-secret
-          NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+  build:
+    name: Build + fresh-boot smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Cache Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+            nextjs-${{ runner.os }}-
+      - name: Build (against seeded fresh DB)
+        # Routes like /feed.xml prerender at build time, so the DB must exist
+        # and be seeded BEFORE `next build`, not just before `next start`.
+        # DATABASE_URL is absolute: Prisma CLI resolves relative file: paths
+        # against prisma/ while the libsql adapter resolves against cwd.
+        run: |
+          set -e
+          export DATABASE_URL="file:$GITHUB_WORKSPACE/prisma/ci.db"
+          export JWT_SECRET=ci-build-secret
+          export ENCRYPTION_KEY=ci-build-secret
+          export NEXT_PUBLIC_APP_URL=http://localhost:3000
+          npx prisma db push --skip-generate
+          node scripts/ci-smoke-seed.mjs
+          npm run build
+      - name: Fresh-boot smoke test
+        # Boots the production server against the seeded fresh DB and requires
+        # every public surface to return 200. Catches boot-time breakage and
+        # the "forgot to update db-init migration list/probes" prod-500 class.
+        run: |
+          set -e
+          export DATABASE_URL="file:$GITHUB_WORKSPACE/prisma/ci.db"
+          export JWT_SECRET=ci-build-secret
+          export ENCRYPTION_KEY=ci-build-secret
+          export NEXT_PUBLIC_APP_URL=http://localhost:3000
+          npm start &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do curl -sf http://localhost:3000 >/dev/null 2>&1 && break; sleep 2; done
+          for path in / /feed.xml /profile /projects /photos; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "http://localhost:3000$path")
+            echo "$path -> $code"
+            if [ "$code" != "200" ]; then echo "::error::SMOKE FAIL: $path returned $code"; exit 1; fi
+          done
+          echo "SMOKE OK"
+
+  dependency-review:
+    name: Dependency review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
