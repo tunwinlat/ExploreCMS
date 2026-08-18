@@ -1,0 +1,32 @@
+name: Production smoke
+
+# Option-A deploy model: Vercel auto-deploys master to production.
+# Vercel's GitHub integration emits deployment_status events; when a
+# Production deployment succeeds we verify the live site actually serves.
+# A failure here means: deploy went out AND is broken — go look NOW.
+
+on:
+  deployment_status:
+
+jobs:
+  prod-smoke:
+    name: Production smoke
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment_status.environment == 'Production'
+    steps:
+      - name: Smoke production (www.tun.lat)
+        run: |
+          set -e
+          BASE="https://www.tun.lat"
+          FAIL=0
+          for path in / /feed.xml /profile /projects /photos; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$BASE$path")
+            echo "$path -> $code"
+            if [ "$code" != "200" ]; then
+              echo "::error::PROD SMOKE FAIL: $BASE$path returned $code"
+              FAIL=1
+            fi
+          done
+          [ "$FAIL" = "0" ] && echo "PROD SMOKE OK" || exit 1
