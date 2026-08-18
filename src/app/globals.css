@@ -1659,3 +1659,25 @@ textarea:focus-visible {
   color: var(--text-primary);
   font-size: 0.85rem;
 }
+
+/* Profile "About" summary: reuse post typography but without the article
+   lead-paragraph treatment (drop cap + italic oversized first paragraph)
+   from post/[slug]/post.css. Higher specificity wins regardless of CSS
+   bundle order. */
+.post-content.profile-about > p:first-of-type {
+  font-size: inherit;
+  font-style: normal;
+  line-height: inherit;
+  margin-bottom: 1.75rem;
+  color: var(--text-primary);
+}
+
+.post-content.profile-about > p:first-of-type::first-letter {
+  float: none;
+  font-size: inherit;
+  line-height: inherit;
+  padding-right: 0;
+  padding-top: 0;
+  font-weight: inherit;
+  color: inherit;
+}
