@@ -60,7 +60,11 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      # validate needs DATABASE_URL present (datasource url = env(...));
+      # any placeholder value satisfies it, nothing connects.
       - run: npx prisma validate
+        env:
+          DATABASE_URL: file:./ci.db
 
   build:
     name: Build + fresh-boot smoke
