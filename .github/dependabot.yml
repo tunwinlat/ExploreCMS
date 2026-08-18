@@ -1,0 +1,23 @@
+# Dependabot — weekly dependency update PRs (Mondays, PT morning).
+# PRs are small and must pass the full CI battery before merge.
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: America/Vancouver
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: America/Vancouver
+    open-pull-requests-limit: 3
