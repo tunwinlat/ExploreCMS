@@ -1,0 +1,23 @@
+name: Release
+
+# Formal versioning via release-please:
+# - Conventional commits on master are collected automatically.
+# - release-please maintains a release PR that bumps package.json version
+#   and generates CHANGELOG.md.
+# - Merging the release PR creates the git tag + GitHub Release.
+# Nothing here deploys — Vercel still ships master directly (option A).
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    name: release-please
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
