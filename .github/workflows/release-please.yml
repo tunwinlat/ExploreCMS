@@ -21,3 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: googleapis/release-please-action@v4
+        with:
+          # GITHUB_TOKEN-created PRs don't auto-trigger CI (GitHub anti-recursion
+          # rule), so the release PR's checks would sit awaiting approval forever.
+          # A user-scoped token makes release PRs trigger CI like any other PR.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
