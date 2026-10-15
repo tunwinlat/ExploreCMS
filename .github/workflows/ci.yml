@@ -95,7 +95,7 @@ jobs:
           export JWT_SECRET=ci-build-secret
           export ENCRYPTION_KEY=ci-build-secret
           export NEXT_PUBLIC_APP_URL=http://localhost:3000
-          npx prisma db push --skip-generate
+          npx prisma db push
           node scripts/ci-smoke-seed.mjs
           npm run build
       - name: Fresh-boot smoke test
@@ -137,7 +137,7 @@ jobs:
           export JWT_SECRET=ci-build-secret
           export ENCRYPTION_KEY=ci-build-secret
           export NEXT_PUBLIC_APP_URL=http://localhost:3000
-          npx prisma db push --skip-generate
+          npx prisma db push
           node scripts/ci-smoke-seed.mjs
           node scripts/ci-e2e-seed.mjs
           npm run build
