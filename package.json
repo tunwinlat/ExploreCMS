@@ -13,8 +13,8 @@
   },
   "dependencies": {
     "@libsql/client": "^0.17.3",
-    "@prisma/adapter-libsql": "^6.19.3",
-    "@prisma/client": "^6.19.3",
+    "@prisma/adapter-libsql": "^7.10.0",
+    "@prisma/client": "^7.10.0",
     "@tippyjs/react": "^4.2.6",
     "@tiptap/core": "^3.23.4",
     "@tiptap/extension-bubble-menu": "^3.23.4",
@@ -66,7 +66,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "jsdom": "^28.1.0",
-    "prisma": "^6.19.3",
+    "prisma": "^7.10.0",
     "typescript": "^5",
     "vitest": "^4.0.18"
   }
