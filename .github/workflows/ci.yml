@@ -36,6 +36,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - run: npx prisma generate
       - run: npm run typecheck
 
   test:
