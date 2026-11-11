@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/tunwinlat/ExploreCMS/compare/explore-cms-v0.2.0...explore-cms-v0.2.1) (2026-11-11)
+
+
+### Bug Fixes
+
+* **deps:** align Tiptap packages at 3.33.0 ([3365502](https://github.com/tunwinlat/ExploreCMS/commit/3365502b240d35c59ddf037065062c0b461a7b24))
+* **deps:** update Next.js to 16.4.6 ([#342](https://github.com/tunwinlat/ExploreCMS/issues/342)) ([6140208](https://github.com/tunwinlat/ExploreCMS/commit/61402080c1b33b2be210bf64fa627d9756c5c811))
+
 ## [0.2.0](https://github.com/tunwinlat/ExploreCMS/compare/explore-cms-v0.1.0...explore-cms-v0.2.0) (2026-08-28)
 
 
